@@ -273,35 +273,35 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
     // Returns:
     //   * planSet: 在线程中为其添加一个新的解
     //   * transformMatrix: 得到service promise的顾客之间的转移频数
-	vector<Car*> tempPlan;
-	float finalCost = 0;
-	SSALNS SSALNS_alg3(sampleCustomer, newPlan, capacity, 10000*ITER_PERCENTAGE);
-	SSALNS_alg3.run(tempPlan, finalCost, print_lck);
-	vector<Car*>::iterator carIter;
-	for(carIter = tempPlan.begin(); carIter < tempPlan.end(); carIter++) {
-		(*carIter)->removeInvalidCustomer(validId);
-		(*carIter)->updateTransformMatrix(transformMatrix);
-	}
-	deleteCustomerSet(sampleCustomer);
+    vector<Car*> tempPlan;
+    float finalCost = 0;
+    SSALNS SSALNS_alg3(sampleCustomer, newPlan, capacity, 10000*ITER_PERCENTAGE);
+    SSALNS_alg3.run(tempPlan, finalCost, print_lck);
+    vector<Car*>::iterator carIter;
+    for(carIter = tempPlan.begin(); carIter < tempPlan.end(); carIter++) {
+        (*carIter)->removeInvalidCustomer(validId);
+        (*carIter)->updateTransformMatrix(transformMatrix);
+    }
+    deleteCustomerSet(sampleCustomer);
     record_lck.lock();
-	// unique_lock<mutex> lck1(record_lck);
-	cout << "Core with id #" << coreId << " finished its task!" << endl;
-	planSet.push_back(tempPlan);
+    // unique_lock<mutex> lck1(record_lck);
+    cout << "Core with id #" << coreId << " finished its task!" << endl;
+    planSet.push_back(tempPlan);
     record_lck.unlock();
 }
 
 vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &newAbandonedCustomerId, vector<int> &delayCustomerId, float capacity) {
-	// ÖØÐÂ¼Æ»®£¬ÓÃÓÚvehicle³ö·¢ÒÔºó
-	// Ê×ÏÈÉ¸Ñ¡³öÒ»Ð©×Å¼±µÈ´ý»Ø¸´µÄwaitCustomerÒÔ¼°Ò»Ð©²»×Å¼±»Ø¸´µÄ
+    // 重新计划，用于vehicle出发之后
+	// 首先需要筛选出着急回复以及不着急回复的顾客
     // Returns:
-	//   * newServedCustomerId:  (wait customerÖÐ)Í¨¹ýre-plan½ÓÊÜµ½·þÎñµÄ¹Ë¿Í
-	//   * newAbandonedCustomerId: (wait customerÖÐ)Í¨¹ýre-planÈ·ÈÏÎÞ·¨½ÓÊÜ·þÎñµÄ¹Ë¿Í
-	//   * delayCustomer: ¶ÔÓÚpatient customer£¬Èç¹ûµ±Ç°²»ÄÜÈ·ÈÏ·þÎñ£¬Ôò¿ÉÔÚÎ´À´ÔÙÎªÆä°²ÅÅ
+	//   * newServedCustomerId:  (wait customer中)通过replan接受到服务的顾客
+	//   * newAbandonedCustomerId: (wait customer中)通过replan确定不能接收到服务的顾客
+    //   * delayCustomer: 对于patient customer, 如果当前不能确认服务，则可在未来再为其啊那批
 	ostringstream ostr;
 	vector<Customer*> hurryCustomer;
 	vector<Customer*> patientCustomer;
 	vector<Customer*>::iterator custIter;
-	mutex record_lck;    // 为planSet上锁
+	mutex record_lck;              // 为planSet上锁
 	vector<thread> thread_pool;    // pool for storing all threads
 	int count = 0;
     // ÏÂÒ»¸öÊ±¼ä¶ÎµÄÖÕÖ¹Ê±¼ä£¨ÏÂÏÂ¸öÊ±¼ä¶ÎµÄ¿ªÊ¼Ê±¼ä£©

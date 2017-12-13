@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/Car.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/tinystr.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/SSALNS.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/LoadFile.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/PublicFunction.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ALNS.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/tinyxmlerror.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/tinystr.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/LNS_rel.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/LNS_rel.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Timer.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Route.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/LoadFile.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Timer.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/SetBench.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/tinyxmlparser.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Simulator.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Car.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/PublicFunction.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/tinyxml.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/SSALNS.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Dispatcher.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OutputFile.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/TxtRecorder.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Route.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Dispatcher.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/TxtRecorder.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/ALNS.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/SetBench.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/OutputFile.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/tinyxml.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Simulator.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Header Search Paths">
+        <CLASSES>
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.8/include" />
+          <root url="file:///usr/include" />
+          <root url="file:///usr/local/include" />
+        </CLASSES>
+        <SOURCES>
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/4.8/include" />
+          <root url="file:///usr/include" />
+          <root url="file:///usr/local/include" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

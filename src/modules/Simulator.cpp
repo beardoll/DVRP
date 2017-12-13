@@ -48,7 +48,7 @@ void clearPlanSet(vector<vector<Car*> > planSet) {
 }
 
 vector<Customer*> Simulator::generateScenario(){
-	// 产生情景
+    // 产生情景
     // 根据动态顾客的随机信息产生其时间窗
     // 注意动态顾客只可能出现在slotIndex之后
     int leftBound = 0;
@@ -101,7 +101,7 @@ vector<int> getID(vector<Customer*> customerSet){
 void threadForInitial(Customer depot, float capacity, int coreId  vector<vector<Car*> > &planSet, 
         vector<Customer*> allCustomer, vector<int> validId, Matrix<int> &transformMatrix, 
         mutex &record_lck) {
-	// 路径初始化的线程操作
+    // 路径初始化的线程操作
     // Args:
     //   * depot: 仓库节点
     //   * capacity: 车容量
@@ -138,7 +138,7 @@ vector<Car*> Simulator::initialPlan(Customer depot, float capacity){
     int i,j;
     int count = 0;
     // 顾客集按照id大小进行排序
-	sort(promiseCustomerSet.begin(), promiseCustomerSet.end());
+    sort(promiseCustomerSet.begin(), promiseCustomerSet.end());
     vector<int> validId;
     validId.push_back(0);   // 第一个节点时仓库节点
     // 所有在计划开始前已知的顾客id（属于必须服务的顾客）
@@ -230,9 +230,9 @@ void validPromise(vector<Car*>Plan, vector<Customer*> hurryCustomer,
             vector<int>::iterator tempIter = find(hurryCustomerId.begin(), 
                     hurryCustomerId.end(), tempId);
             if(tempIter < hurryCustomerId.end()) {
-				// 如果tempId在hurryCustomerId中
-				newServedCustomerId.push_back(tempId);
-				hurryCustomerId.erase(tempIter);
+                // 如果tempId在hurryCustomerId中
+                newServedCustomerId.push_back(tempId);
+                hurryCustomerId.erase(tempIter);
             }
         }
         deleteCustomerSet(tempCust);
@@ -301,14 +301,12 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
             patientCustomer.push_back(tempCust);
         }
     }
-    // È»ºó½«ÕâÐ©¹Ë¿Í¾¡¿ÉÄÜµØ·ÅÈëµ±Ç°¼Æ»®ÖÐ
-    // Èô²»ÄÜ£¬Ôò·µ»Ø'No' promise
     vector<Car*> newPlan;
     vector<Car*>::iterator carIter;
     float finalCost = 0;
     const int iterForWaitCustomer = 30000*ITER_PERCENTAGE;
     if(hurryCustomer.size() == 0) {  
-        // Èç¹ûÃ»ÓÐhurryCustomer£¬ÄÇÃ´²»ÐèÒª¶ÔÆä½øÐÐreplan
+        // 如果没有hurryCustomer，则不需要为其replan
         ostr.str("");
         ostr << "There are no hurry Customer" << endl;
         TxtRecorder::addLine(ostr.str());
@@ -393,7 +391,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     ostr.str("");
     ostr << "----Sampling begins!" << endl;
     ostr << "----In replan, there will be " << dynamicCustomerSet.size() 
-        << " dynamic customers" << endl;
+         << " dynamic customers" << endl;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
 
@@ -415,12 +413,12 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         restSampleNum = restSampleNum - CORE_NUM;   
     }
 
-    // È¡ÆÀ·Ö×î¸ßµÄ¼Æ»®×÷ÎªÊä³ö
+    // 评价每个scenario的性能
     ostr.str("");
     ostr << "----Now assessing the performance of each scenario" << endl;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
-    vector<pair<int, int> > scoreForPlan;    // Ã¿¸ö¼Æ»®µÄµÃ·Ö
+    vector<pair<int, int> > scoreForPlan;    // 每个计划的得分
     scoreForPlan.reserve(samplingRate);
     for(planIter = planSet.begin(); planIter < planSet.end(); planIter++) {
         int pos = planIter - planSet.begin();             // 在采样得到的计划中的位置

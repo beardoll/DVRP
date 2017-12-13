@@ -294,7 +294,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         if((*custIter)->tolerantTime <= nextMoment) {  
             // 该顾客着急于下时间段前得到回复
             Customer *tempCust = new Customer(**custIter);
-            hurryCustomer.push_back(tempCust);     // ¼ÓÈëhurryCustomerÖÐ
+            hurryCustomer.push_back(tempCust);
         } else {
             // 否则，该顾客属于“有耐心的顾客”
             Customer *tempCust = new Customer(**custIter);
@@ -377,7 +377,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     }
     sort(allServedCustomerId.begin(), allServedCustomerId.end());
     // 然后进行采样，调用SSALNS算法计算各个采样情景下的计划
-	// 并且计算评分矩阵
+    // 并且计算评分矩阵
     // 初始化transformMatrix
     Matrix<int> transformMatrix(allServedCustomerId.size(), allServedCustomerId.size());
     for(int i=0; i<allServedCustomerId.size(); i++) {

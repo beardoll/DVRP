@@ -82,7 +82,7 @@ void Timer::deleteEventElement(int carIndex){
 }
 
 void searchCustomer(int customerId, vector<Customer*> customerSet, Customer &customer) {
-	// 根据customerId在customerSet中寻找顾客
+    // 根据customerId在customerSet中寻找顾客
     bool mark = false;
     vector<Customer*>::iterator custIter;
     for(custIter = customerSet.begin(); custIter < customerSet.end(); custIter++) {
@@ -118,7 +118,7 @@ void Timer::updateEventElement(EventElement &newEvent){
         if(found == false) {
             // 找不到是因为货车在此之前没有将时间表录入
             // 这种情况发生在货车在仓库等待了一段时间后才收到服务任务
-			addEventElement(newEvent);
+            addEventElement(newEvent);
         }
     }
 }
@@ -155,7 +155,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Customer*> &rejectCustomer,
                 EventElement newEvent = disp.handleFinishedService(currentEvent.time, 
                         currentEvent.carIndex);
                 updateEventElement(newEvent);
-            break;
+                break;
             }
             case newTimeSlot: {
                 vector<EventElement> newEventList = disp.handleNewTimeSlot(slotIndex);

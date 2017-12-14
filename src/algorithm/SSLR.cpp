@@ -319,7 +319,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
                 shawRemoval(tempCarSet, removedCustomer, currentRemoveNum);
                 break;
             }
-		    case 1: {
+            case 1: {
                 randomRemoval(tempCarSet, removedCustomer, currentRemoveNum);
                 break;
             }

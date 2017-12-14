@@ -375,7 +375,6 @@ EventElement Dispatcher::handleFinishedService(float time, int carIndex){
             break;
         }
     }
-
     newEvent = currentPlan[pos]->getCurrentAction(time);
     int currentId = currentPlan[pos]->getCurrentNode().id;
     ostr.str("");

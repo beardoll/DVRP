@@ -36,7 +36,6 @@ EventElement Timer::pop(){
 
 Timer::Timer(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCustomerSet, 
         float capacity, Customer depot) {   
-	
     // 构造函数，输入参数为所有顾客，以及各时间段开始值
     this->staticCustomerSet = staticCustomerSet;
     this->dynamicCustomerSet = dynamicCustomerSet;

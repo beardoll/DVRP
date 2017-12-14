@@ -79,6 +79,3 @@ bool getData(string filename, vector<Customer*> &allCustomer,
     return true;
 }
 
-void test() {
-    // What about the indent
-}

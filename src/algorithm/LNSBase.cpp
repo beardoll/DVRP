@@ -241,7 +241,8 @@ void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet,
                 }
             }
             float randomNoise = noiseAmount * random(randomRange[0], randomRange[1]);
-            removedCarSet[i]->computeInsertCost(*removedCustomer[j], minValue, customer1, secondValue, customer2, randomNoise, allowNegativeCost);
+            removedCarSet[i]->computeInsertCost(*removedCustomer[j], minValue, customer1, 
+                    secondValue, customer2, randomNoise, allowNegativeCost);
             minInsertPerRoute.setValue(i, j, minValue);
             minInsertPos.setValue(i, j, customer1);
             secondInsertPerRoute.setValue(i, j, secondValue);

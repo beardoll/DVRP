@@ -30,8 +30,8 @@ public:
 	void setProperty(bool newProperty) { artificial = newProperty; } // 设置货车的新属性
 
 	// 计算insert cost和remove cost
-	void computeInsertCost(Customer item, float &minValue, Customer &customer1, float &secondValue, Customer &customer2, 
-		float noiseAmount = 0.0f, bool noiseAdd = false, float penaltyPara = 0.0f, bool regularization = true);
+	void computeInsertCost(Customer item, float &minValue, Customer &customer1, 
+            float &secondValue, Customer &customer2, float randomNose=0, bool allowNegativeCost=false);
 	vector<float> computeReducedCost(float DTpara[]);  // 计算所有节点的移除代价
 
 	// getCustomer方法

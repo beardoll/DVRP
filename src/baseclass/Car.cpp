@@ -46,8 +46,8 @@ Car Car::getNullCar(){
 
 
 //================ insert cost和remove cost =================//
-void Car::computeInsertCost(Customer item, float &minValue, Customer &customer1, float &secondValue, Customer &customer2, 
-		float randomNoise, float randomRange[], bool allowNegativeCost){
+void Car::computeInsertCost(Customer item, float &minValue, Customer &customer1, 
+        float &secondValue, Customer &customer2, float randomNoise, bool allowNegativeCost){
 	// 计算item节点到本车路径的最小插入代价和次小插入代价
 	// randomNoise: 随机化的噪声量
 	// allowNegativeCost: 是否允许出现负的insertion cost

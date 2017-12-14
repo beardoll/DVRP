@@ -16,7 +16,7 @@ public:
     EventElement handleFinishedService(float time, int carIndex);       // 处理货车完成服务事件
     // EventElement handleDepature(float time, int carIndex);              // 处理货车出发事件
     vector<EventElement> handleNewTimeSlot(int slotIndex); // 新时间段开始 
-    void carFinishedTask(int carIndex);       // 收车 
+    void carFinishTask(int carIndex);       // 收车 
     vector<int> getRejectCustomerId() {return rejectCustomerId; }
     vector<Car*> getFinishedPlan() {return finishedPlan; }
 private:

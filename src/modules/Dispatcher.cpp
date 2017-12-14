@@ -3,6 +3,7 @@
 #include "Simulator.h"
 #include "PublicFunction.h"
 #include "TxtRecorder.h"
+#include <stdexcept>
 
 const float MAX_FLOAT = numeric_limits<float>::max();
 
@@ -130,7 +131,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         ostr << "============ Now Initialize the routing plan ===========" << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
-        Simulator smu(samplingRate, timeSlotLen, timeSlotNum, slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, currentPlan, iter_percentage, predictMethod);
+        Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, currentPlan);
         updatedPlan = smu.initialPlan(depot, capacity);
         currentPlan = copyPlan(updatedPlan);
         withdrawPlan(updatedPlan);
@@ -163,7 +164,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             futurePlan.push_back(tempCar);
         }
         if (currentPlan.size() != 0) {  // 有货车可派时，才进行replan
-			Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
+            Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
                     futurePlan);
             vector<int> newServedCustomerId;
             vector<int> newAbandonedCustomerId;
@@ -258,7 +259,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
 } 
 
 EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCustomer){  
-	// 处理新顾客到达
+    // 处理新顾客到达
     ostringstream ostr;
     ostr.str("");
     ostr<< "----Customer with id #" << newCustomer.id << " is arriving..." << endl;
@@ -272,7 +273,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
     pair<int, Customer> insertPos;   
     vector<Car*>::iterator carIter;
     float currentTime = newCustomer.startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
-    for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
+    for (carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
         // 求newCustomer在每条route的最小插入代价
         Car tempCar = (*carIter)->capturePartRoute(currentTime);
         Customer customer1, customer2;
@@ -344,7 +345,7 @@ EventElement Dispatcher::handleCarArrived(float time, int carIndex){
             << " finished its task!" << endl << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
-        carFinishedTask(tempEvent.carIndex);
+        carFinishTask(tempEvent.carIndex);
     } else {
         // 更新newServedCustomerId以及promisedCustomerId
         int currentId = currentPlan[pos]->getCurrentNode().id;

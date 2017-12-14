@@ -324,7 +324,7 @@ void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRout
 }
 
 void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removedCustomer,
-                            int q){
+        int q){
     // shaw removal: 移除特性相近的顾客节点
     // 每次循环移除 y^p*|L|个顾客，L为路径中剩余节点，y是0-1之间的随机数
     // Args:
@@ -414,7 +414,7 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
         indexsetInRoute.resize(iterINT - indexsetInRoute.begin());
     }
 
-	// 检查removedIndexset中是否有相同的元素
+    // 检查removedIndexset中是否有相同的元素
     sort(removedIndexset.begin(), removedIndexset.end());          
     try {
         checkRepeatID(removedIndexset);
@@ -483,7 +483,7 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Customer*> &remov
 
     try {
         removeCustomerInCar(removedIndexset, customerNumInCar, allCustomerInOrder, 
-                            originCarSet, removedCustomer);
+                originCarSet, removedCustomer);
     } 
     catch (exception &e){
         cout << "In random remove: " << e.what() << endl;
@@ -749,7 +749,8 @@ void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removed
                 }
             }
         }
-        sort(regretdiffPerRestCust.begin(), regretdiffPerRestCust.end(), descendSort<float, pair<int, int> >);  // 应该由大到小进行排列
+        // 应该由小到大进行排列
+        sort(regretdiffPerRestCust.begin(), regretdiffPerRestCust.end(), descendSort<float, pair<int, int> >);
         if(regretdiffPerRestCust[0].first == MAX_FLOAT) {
         // 如果所有的节点都没有可行插入点，则开辟新车
         selectedCarPos= carNum++;

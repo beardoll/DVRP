@@ -10,19 +10,19 @@ using namespace std;
 
 class TxtRecorder{
 public:
-	//FileOperator(string path) {
-	//	outfile = ofstream(path, ofstream::app);
-	//}
-	static ofstream outfile;
+    //FileOperator(string path) {
+    //	outfile = ofstream(path, ofstream::app);
+    //}
+    static ofstream outfile;
     static void changeFile(string newPath) {
         outfile.open(newPath.c_str(), ofstream::trunc);
     }
-	static void addLine(string str) {
-		outfile << str;
-	}
-	static void closeFile(){
-		outfile.close();
-	}
+    static void addLine(string str) {
+        outfile << str;
+    }
+    static void closeFile(){
+        outfile.close();
+    }
 };
 
 #endif

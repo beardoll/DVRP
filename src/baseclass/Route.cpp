@@ -213,7 +213,7 @@ void Route::deleteNode(Customer &item){
         temp1 = temp1->next;
 	}
 	if(temp1 == rear) {  // 没有找到
-		throw out_of_range("We want to delete inexistent customer!");
+        throw out_of_range("We want to delete inexistent customer!");
 	} else {
         Customer* nextNode = temp1->next;
         Customer* frontNode = temp1->front;
@@ -356,12 +356,12 @@ vector<float> Route::getArrivedTime(){     // 得到本车所有节点的arrivedTime
 
 //=============== 修改链表属性 ================//
 bool Route::moveForward(){
-	current = current->next;
-	if(current == NULL) {  // 已经完成任务
-		return false;
-	} else {
-		return true;
-	}
+    current = current->next;
+    if(current == NULL) {  // 已经完成任务
+        return false;
+    } else {
+        return true;
+    }
 }
 
 

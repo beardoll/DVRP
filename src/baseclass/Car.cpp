@@ -146,7 +146,7 @@ Car Car::capturePartRoute(float time){
             startNode->serviceTime = 0;
             startNode->startTime = time;
             break;
-		}
+        }
         case wait: {
             // 车子处于等待状态，直接取当前节点作为起始点
             // 车子随时可以出发，所以serviceTime为0
@@ -175,7 +175,7 @@ Car Car::capturePartRoute(float time){
         case offwork: {  
             // 收车了的车子是不可用的
             // 此时返回一辆空车，其中startNode没有任何意义
-		    break;		
+            break;		
         }
     }
     // 将current指针后的顾客置入newCar中，注意货车剩余容量leftQuanity

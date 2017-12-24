@@ -7,6 +7,7 @@
 #include<functional>
 #include "TxtRecorder.h"
 #include<cmath>
+#include<stdexcept>
 
 using namespace std;
 

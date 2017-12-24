@@ -310,7 +310,11 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
         sort(promisedCustomerId.begin(), promisedCustomerId.end());
         int selectedCarPos = insertPos.first;
         Customer selectedCustomer = insertPos.second;
-        currentPlan[selectedCarPos]->insertAfter(selectedCustomer, newCustomer);
+        try {
+            currentPlan[selectedCarPos]->insertAfter(selectedCustomer, newCustomer);
+        } catch (exception &e) {
+            cout << e.what() << endl;
+        }
         if(currentPlan[selectedCarPos]->getState() == wait) {  // if the car stays asleep
             newEvent = currentPlan[selectedCarPos]->launchCar(currentTime);
         } else {

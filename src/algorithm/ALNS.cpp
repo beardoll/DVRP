@@ -5,6 +5,7 @@
 #include<cassert>
 #include<functional>
 #include<cmath>
+#include<stdexcept>
 
 using namespace std;
 

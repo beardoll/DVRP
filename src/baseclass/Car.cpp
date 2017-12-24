@@ -67,15 +67,15 @@ vector<float> Car::computeReducedCost(float DTpara[]){
 
 
 //================ insert 和 delete Customer方法 =================//
-bool Car::insertAtRear(Customer &item){
-    return route.insertAtRear(item);
+void Car::insertAtRear(Customer &item){
+    route.insertAtRear(item);
 } 
 
 bool Car::insertAtHead(Customer &item){
-    return route.insertAtHead(item);
+    route.insertAtHead(item);
 }
 
-bool Car::insertAfter(const Customer &item1, const Customer &item2) {
+void Car::insertAfter(const Customer &item1, const Customer &item2) {
     // 简单地在item1后面插入item2
     Customer itema, itemb;
     itema = item1;
@@ -92,11 +92,11 @@ bool Car::insertAfter(const Customer &item1, const Customer &item2) {
         itema = itemx;
 	}
 
-    return route.insertAfter(itema, itemb);
+    route.insertAfter(itema, itemb);
 }
 
-bool Car::deleteCustomer(Customer &item) {
-    rturn route.deleteNode(item);
+void Car::deleteCustomer(Customer &item) {
+    route.deleteNode(item);
 }
 
 
@@ -186,7 +186,11 @@ Car Car::capturePartRoute(float time){
     vector<Customer*> tempCust = tempRoute.getAllCustomer();   // 获得current指针后的所有顾客
     vector<Customer*>::iterator custIter;
     for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
-        newCar.insertAtRear(**custIter);
+        try {
+            newCar.insertAtRear(**custIter);
+        } catch (exception &e) {
+            cout << e.what() << endl;
+        }
     }
     deleteCustomerSet(tempCust);
     return newCar;

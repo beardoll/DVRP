@@ -7,6 +7,7 @@
 #include<limits>
 #include<cstdlib>
 #include<algorithm>
+#include<stdexcept>
 
 const float MAX_FLOAT = numeric_limits<float>::max();
 
@@ -126,7 +127,7 @@ void Route::printRoute(){ // 打印链表
 
 
 //=============== 插入以及删除节点操作 ================//
-bool Route::insertAfter(Customer &item1, Customer &item2){
+void Route::insertAfter(Customer &item1, Customer &item2){
     // 在链表中与item1相同的节点后面插入节点item2
     Customer* temp = new Customer;
     *temp = item2;
@@ -140,7 +141,7 @@ bool Route::insertAfter(Customer &item1, Customer &item2){
     if(ptr == rear) {
         // 没有找到，返回false
         delete temp;
-        return false;
+        throw out_of_range("Cannot find the position to insert!");
     } else{
         quantity = quantity + item2.quantity;
         temp->next = ptr->next;
@@ -149,11 +150,10 @@ bool Route::insertAfter(Customer &item1, Customer &item2){
         ptr->next = temp;
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
-        return true;
     }
 }
 
-bool Route::insertAtHead(Customer &item){ 
+void Route::insertAtHead(Customer &item){ 
     // 在表头插入item
     // 只有当current指针为head时返回true
     if(current == head) {
@@ -166,10 +166,9 @@ bool Route::insertAtHead(Customer &item){
         quantity = quantity + item.quantity;
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
-        return true;
     }
     else{
-        return false;
+        throw out_of_range("The car has departured, cannot insert node after head!");
     }
 }
 
@@ -186,9 +185,8 @@ bool Route::insertAtRear(Customer &item){
 	    quantity = quantity + item.quantity;
 	    size++;
 	    refreshArrivedTime();  // 插入节点后，更新arrivedTime
-	    return true;
 	} else {
-	    return false;
+        throw out_of_range("Has reached the end node, cannot insert any nodes!");
     }
 }
 
@@ -215,7 +213,7 @@ void Route::deleteNode(Customer &item){
         temp1 = temp1->next;
 	}
 	if(temp1 == rear) {  // 没有找到
-		throw out_of_range("We want to delete inexistent customer!")'
+		throw out_of_range("We want to delete inexistent customer!");
 	} else {
         Customer* nextNode = temp1->next;
         Customer* frontNode = temp1->front;

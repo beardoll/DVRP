@@ -111,12 +111,12 @@ void removeCustomerFromCar(vector<int> removedIndexset, vector<int> customerNum,
             }
         }
         carIndex = iter - customerNum.begin();
-        mark = originCarSet[carIndex]->deleteCustomer(*allCustomerInOrder[currentIndex]);
-        // 如果mark为false，说明我们企图删除车上不存在的一个节点
-        if (mark == false) {
+        try {
+            originCarSet[carIndex]->deleteCustomer(*allCustomerInOrder[currentIndex]);
+        } catch (exception &e) {
             cout << "Deleted customer #" << allCustomerInOrder[currentIndex]->id << 
                 " from car #" << originCarSet[carIndex]->id << endl;
-            throw out_of_range("We want to delete inexistent customer!");
+            cout << e.what() << endl;
         }
         Customer *temp = new Customer;
         *temp = *allCustomerInOrder[currentIndex];
@@ -627,8 +627,12 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
         if(minInsertPerRestCust[0].first != MAX_FLOAT){  
             // 如果找到了可行插入位置
             int selectedCarPos = minInsertPerRestCust[0].second.second;  // 被选中的车辆位置
-            removedCarSet[selectedCarPos]->insertAfter(minInsertPos.getElement(selectedCarPos, 
-                        selectedCustIndex), *removedCustomer[selectedCustIndex]);
+            try {
+                removedCarSet[selectedCarPos]->insertAfter(minInsertPos.getElement(selectedCarPos, 
+                            selectedCustIndex), *removedCustomer[selectedCustIndex]);
+            } catch (exception &e) {
+                cout << "In greedy insert: " << e.what() << endl;
+            }
             alreadyInsertIndex.push_back(selectedCustIndex);
             vector<int>::iterator iterINT;
             // set_difference要求先排序
@@ -644,7 +648,11 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
         else {  // 没有可行插入位置，则再新开一辆货车
             int selectedCarPos = carNum++;  // 被选中的车辆位置
             Car *newCar = new Car(depot, depot, capacity, newCarIndex++, hierarchicalCar);
-            newCar->insertAtHead(*removedCustomer[selectedCustIndex]);
+            try {
+                newCar->insertAtHead(*removedCustomer[selectedCustIndex]);
+            } catch (exception &e) {
+                cout << "In greedy insert: " << e.what() << endl;
+            }
             removedCarSet.push_back(newCar);  // 添加到货车集合中
             alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
             sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end()); 
@@ -740,24 +748,32 @@ void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removed
                 // 如果只有一个可行插入点，则应该优先安排
                 // 按照minValue的值，最小者应该率先被安排
                 // 因此diff = LARGE_FLOAT - minValue
-                regretdiffPerRestCust.push_back(make_pair(LARGE_FLOAT-minValue, make_pair(index, pos1)));
+                regretdiffPerRestCust.push_back(make_pair(LARGE_FLOAT-minValue, 
+                            make_pair(index, pos1)));
             } 
             else{
                 if(secondValue1 <= secondValue2){
-                    regretdiffPerRestCust.push_back(make_pair(abs(minValue-secondValue1), make_pair(index, pos1)));
+                    regretdiffPerRestCust.push_back(make_pair(abs(minValue-secondValue1), 
+                                make_pair(index, pos1)));
                 } else{
-                    regretdiffPerRestCust.push_back(make_pair(abs(minValue-secondValue2), make_pair(index, pos1)));
+                    regretdiffPerRestCust.push_back(make_pair(abs(minValue-secondValue2), 
+                                make_pair(index, pos1)));
                 }
             }
         }
         // 应该由小到大进行排列
-        sort(regretdiffPerRestCust.begin(), regretdiffPerRestCust.end(), descendSort<float, pair<int, int> >);
+        sort(regretdiffPerRestCust.begin(), regretdiffPerRestCust.end(), 
+                descendSort<float, pair<int, int> >);
         if(regretdiffPerRestCust[0].first == MAX_FLOAT) {
         // 如果所有的节点都没有可行插入点，则开辟新车
         selectedCarPos= carNum++;
         selectedCustIndex = regretdiffPerRestCust[0].second.first;
         Car *newCar = new Car(depot, depot, capacity, newCarIndex++, hierarchicalCar);
-        newCar->insertAtHead(*removedCustomer[selectedCustIndex]);
+        try {
+            newCar->insertAtHead(*removedCustomer[selectedCustIndex]);
+        } catch (exception &e) {
+            cout << "In regret insert: " << e.what() << endl;
+        }
         removedCarSet.push_back(newCar);  // 添加到货车集合中
         alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
         sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
@@ -779,8 +795,12 @@ void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removed
         selectedCarPos = regretdiffPerRestCust[0].second.second;
         selectedCustIndex = regretdiffPerRestCust[0].second.first;
         alreadyInsertIndex.push_back(selectedCustIndex);
-        removedCarSet[selectedCarPos]->insertAfter(minInsertPos.getElement(selectedCarPos, 
-                    selectedCustIndex), *removedCustomer[selectedCustIndex]);
+        try {
+            removedCarSet[selectedCarPos]->insertAfter(minInsertPos.getElement(selectedCarPos, 
+                        selectedCustIndex), *removedCustomer[selectedCustIndex]);
+        } catch (exception &e) {
+            cout << "In regret insert: " << e.what() << endl;
+        }
         sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
         vector<int>::iterator iterINT;
         iterINT = set_difference(allIndex.begin(), allIndex.end(), alreadyInsertIndex.begin(), 

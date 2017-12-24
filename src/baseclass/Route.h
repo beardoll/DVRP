@@ -21,10 +21,10 @@ public:
     void clear();     // 清空链表
 
     // 插入以及删除节点操作
-    bool insertAfter(Customer &item1, Customer &item2); // 在链表中与item1相同的节点后面插入节点item2
-    bool insertAtHead(Customer &item);   // 在表头插入item
-    bool insertAtRear(Customer &item);    // 在表尾插入item
-    bool deleteNode(Customer &item);   // 在链表中删除与item相同的节点
+    void insertAfter(Customer &item1, Customer &item2); // 在链表中与item1相同的节点后面插入节点item2
+    void insertAtHead(Customer &item);   // 在表头插入item
+    void insertAtRear(Customer &item);    // 在表尾插入item
+    void deleteNode(Customer &item);   // 在链表中删除与item相同的节点
 
     // 获得单节点操作
     Customer& currentPos();   // 返回当前位置

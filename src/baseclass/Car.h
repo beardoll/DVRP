@@ -45,10 +45,10 @@ public:
     Customer& getCurrentNode() {return route.currentPos();} // 得到current指针指向的节点
 
     // insert 和 delete Customer方法
-    bool insertAtRear(Customer &item);   // 在路径的尾部插入节点
-    bool insertAtHead(Customer &item);   // 在路径头部插入节点
-    bool insertAfter(const Customer &item1, const Customer &item2);     //  在item1后插入item2
-    bool deleteCustomer(Customer &item); // 在路径中删除item节点
+    void insertAtRear(Customer &item);   // 在路径的尾部插入节点
+    void insertAtHead(Customer &item);   // 在路径头部插入节点
+    void insertAfter(const Customer &item1, const Customer &item2);     //  在item1后插入item2
+    void deleteCustomer(Customer &item); // 在路径中删除item节点
 
     // part Route操作
     // 将newCar的路径插入到当前货车路径的current节点之后

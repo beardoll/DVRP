@@ -1,5 +1,4 @@
-#include "PublicFunction.h"
-#include "LNS_rel.h"
+#include "../public/PublicFunction.h"
 #include "ALNS.h"
 #include<algorithm>
 #include<cassert>

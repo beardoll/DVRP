@@ -3,7 +3,7 @@
 
 #include<string>
 #include<iostream>
-#include "Customer.h"
+#include "../baseclass/Customer.h"
 using namespace std;
 
 enum EventType{newCustomer, carArrived, finishedService, carDepature, newTimeSlot, carOffWork};

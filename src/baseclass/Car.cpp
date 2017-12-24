@@ -1,5 +1,5 @@
 #include "Car.h"
-#include "PublicFunction.h"
+#include "../public/PublicFunction.h"
 #include<cmath>
 
 Car::Car(Customer &headNode, Customer &rearNode, float capacity, int index, bool artificial):

@@ -1,11 +1,10 @@
 #include "SSLR.h"
-#include "LNS_rel.h"
-#include "PublicFunction.h"
+#include "../public/PublicFunction.h"
 #include<algorithm>
 #include<cassert>
-#include "Matrix.h"
+#include "../baseclass/Matrix.h"
 #include<functional>
-#include "TxtRecorder.h"
+#include "../run/TxtRecorder.h"
 #include<cmath>
 #include<stdexcept>
 

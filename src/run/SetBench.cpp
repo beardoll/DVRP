@@ -1,5 +1,5 @@
 #include "SetBench.h"
-#include "PublicFunction.h"
+#include "../public/PublicFunction.h"
 #include<algorithm>
 #include<cmath>
 

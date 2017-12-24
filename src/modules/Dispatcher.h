@@ -2,8 +2,7 @@
 #define _DISPATHCER_H
 
 #include "EventElement.h"
-#include "Car.h"
-#include "ProbInfo.h"
+#include "../baseclass/Car.h"
 #include<vector>
 
 class Dispatcher{   // 调度中心类

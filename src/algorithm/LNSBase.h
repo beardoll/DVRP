@@ -1,8 +1,8 @@
 #ifndef _LNSBASE_H
 #define _LNSBASE_H
 
-#include "Customer.h"
-#include "Car.h"
+#include "../baseclass/Customer.h"
+#include "../baseclass/Car.h"
 #include <vector>
 
 using namespace std;

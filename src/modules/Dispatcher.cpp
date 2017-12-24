@@ -1,8 +1,8 @@
 #include "Dispatcher.h"
 #include<algorithm>
 #include "Simulator.h"
-#include "PublicFunction.h"
-#include "TxtRecorder.h"
+#include "../public/PublicFunction.h"
+#include "../run/TxtRecorder.h"
 #include <stdexcept>
 
 const float MAX_FLOAT = numeric_limits<float>::max();

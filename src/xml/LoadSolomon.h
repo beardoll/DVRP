@@ -1,7 +1,7 @@
 #ifndef _LOADSOLOMON_H
 #define _LOADSOLOMON_H
 
-#include "Customer.h"
+#include "../baseclass/Customer.h"
 #include<string>
 #include<vector>
 

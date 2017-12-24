@@ -1,11 +1,11 @@
 #include "Simulator.h"
-#include "ALNS.h"
-#include "Matrix.h"
-#include "PublicFunction.h"
-#include "SSLR.h"
+#include "../algorithm/ALNS.h"
+#include "../baseclass/Matrix.h"
+#include "../public/PublicFunction.h"
+#include "../algorithm/SSLR.h"
 #include<algorithm>
-#include "TxtRecorder.h"
-#include "Config.h"
+#include "../run/TxtRecorder.h"
+#include "../run/Config.h"
 #include<thread>
 #include<mutex>
 #include<condition_variable>

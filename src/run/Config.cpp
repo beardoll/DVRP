@@ -1,7 +1,7 @@
 #include "Config.h"
 
 // 定义全局变量
-DynamicLevel DYNAMIC_LEVEL = low;
+DYNAMICISM = 0.3
 Strategy STRATEGY = Negative;
 float ITER_PERCENTAGE = 1.0;
 int SAMPLE_RATE = 30;

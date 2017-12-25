@@ -8,7 +8,7 @@ using namespace std;
 enum Strategy{Negative, Positve};
 enum DynamicLevel{low, mid, high};
 
-extern DynamicLevel DYNAMIC_LEVEL;
+extern float DYNAMICISM;
 extern Strategy STRATEGY;
 extern float ITER_PERCENTANGE;
 extern int SAMPLE_RATE;

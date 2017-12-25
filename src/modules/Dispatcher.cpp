@@ -3,6 +3,7 @@
 #include "Simulator.h"
 #include "../public/PublicFunction.h"
 #include "../run/TxtRecorder.h"
+#include "../run/Config.h"
 #include <stdexcept>
 
 const float MAX_FLOAT = numeric_limits<float>::max();
@@ -151,7 +152,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         ostr << "============ Now replan, the time slot is: " << slotIndex << "============" << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
-        float currentTime = slotIndex * timeSlotLen;
+        float currentTime = slotIndex * TIME_SLOT_LEN;
         for(custIdIter = waitCustomerId.begin(); custIdIter < waitCustomerId.end(); custIdIter++) {
             Customer *temp = new Customer;
             *temp = *allCustomer[*custIdIter - 1];
@@ -288,7 +289,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
     EventElement newEvent;
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
-        if(newCustomer.tolerantTime < slotIndex*timeSlotLen) { 
+        if(newCustomer.tolerantTime < slotIndex * TIME_SLOT_LEN) { 
             // 等不到replan，则reject
             ostr.str("");
             ostr << "He is rejected!" << endl;

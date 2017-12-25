@@ -1,11 +1,10 @@
 #include "SetBench.h"
 #include "../public/PublicFunction.h"
+#include "Config.h"
 #include<algorithm>
 #include<cmath>
 
-SetBench::SetBench(vector<Customer*> originCustomerSet, int timeSlotLen, int timeSlotNum, 
-        float dynamicism): timeSlotLen(timeSlotLen), timeSlotNum(timeSlotNum), dynamicism(dynamicism)
-{
+SetBench::SetBench(vector<Customer*> originCustomerSet) {
     this->originCustomerSet = copyCustomerSet(originCustomerSet);
 } // 构造函数
 
@@ -18,14 +17,14 @@ void SetBench::constructProbInfo(){
     for(iter; iter < originCustomerSet.end(); iter++) {
         // vector<float> dist = randomVec(timeSlotNum);   // 在各个slot提出需求的概率
         // vector<float> dist(temp, temp+6);
-        int index = random(0, timeSlotNum-1);
-        for(i=0; i<timeSlotNum; i++) {
+        int index = random(0, TIME_SLOT_NUM-1);
+        for(i=0; i<TIME_SLOT_NUM; i++) {
             if(i == index) {
                 (*iter)->timeProb[i] = 0.5;
-            } else if(i == timeSlotNum - 1) {
+            } else if(i == TIME_SLOT_NUM - 1) {
                 (*iter)->timeProb[i] = 0;
             } else {
-                (*iter)->timeProb[i] = 0.5/(timeSlotNum - 1);
+                (*iter)->timeProb[i] = 0.5/(TIME_SLOT_NUM - 1);
             }
             //(*iter)->timeProb[i] = dist[i];
         }
@@ -37,7 +36,7 @@ void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*>
     constructProbInfo();
     int customerAmount = originCustomerSet.end() - originCustomerSet.begin();
     int i;
-    int dynamicNum = (int)floor(customerAmount*dynamicism);  // 动态到达的顾客数量
+    int dynamicNum = (int)floor(customerAmount*DYNAMICISM);  // 动态到达的顾客数量
     vector<int> staticPos;           // 静态到达的顾客节点在originCustomerSet中的定位
     // 动态到达的BHs在BHs集合下的坐标
     vector<int> dynamicPos = getRandom(0, customerAmount, dynamicNum, staticPos);   	
@@ -59,11 +58,11 @@ void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*>
             staticCustomerSet.push_back(*iter);
         }
         // 利用轮盘算法采样得出顾客可能提出需求的时间段
-        int selectSlot = roulette((*iter)->timeProb, timeSlotNum);   
-        float t1 = selectSlot * timeSlotLen;         // 时间段的开始
-        float t2 = (selectSlot+1) * timeSlotLen;     // 时间段的结束
+        int selectSlot = roulette((*iter)->timeProb, TIME_SLOT_NUM);   
+        float t1 = selectSlot * TIME_SLOT_LEN;         // 时间段的开始
+        float t2 = (selectSlot+1) * TIME_SLOT_LEN;     // 时间段的结束
         float tempt = random(t1, t2);
-        float maxActiveTime = timeSlotNum * timeSlotLen;  // 货车可工作的最晚时间
+        float maxActiveTime = TIME_SLOT_NUM * TIME_SLOT_LEN;  // 货车可工作的最晚时间
         // 至少宽限5倍的serviceTime
         (*iter)->startTime =  min(tempt, maxActiveTime - 5 * (*iter)->serviceTime); 
         float t3 = 3*(*iter)->serviceTime;
@@ -74,4 +73,4 @@ void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*>
         // 可容忍的最晚得到答复的时间，为0.3-0.6倍的时间窗长度 + startTime
         (*iter)->tolerantTime = (*iter)->startTime + random(0.6, 0.8) * timeWindowLen;
     }
-}
+}`

@@ -2,6 +2,7 @@
 #include "Dispatcher.h"
 #include<cassert>
 #include<algorithm>
+#include "../run/Config.h"
 
 bool ascendSortEvent(const EventElement &a, const EventElement &b){  // 递增排序
     return a.time < b.time;
@@ -43,9 +44,9 @@ Timer::Timer(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCusto
     this->depot = depot;
     EventElement newEvent;
     int i;
-    for(i=0; i<timeSlotNum; i++) {  
+    for(i=0; i<TIME_SLOT_NUM; i++) {  
         // 增加“时间段到达”事件
-        newEvent = EventElement(i*timeSlotLen, newTimeSlot, -1, -1);
+        newEvent = EventElement(i*TIME_SLOT_LEN, newTimeSlot, -1, -1);
         eventList.push_back(newEvent);
     }
     vector<Customer*>::iterator iter = dynamicCustomerSet.begin();

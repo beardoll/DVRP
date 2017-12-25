@@ -72,12 +72,12 @@ vector<Customer*> Simulator::generateScenario(){
         float randFloat = random(0,1);
         float sumation = 0;
         // 时间段计数
-        int count = roulette((*iter)->timeProb + slotIndex, timeSlotNum - slotIndex);
-        float t1 = (count+slotIndex) * timeSlotLen;
-        float t2 = (count+slotIndex+1) * timeSlotLen;
+        int count = roulette((*iter)->timeProb + slotIndex, TIME_SLOT_NUM - slotIndex);
+        float t1 = (count+slotIndex) * TIME_SLOT_LEN;
+        float t2 = (count+slotIndex+1) * TIME_SLOT_LEN;
         float tempt = random(t1, t2);
         // 时间轴长度
-        float maxTime = timeSlotNum * timeSlotLen;
+        float maxTime = TIME_SLOT_NUM * timeSlotLen;
         (*iter)->startTime = min(tempt, maxTime - 5*(*iter)->serviceTime);
         float t3 = leftBound*(*iter)->serviceTime;
         float t4 = rightBound*(*iter)->serviceTime;  
@@ -165,7 +165,7 @@ vector<Car*> Simulator::initialPlan(Customer depot, float capacity){
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
 
-    int restSampleNum = samplingRate;       // ÉÐÎ´ÅÜÍêµÄÑù±¾
+    int restSampleNum = samplingRate;       // 尚未跑完的样本
     while(restSampleNum > 0) {
         // coreId: 线程id，从0开始
         int coreId = samplingRate - restSampleNum + 1; 
@@ -289,7 +289,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     vector<thread> thread_pool;    // pool for storing all threads
     int count = 0;
     // 下一个时间段的种植时间（下下个时间段的开始时间）
-    float nextMoment = (slotIndex+1) * timeSlotLen; 
+    float nextMoment = (slotIndex+1) * TIME_SLOT_LEN; 
     for(custIter = waitCustomerSet.begin(); custIter < waitCustomerSet.end(); custIter++) {
         if((*custIter)->tolerantTime <= nextMoment) {  
             // 该顾客着急于下时间段前得到回复

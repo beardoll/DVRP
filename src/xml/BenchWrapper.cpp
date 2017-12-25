@@ -1,4 +1,5 @@
 #include "BenchWrapper.h"
+#include "../run/Config.h"
 
 void BenchWrapper::insertFloatToNode(TiXmlElement *element, float data) {
     // 将浮点型数据装入xml节点"element"中
@@ -17,13 +18,11 @@ TiXmlElement* BenchWrapper::createNode(string name, float data){
     return elem;
 }
 
-void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *root, 
-        int timeSlotNum) {
+void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *root) {
     // 将customers数据存为XML格式
     // Args:
     //   customers: Customer类型的指针数组
     //   root: 上级节点，比如<Customer>
-    //   timeSlotNum: 指定用户可能在几个时间段提出需求
     vector<Customer*>::iterator custIter;
     TiXmlElement *elem;
 
@@ -50,7 +49,7 @@ void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *r
                 TiXmlElement* serviceTimeElem = createNode("serviceTime", (*custIter)->serviceTime);
                 // 建立两层结构存储提取需求的概率
                 TiXmlElement* probInfoElem = new TiXmlElement("probInfo");
-                for (int i=0; i<timeSlotNum; i++) {
+                for (int i=0; i<TIME_SLOT_NUM; i++) {
                     TiXmlElement *timeProb = createNode("timeProb", (*custIter)->timeProb[i]);
                     probInfoElem->LinkEndChild(timeProb);
                 }
@@ -69,8 +68,8 @@ void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *r
     }
 }
 
-void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomers, vector<Customer*> dynamicCustomers, 
-        Customer depot, float capacity, int timeSlotNum) {
+void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomers, 
+        vector<Customer*> dynamicCustomers, Customer depot, float capacity) {
     // 将生成的数据集存放于xml文件中
     // Args:
     //   path: 相对路径，生成的文件名
@@ -78,7 +77,6 @@ void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomers, vec
     //   dynamicCustomer: 动态顾客集合（指针数组）
     //   depot: 仓库
     //   capacity: 车载量
-    //   timeSlotNum: 时间轴划分数
     TiXmlDocuement doc;
     TiXmlComment *comment;
     TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "", "");
@@ -89,9 +87,9 @@ void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomers, vec
     doc.LinkEndChild(root);
 
     TiXmlElement *staticElem = new TiXmlElement("staticCustomer");
-    saveCusomer(staticElem, staticCustomer, timeSlotNum);
+    saveCusomer(staticElem, staticCustomer, TIME_SLOT_NUM);
     TiXmlElement *dynamicElem = new TiXmlElement("dynamicCustomer");
-    saveCustomer(dynamicElem, dynamicCustomer, timeSlotNum);
+    saveCustomer(dynamicElem, dynamicCustomer, TIME_SLOT_NUM);
     root->LinkEndChild(staticElem);
     root->LinkEndChild(dynamicElem);
 
@@ -113,7 +111,7 @@ void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomers, vec
 }
 
 void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Customer*> rejectCustomers, 
-        vector<Customer*> dynamicCustomers, Customer depot, float travelLen, float extra, int timeSlot) {
+        vector<Customer*> dynamicCustomers, Customer depot, float travelLen, float extra) {
     // 将实验结果存放于fileName为名的XML文件中
     TiXmlDocument doc;
     TiXmlComment *comment;

@@ -1,9 +1,9 @@
 #ifndef _PUBLICFUNCTION_H
 #define _PUBLICFUNCTION_H
 
-#include "Car.h"
-#include "tinystr.h"
-#include "tinyxml.h"
+#include "../baseclass/Car.h"
+#include "../xml/tinystr.h"
+#include "../xml/tinyxml.h"
 
 using namespace std;
 
@@ -34,7 +34,8 @@ inline void withdrawPlan(vector<Car*> &Plan);    // 销毁计划
 inline vector<Car*> copyPlan(vector<Car*> Plan); // 复制计划
 inline void deleteCustomerSet(vector<Customer*> &customerSet);            // 删除customerSet
 inline vector<Customer*> copyCustomerSet(vector<Customer*> customerSet);  // 复制customerSet
-void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &staticCustomer, vector<Customer*> &dynamicCustomer, float dynamicism);
+void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &staticCustomer, 
+        vector<Customer*> &dynamicCustomer, float dynamicism);
 bool ascendSortForCustId(Customer* item1, Customer* item2);
 void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost);
 void showAllCustomer(vector<Car*> carSet);
@@ -92,7 +93,7 @@ inline void setZero(T* p, int size) {
 }
 
 template<class T>
-inline void setZero(T* p, int size) {
+inline void setOne(T* p, int size) {
     for (int i=0; i<size; i++) {
         *(p++) = (T)1;
     }

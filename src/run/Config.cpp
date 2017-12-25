@@ -10,10 +10,10 @@ int TIME_SLOT_LEN = 40;
 int TIME_SLOT_NUM = 6;
 
 // ******** Path for Solomon Benchmark ********* //
-string SOLOMON_PATH = "./solomon-1987-rc1/";
-string SOLOMON_FILENAME = "RC103_100.xml";
+string SOLOMON_FILENAME = "./solomon-1987-rc1/RC103_100.xml";
+
 
 // ******** Path for the bench we construct ******** //
-string BENCH_FILE_PATH = "./Simulation_2_version";
+string BENCH_FILE_PATH = "./simulation";
 
 

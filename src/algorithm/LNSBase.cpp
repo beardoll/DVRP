@@ -1,10 +1,17 @@
 #include "LNSBase.h"
+#include "../baseclass/Matrix.h"
+#include "../public/PublicFunction.h"
 #include<stdexcept>
-#include<Matrix.h>
 #include<algorithm>
 #include<cassert>
 #include<functional>
 #include<cmath>
+#include<sstream>
+#include<limits>
+
+
+const float MAX_FLOAT = numeric_limits<float>::max();
+const float LARGE_FLOAT = 10000.0f;
 
 void computeMax(vector<Customer*> allCustomer, float &maxd, float &mind, float &maxquantity){
     // 计算所有顾客之间的最大/最小距离以及顾客的最大货物需求量
@@ -36,7 +43,7 @@ LNSBase::LNSBase(int pshaw, int pworst, float eta, float capacity, float *random
         vector<Customer*> &allCustomer, Customer depot, bool hierarchicalCar, 
         bool allowNegativeCost){
     this->allCustomer = allCustomer;
-    computeMax(allCustomer, &maxd, &maxt, &maxquantity);
+    computeMax(allCustomer, maxd, maxt, maxquantity);
     this->pshaw = pshaw;
     this->pworst = pworst;
     this->baseNoise = eta * maxquantity;
@@ -52,7 +59,7 @@ LNSBase::LNSBase(int pshaw, int pworst, float eta, float capacity, float *random
     this->DTpara[3] = 0.0f;
 }
 
-LNSBse::resetDTpara(float *DTpara) {
+void LNSBase::resetDTpara(float *DTpara) {
     this->DTpara[0] = DTpara[0];
     this->DTpara[1] = DTpara[1];
     this->DTpara[2] = DTpara[2];
@@ -61,7 +68,7 @@ LNSBse::resetDTpara(float *DTpara) {
 
 void checkRepeatID(vector<int> sortedArray) {
     // 检查排序号的sortedArray中是否有重复元素
-    if (sortedArray.size() == 0) return false;
+    if (sortedArray.size() == 0) return;
     vector<int>::iterator iter1, iter2;
     iter1 = sortedArray.begin();
     iter2 = iter1 + 1;
@@ -115,7 +122,7 @@ void removeCustomerFromCar(vector<int> removedIndexset, vector<int> customerNum,
             originCarSet[carIndex]->deleteCustomer(*allCustomerInOrder[currentIndex]);
         } catch (exception &e) {
             cout << "Deleted customer #" << allCustomerInOrder[currentIndex]->id << 
-                " from car #" << originCarSet[carIndex]->id << endl;
+                " from car #" << originCarSet[carIndex]->getCarIndex() << endl;
             cout << e.what() << endl;
         }
         Customer *temp = new Customer;
@@ -205,10 +212,10 @@ void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet,
     float DTH1, DTH2, DTL1, DTL2;
     // DTH1, DTH2(>0): 插入到working vehicle的奖励值
     // DTL1, DTL2(>0): 插入到virtual vehicle的惩罚值
-    DTH1 = *DTpara[0];
-    DTH2 = *DTpara[1];
-    DTL1 = *DTpara[2];
-    DTL2 = *DTpara[3];
+    DTH1 = DTpara[0];
+    DTH2 = DTpara[1];
+    DTL1 = DTpara[2];
+    DTL2 = DTpara[3];
     int removedCustomerNum = removedCustomer.size();
     int carNum = removedCarSet.size();
     for(int i=0; i<carNum; i++){
@@ -219,25 +226,29 @@ void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet,
             }
             float minValue, secondValue;
             Customer customer1, customer2;
-            float noiseAmount += baseNoise;
+            float noiseAmount = baseNoise;
             // 异构车辆，在算法中异构车辆为working vehicle和virtual vehicle
             if(removedCarSet[i]->judgeArtificial() == false){  // 如果不是虚拟车
                 switch(removedCustomer[j]->priority) {         // then give bonus
-                    case 1:
+                    case 1: {
                         noiseAmount = -DTH1;
                         break;
-                    case 2:
+                    }
+                    case 2: {
                         noiseAmount = -DTL1;
                         break;
+                    }
                 }
             } else {     // 如果是虚拟车，则需要进行惩罚
                 switch(removedCustomer[j]->priority) {
-                    case 1:
+                    case 1: {
                         noiseAmount = DTH2;
                         break;
-                    case 2:
+                    }
+                    case 2: {
                         noiseAmount = DTL2;
                         break;
+                    }
                 }
             }
             float randomNoise = noiseAmount * random(randomRange[0], randomRange[1]);
@@ -281,10 +292,10 @@ void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRout
     float DTH1, DTH2, DTL1, DTL2;
     // DTH1, DTH2(>0): 插入到working vehicle的奖励值
     // DTL1, DTL2(>0): 插入到virtual vehicle的惩罚值
-    DTH1 = *DTpara[0];
-    DTH2 = *DTpara[1];
-    DTL1 = *DTpara[2];
-    DTL2 = *DTpara[3];
+    DTH1 = DTpara[0];
+    DTH2 = DTpara[1];
+    DTL1 = DTpara[2];
+    DTL2 = DTpara[3];
 
     // 更新四个矩阵
     // removedCarSet[selectedCarPos]->getRoute().refreshArrivedTime();
@@ -316,7 +327,7 @@ void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRout
             }		
         }
         float randomNoise = noiseAmount * random(randomRange[0], randomRange[1]);
-        removedCarSet[selectedCarPos]->computeInsertCost(*removedCustomer[index], minValue, customer1, secondValue, customer2, randomNoise, allowNegativeNoise);
+        removedCarSet[selectedCarPos]->computeInsertCost(*removedCustomer[index], minValue, customer1, secondValue, customer2, randomNoise, allowNegativeCost);
         minInsertPerRoute.setValue(selectedCarPos, index, minValue);
         minInsertPos.setValue(selectedCarPos, index, customer1);
         secondInsertPerRoute.setValue(selectedCarPos, index, secondValue);
@@ -426,7 +437,7 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
 
     // 清空变量
     try {
-        removeCustomerFromCar(removedIndexset, customerTotalNum, allCustomerInOrder, originCarSet, 
+        removeCustomerFromCar(removedIndexset, customerNumInCar, allCustomerInOrder, originCarSet, 
                                 removedCustomer);
     } catch (exception &e) {
         cout << "In shaw removal: " << e.what() << endl;
@@ -455,7 +466,7 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Customer*> &remov
     }
 
     //检查原车辆中是否有顾客
-    if(customerNumInCar <= 0) {                                 
+    if(customerTotalNum <= 0) {                                 
         cout << "Warning: Currently no customers in plan (randomRemoval)" << endl;     
     }                                                         
 
@@ -483,7 +494,7 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Customer*> &remov
     }
 
     try {
-        removeCustomerInCar(removedIndexset, customerNumInCar, allCustomerInOrder, 
+        removeCustomerFromCar(removedIndexset, customerNumInCar, allCustomerInOrder, 
                 originCarSet, removedCustomer);
     } 
     catch (exception &e){
@@ -542,12 +553,12 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Customer*> &remove
     try {
         checkRepeatID(removedIndexset);
     }
-    catch {
+    catch (exception &e) {
         cout << "In worst removal: " << e.what() << endl;
     }
 
     try {
-        removeCustomerInCar(removedIndexset, customerNumInCar, allCustomerInOrder, 
+        removeCustomerFromCar(removedIndexset, customerNumInCar, allCustomerInOrder, 
                             originCarSet, removedCustomer); 
     } 
     catch (exception &e) {
@@ -594,7 +605,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
     vector<int> allIndex(0);   // 对removedCustomer进行编号,1,2,3,...
 
     float tempBaseNoise = baseNoise;
-    float *tempDTpara = {DTpara[0], DTpara[1], DTpara[2], DTpara[3]};
+    float *tempDTpara = new float[4];
     if(noiseAdd == false) {
         // 不需要添加噪声量，则将所有与噪声有关变量置零
         tempBaseNoise = 0;
@@ -602,6 +613,11 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
         tempDTpara[1] = 0;
         tempDTpara[2] = 0;
         tempDTpara[3] = 0;
+    } else {
+        tempDTpara[0] = DTpara[0];
+        tempDTpara[1] = DTpara[1];
+        tempDTpara[2] = DTpara[2];
+        tempDTpara[3] = DTpara[3];
     }
     generateMatrix(allIndex, removedCarSet, removedCustomer, minInsertPerRoute,  
             minInsertPos, secondInsertPerRoute, secondInsertPos, 
@@ -643,7 +659,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
             restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
             updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
                     secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                    tempbaseNoise, tempDTpara, randomRange, allowNegativeCost);
+                    tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
         } 
         else {  // 没有可行插入位置，则再新开一辆货车
             int selectedCarPos = carNum++;  // 被选中的车辆位置
@@ -670,9 +686,10 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
                     tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
         }
     }
+    delete[] tempDTpara;
 }
 
-void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removedCustomer,
+void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removedCustomer,
 							 bool noiseAdd){
     // regret insert算子, 把removedCustomer插入到removedCarSet中
     // Args:
@@ -689,9 +706,9 @@ void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removed
     try {
         if (carNum == 0) {
             throw invalid_argument("Empty car in removedCarSet!");
-        } catch (exception &e){
-            cout << "In greedy insertion: " << e.what() << endl;
-        }
+        } 
+    } catch (exception &e){
+        cout << "In greedy insertion: " << e.what() << endl;
     }
     int newCarIndex = removedCarSet[carNum - 1]->getCarIndex();  // 新车编号
     int i;
@@ -708,7 +725,7 @@ void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removed
     vector<int> allIndex(0);   // 对removedCustomer进行编号
 
     float tempBaseNoise = baseNoise;
-    float *tempDTpara = {DTpara[0], DTpara[1], DTpara[2], DTpara[3]};
+    float *tempDTpara = new float[4];
     if(noiseAdd == false) {
         // 不需要添加噪声量，则将所有与噪声有关变量置零
         tempBaseNoise = 0;
@@ -716,11 +733,16 @@ void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removed
         tempDTpara[1] = 0;
         tempDTpara[2] = 0;
         tempDTpara[3] = 0;
+    } else {
+        tempDTpara[0] = DTpara[0];
+        tempDTpara[1] = DTpara[1];
+        tempDTpara[2] = DTpara[2];
+        tempDTpara[3] = DTpara[3];
     }
 
     generateMatrix(allIndex, removedCarSet, removedCustomer, minInsertPerRoute,  
             minInsertPos, secondInsertPerRoute, secondInsertPos, 
-            tempbaseNoise, tempDTpara, randomRange, allowNegativeCost);
+            tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
     // 尚未插入到路径中的节点位置，相对于最初的removedCustomer
     vector<int> restCustomerIndex = allIndex;  
     // 各个removedCustomer的最小插入代价与次小插入代价之差
@@ -811,6 +833,7 @@ void SSALNS::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removed
                 tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
         }
     }
+    delete[] tempDTpara;
 }
 
 void LNSBase::reallocateCarIndex(vector<Car*> &originCarSet){  

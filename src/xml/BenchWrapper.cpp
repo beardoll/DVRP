@@ -8,7 +8,7 @@ void BenchWrapper::insertFloatToNode(TiXmlElement *element, float data) {
     buffer << data;
     ss = buffer.str();
     element->LinkEndChild(new TiXmlText(ss.c_str()));
-    buffer.str("")
+    buffer.str("");
 }
 
 TiXmlElement* BenchWrapper::createNode(string name, float data){

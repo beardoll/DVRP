@@ -8,15 +8,6 @@
 
 using namespace std;
 
-ALNS::ALNS(vector<Customer*> allCustomer, Customer depot, float capacity, int maxIter,
-        bool verbose, int pshaw, int pworst, float eta) {
-    this->maxIter = maxIter;
-    this->verbose = verbose;
-    float randomRange[2] = {0, 1}};
-    LNSBase(pshaw, pworst, eta, capacity, randomRange, allCustomer, depot);
-}
-
-
 
 void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){  
     // 运行算法，相当于算法的main()函数

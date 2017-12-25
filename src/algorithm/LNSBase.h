@@ -12,7 +12,7 @@ class LNSBase {
         LNSBase(int pshaw, int pworst, float eta, float capacity, float *randomRange, 
                 vector<Customer*> &allCustomer, Customer depot, bool herarchicalCar=false, 
                 bool allowNegativeCost=false);
-        ~LNSBase() { delete DTpara};
+        ~LNSBase() { delete DTpara; }
         void resetDTpara(float *DTpara);
         void shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removedCustomer, int q);
         void randomRemoval(vector<Car*> &originCarSet, vector<Customer*> &removedCustomer, int q);
@@ -33,6 +33,7 @@ class LNSBase {
         int pshaw;  // 增加shaw removal中的随机性
         int pworst; // 增加worst removal的随机性
         float capacity;
+        float baseNoise;
         float *DTpara; // 不同优先级顾客的奖惩因子
         float *randomRange; // 随机化噪声量的随机数左值和右值
         vector<Customer*> allCustomer;
@@ -41,5 +42,5 @@ class LNSBase {
         // virtual car
         bool hierarchicalCar;
         bool allowNegativeCost; // 是否允许计算insertion cost时有负数
-}
+};
 #endif

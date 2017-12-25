@@ -9,26 +9,17 @@
 #include<ctime>
 #include<cstdlib>
 
-#include "LoadFile.h"
 #include "run/SetBench.h"
-#include "baseclass/Timer.h"
+#include "modules/Timer.h"
 #include "run/TxtRecorder.h"
 #include "baseclass/Car.h"
 #include "algorithm/ALNS.h"
 #include "public/PublicFunction.h"
 #include "xml/LoadSolomon.h"
 #include "xml/BenchWrapper.h"
+#include "run/Config.h"
 
 using namespace std;
-
-
-
-// ********** Path for sample that we construct ******* //
-static const string BENCH_FILE_PATH = "./Simulation_2_version/";    // the root directory for global bench
-
-static const string FILE_NAME2 = FILE_NAME;
-static const string BENCH_ROUTE = BENCH_FILE_PATH + "bench.xml";              // the routine for original sample
-
 
 int main(int argc, char *argv[]){
     cout << "================ Preparation =============" << endl;
@@ -43,28 +34,26 @@ int main(int argc, char *argv[]){
         vector<Customer*> allCustomer;
         Customer depot;
         float capacity;
-        bool mark = getData(filename, allCustomer, depot, capacity);
+        string solomonFileName = SOLOMON_PATH + "RC103_100.xml";
+        bool mark = getData(solomonFileName, allCustomer, depot, capacity);
 
         // 建立新的benchmark（修改服务时间以及时间窗 + 分static和dynamic）
         vector<Customer*> staticCustomer, dynamicCustomer;
         SetBench sb(allCustomer);
         sb.construct(staticCustomer, dynamicCustomer);
-        string savePath = ;
-        BenchWrapper bw();
+        string savePath = BENCH_FILE_PATH + "bench_exp.xml";
+        BenchWrapper bw;
         bw.saveBench(savePath, staticCustomer, dynamicCustomer, depot, capacity);
-
         cout << "OK, new version of bench has been established!" << endl;
     }
     else if(condition == 1) {
-        BenchWrapper bw();
-        // run repeated simulation for one sample, and get the average performance 
-        int experimentNum = 30;
+        BenchWrapper bw;
         srand(unsigned(time(0)));
         
         // the directory for saving txt and xml files, respectively
         //string txtName = SIMULATION_PATH + "txt/";
         //string xmlName = SIMULATION_PATH + "xml/";
-        string loadFileName = ;
+        string loadFileName = BENCH_FILE_PATH + "bench_exp.xml";
 
         vector<Customer*> staticCustomer, dynamicCustomer;
         Customer depot;
@@ -72,8 +61,8 @@ int main(int argc, char *argv[]){
         bw.loadBench(loadFileName, staticCustomer, dynamicCustomer, depot, capacity);
 
         // txt文件地址
-        string pp = recordDir + sampleRate_string + "_" + experimentCountString + ".txt";
-        TxtRecorder::changeFile(pp);
+        string txtFileName = BENCH_FILE_PATH + "result.txt";
+        TxtRecorder::changeFile(txtFileName);
 
         Timer timer(staticCustomer, dynamicCustomer, capacity, depot);
         vector<Customer*> rejectCustomer;
@@ -84,7 +73,7 @@ int main(int argc, char *argv[]){
         TxtRecorder::closeFile();
         
         // xml文件地址
-        string name = dynamicResultDir+ sampleRate_string + "_" + experimentCountString + ".xml";
+        string name = BENCH_FILE_PATH + "dynamicResult.xml";
         bw.saveResult(name, finalCarSet, rejectCustomer, dynamicCustomer, depot, travelDistance, 
                 addAveDistance);
 
@@ -94,8 +83,8 @@ int main(int argc, char *argv[]){
         computeBest(finalCarSet, bestCarSet, bestCost);
         vector<Customer*> temp1, temp2;
         // ALNS结果的存放地
-        string name2 = staticResultDir + sampleRate_string + "_" + experimentCountString + ".xml";
-        bw.saveResult(name2, bestCarSet, temp1, temp2, name2, depot, bestCost, 0);
+        string name2 = BENCH_FILE_PATH + "staticResult.xml";
+        bw.saveResult(name2, bestCarSet, temp1, temp2, depot, bestCost, 0);
                         
         withdrawPlan(finalCarSet);
         withdrawPlan(bestCarSet);

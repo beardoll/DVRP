@@ -28,5 +28,5 @@ class BenchWrapper{
         bool loadBench(string fileName, vector<Customer*> &staticCustomers, 
                 vector<Customer*> &dynamicCustomers, Customer &depot, float &capacity);
 
-}
+};
 #endif

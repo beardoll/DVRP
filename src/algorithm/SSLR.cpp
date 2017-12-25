@@ -1,12 +1,12 @@
 #include "SSLR.h"
 #include "../public/PublicFunction.h"
-#include<algorithm>
-#include<cassert>
 #include "../baseclass/Matrix.h"
-#include<functional>
 #include "../run/TxtRecorder.h"
 #include<cmath>
 #include<stdexcept>
+#include<algorithm>
+#include<cassert>
+#include<functional>
 
 using namespace std;
 

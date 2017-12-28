@@ -43,6 +43,7 @@ int getCustomerNum(vector<Car*> originCarSet);
 bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2);
 bool customerSetEqual(vector<Customer*> c1, vector<Customer*> c2);
 vector<Customer*> extractCustomer(vector<Car*> plan);
+vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*> originCustomer);
 template<class T> inline void setZero(T* p, int size);
 template<class T> inline void setOne(T *p, int size);
 

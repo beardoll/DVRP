@@ -9,10 +9,6 @@
 #include<sstream>
 #include<limits>
 
-
-const float MAX_FLOAT = numeric_limits<float>::max();
-const float LARGE_FLOAT = 10000.0f;
-
 void computeMax(vector<Customer*> allCustomer, float &maxd, float &mind, float &maxquantity){
     // 计算所有顾客之间的最大/最小距离以及顾客的最大货物需求量
     int customerAmount = (int)allCustomer.size();
@@ -40,7 +36,7 @@ void computeMax(vector<Customer*> allCustomer, float &maxd, float &mind, float &
 }
 
 LNSBase::LNSBase(int pshaw, int pworst, float eta, float capacity, float *randomRange, 
-        vector<Customer*> &allCustomer, Customer depot, bool hierarchicalCar, 
+        vector<Customer*> allCustomer, Customer depot, bool hierarchicalCar, 
         bool allowNegativeCost){
     this->allCustomer = allCustomer;
     computeMax(allCustomer, maxd, maxt, maxquantity);

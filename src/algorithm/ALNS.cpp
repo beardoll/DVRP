@@ -49,15 +49,15 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
     int insertFreq[insertNum];      // 各个insert heuristic使用的频率
     int noiseFreq[2];               // 噪声使用的频率，第一个是with noise，第二个是without noise
     float haha[3];
-    setZero<float>(removeFreq, removeNum);
-    setZero<float>(insertFreq, insertNum);
-    setZero<float>(noiseFreq, 2);
+    setZero<int>(removeFreq, removeNum);
+    setZero<int>(insertFreq, insertNum);
+    setZero<int>(noiseFreq, 2);
     int removeScore[removeNum];     // 各个remove heuristic的得分
     int insertScore[insertNum];     // 各个insert heuristic的得分
     int noiseScore[2];              // 噪声得分
-    setZero<float>(removeScore, removeNum);
-    setZero<float>(insertScore, insertNum);
-    setZero<float>(noiseScore, 2);
+    setZero<int>(removeScore, removeNum);
+    setZero<int>(insertScore, insertNum);
+    setZero<int>(noiseScore, 2);
     // 三项得分设定
     int sigma1 = 33;
     int sigma2 = 9;
@@ -69,9 +69,6 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
     float w = 0.05f;      // 初始温度设定有关参数
     float T = w * currentCost / (float)log(2);   // 初始温度
     float ksi = 0.4f;     // 每次移除的最大节点数目占总节点数的比例
-    float maxd, mind, maxquantity;    // 节点之间的最大距离以及节点的最大货物需求量
-    computeMax(allCustomer, maxd, mind, maxquantity);
-    float noiseAmount = eta * maxd;   // 噪声量
     float c = 0.9998f;    // 降温速率
     vector<Customer*> removedCustomer(0);                // 被移除的节点
     vector<Car*> tempCarSet = copyPlan(currentCarSet);   // 暂时存放当前解
@@ -107,12 +104,12 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
                 updateProb(insertProb, insertWeight, insertNum);
                 updateProb(noiseProb, noiseWeight, 2);
                 // 将各变量置零
-                setZero(removeFreq, removeNum);
-                setZero(removeScore, removeNum);
-                setZero(insertFreq, insertNum);
-                setZero(insertScore, insertNum);
-                setZero(noiseFreq, 2);
-                setZero(noiseScore, 2);
+                setZero<int>(removeFreq, removeNum);
+                setZero<int>(removeScore, removeNum);
+                setZero<int>(insertFreq, insertNum);
+                setZero<int>(insertScore, insertNum);
+                setZero<int>(noiseFreq, 2);
+                setZero<int>(noiseScore, 2);
             }
         }
 
@@ -147,7 +144,7 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
         insertFreq[insertIndex]++;
         noiseFreq[1-(int)noiseAdd]++;
         // 最多移除节点数目
-        int maxRemoveNum = min(100, static_cast<int>(floor(ksi*customerAmount)));
+        int maxRemoveNum = min(100, static_cast<int>(floor(ksi*customerTotalNum)));
         // 最少移除节点数目
         int minRemoveNum = 4;  
         // 当前要移除的节点数目
@@ -197,7 +194,7 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
             }
         }
         try {
-            if (getCustomerNum(tempCarSet) != customerAmount) {
+            if (getCustomerNum(tempCarSet) != customerTotalNum) {
                 throw out_of_range("Lose some customers in ALNS!");
             }
         }
@@ -207,7 +204,7 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
         removeNullRoute(tempCarSet);
 
         // 使用模拟退火算法决定是否接收该解
-        float newCost = getCost(tempCarSet, penaltyPara);
+        float newCost = getCost(tempCarSet);
         float acceptProb = exp(-(newCost - currentCost)/T);
         bool accept = false;
         if(acceptProb > rand()/(RAND_MAX+1.0f)) {

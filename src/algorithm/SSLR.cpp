@@ -1,5 +1,4 @@
 #include "SSLR.h"
-#include "../public/PublicFunction.h"
 #include "../baseclass/Matrix.h"
 #include "../run/TxtRecorder.h"
 #include<cmath>
@@ -10,43 +9,7 @@
 
 using namespace std;
 
-vector<Customer*> mergeCustomer(waitCustomer, originCustomer) {
-    // 将waitCustomer和originCustomer融合为一个数组
-    vector<Customer*> allCustomer;
-    vector<Customer*> custIter;
-    for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
-        allCustomer.push_back(new(**custIter));
-    }
-    for(custIter = originCustomer.begin(); custIter < originCustomer.end(); custIter++) {
-        allCustomer.push_back(new(**custIter));
-    }
-    return allCustomer;
-}
-
-SSLR::SSLR(vector<Customer*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter, 
-        bool verbose, int pshaw, int pworst, float eta){
-    // 给各顾客赋予优先级
-    this->maxIter = maxIter;
-    this->verbose = verbose;
-    depot = originPlan[0]->getRearNode();
-    vector<Customer*>::iterator custPtr;
-    // 对waitCustomer，其优先级设为2
-    for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
-        Customer* newCust = new Customer(**custPtr);
-        newCust->priority = 2;
-        this->waitCustomer.push_back(newCust);
-    }
-    this->originPlan = copyPlan(originPlan);
-    // 原本在计划中的顾客节点
-    originCustomer = extractCustomer(originPlan);
-    // 所有的顾客节点
-    allCustomer = mergeCustomer(waitCustomer, originCustomer);
-    float *randomRange = {-1, 1};
-    LNSBase(pshaw, pworst, eta, capacity, randomRange, allCustomer, depot, true, true);
-};
-
 SSLR::~SSLR() {}
-
 
 void judgeFeasible(vector<Car*> carSet) {
 	// 判断carSet是否可行

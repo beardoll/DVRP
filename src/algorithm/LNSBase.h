@@ -5,12 +5,15 @@
 #include "../baseclass/Car.h"
 #include <vector>
 
+const float MAX_FLOAT = numeric_limits<float>::max();
+const float LARGE_FLOAT = 10000.0f;
+
 using namespace std;
 
 class LNSBase {
     public:
         LNSBase(int pshaw, int pworst, float eta, float capacity, float *randomRange, 
-                vector<Customer*> &allCustomer, Customer depot, bool herarchicalCar=false, 
+                vector<Customer*> allCustomer, Customer depot, bool herarchicalCar=false, 
                 bool allowNegativeCost=false);
         ~LNSBase() { delete DTpara; }
         void resetDTpara(float *DTpara);
@@ -22,14 +25,14 @@ class LNSBase {
         void regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removedCustomer, 
                 bool noiseAdd);
         void reallocateCarIndex(vector<Car*> &originCarSet);
-        void removeNullRoute(vector<Car*> &originCarSet, bool mark);
+        void removeNullRoute(vector<Car*> &originCarSet, bool mark=false);
         size_t codeForSolution(vector<Car*> originCarSet);
         float getCost(vector<Car*> originCarSet);
         void updateWeight(int *freq, float *weight, int *score, float r, int num);
         void updateProb(float *removedProb, float *removedWeight, int removedNum);
 
         float maxd, maxt, maxquantity; //节点间最大距离，最大时间窗间隔，最大货物量
-    private:
+    protected:
         int pshaw;  // 增加shaw removal中的随机性
         int pworst; // 增加worst removal的随机性
         float capacity;

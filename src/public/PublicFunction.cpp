@@ -261,3 +261,17 @@ vector<Customer*> extractCustomer(vector<Car*> plan) {
     }
     return allCustomer;
 }
+
+vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*>originCustomer) {
+    // 将waitCustomer和originCustomer融合为一个数组
+    vector<Customer*> allCustomer;
+    vector<Customer*> custIter;
+    for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
+        allCustomer.push_back(new(**custIter));
+    }
+    for(custIter = originCustomer.begin(); custIter < originCustomer.end(); custIter++) {
+        allCustomer.push_back(new(**custIter));
+    }
+    return allCustomer;
+}
+

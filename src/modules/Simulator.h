@@ -1,7 +1,7 @@
 #ifndef _SIMULATOR_H
 #define _SIMULATOR_H
-#include "Customer.h"
-#include "Car.h"
+#include "../baseclass/Customer.h"
+#include "../baseclass/Car.h"
 #include<vector>
 
 class Simulator{  // ·ÂÕæÆ÷Àà

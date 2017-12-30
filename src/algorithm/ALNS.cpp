@@ -8,6 +8,16 @@
 
 using namespace std;
 
+float RANDOM_RANGE_ALNS[2] = {0, 1};
+
+ALNS::ALNS(vector<Customer*> allCustomer, Customer depot, float capacity, int maxIter,
+            bool verbose, int pshaw, int pworst, float eta): LNSBase(
+                pshaw, pworst, eta, capacity, RANDOM_RANGE_ALNS, allCustomer, depot) 
+    {
+        this->maxIter = maxIter;
+        this->verbose = verbose;
+    }
+
 
 void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){  
     // 运行算法，相当于算法的main()函数
@@ -159,7 +169,7 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
                 // 首先得到maxArrivedTime
                 float maxArrivedTime = -MAX_FLOAT;
                 for(i=0; i<(int)tempCarSet.size(); i++){
-                    tempCarSet[i]->getRoute().refreshArrivedTime();	
+                    // tempCarSet[i]->getRoute().refreshArrivedTime();	
                     vector<float> temp = tempCarSet[i]->getRoute().getArrivedTime();
                     sort(temp.begin(), temp.end(), greater<float>());
                     if(temp[0] > maxArrivedTime) {
@@ -167,7 +177,7 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
                     }
                 }
                 // 更新类成员maxt
-                maxt = maxArrivedTime;
+                this->maxt = maxArrivedTime;
                 // 执行removal算子
                 shawRemoval(tempCarSet, removedCustomer, currentRemoveNum);
                 break;

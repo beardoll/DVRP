@@ -7,7 +7,8 @@
 
 class Dispatcher{   // 调度中心类
 public:
-    Dispatcher(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCustomerSet, Customer depot, float capacity);
+    Dispatcher(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCustomerSet, 
+            Customer depot, float capacity);
     ~Dispatcher(){}; // 析构函数
     void destroy();  // 销毁Dispatcher
     EventElement handleNewCustomer(int slotIndex, const Customer& newCustomer);  // 处理新顾客到达

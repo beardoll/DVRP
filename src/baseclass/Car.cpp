@@ -1,6 +1,7 @@
 #include "Car.h"
 #include "../public/PublicFunction.h"
 #include<cmath>
+#include <stdexcept>
 
 Car::Car(Customer &headNode, Customer &rearNode, float capacity, int index, bool artificial):
     carIndex(index), route(headNode, rearNode, capacity), artificial(artificial)
@@ -68,11 +69,19 @@ vector<float> Car::computeReducedCost(float DTpara[]){
 
 //================ insert ºÍ delete Customer·½·¨ =================//
 void Car::insertAtRear(Customer &item){
-    route.insertAtRear(item);
+    try {
+        route.insertAtRear(item);
+    } catch (exception &e) {
+        throw out_of_range(e.what());
+    }
 } 
 
-bool Car::insertAtHead(Customer &item){
-    route.insertAtHead(item);
+void Car::insertAtHead(Customer &item){    
+    try {
+        route.insertAtHead(item);
+    } catch (exception &e) {
+        throw out_of_range(e.what());
+    }
 }
 
 void Car::insertAfter(const Customer &item1, const Customer &item2) {
@@ -91,12 +100,19 @@ void Car::insertAfter(const Customer &item1, const Customer &item2) {
         nextArriveTime = currentTime + sqrt(pow(item1.x - item2.x, 2) + pow(item1.y - item2.y, 2));
         itema = itemx;
 	}
-
-    route.insertAfter(itema, itemb);
+    try {
+        route.insertAfter(itema, itemb);
+    } catch (exception &e) {
+        throw out_of_range(e.what());
+    }
 }
 
 void Car::deleteCustomer(Customer &item) {
-    route.deleteNode(item);
+     try {
+        route.deleteNode(item);
+    } catch (exception &e) {
+        throw out_of_range(e.what());
+    }
 }
 
 

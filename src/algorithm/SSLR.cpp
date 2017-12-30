@@ -9,13 +9,31 @@
 
 using namespace std;
 
+float RANDOM_RANGE_SSLR[2] = {-1, 1};
+
+SSLR::SSLR(vector<Customer*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter,
+        bool verbose, int pshaw, int pworst, float eta): LNSBase(pshaw, 
+        pworst, eta, capacity, RANDOM_RANGE_SSLR, mergeCustomer(waitCustomer, 
+        extractCustomer(originPlan)), originPlan[0]->getRearNode(), true, true) 
+    {
+        this->maxIter = maxIter;
+        this->verbose = verbose;
+        vector<Customer*>::iterator custPtr;
+        // 对waitCustomer，其优先级设为2
+        for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
+            Customer* newCust = new Customer(**custPtr);
+            newCust->priority = 2;
+            this->waitCustomer.push_back(newCust);
+        }
+        this->originPlan = copyPlan(originPlan);
+    }
+
 SSLR::~SSLR() {}
 
-void judgeFeasible(vector<Car*> carSet) {
+bool judgeFeasible(vector<Car*> carSet, int &infeasibleNum) {
 	// 判断carSet是否可行
     bool mark = true;
     vector<Car*>::iterator carIter;
-    int infeasibleNum = 0;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
         //检查是否有空车
         if ((*carIter) == NULL) {            
@@ -35,14 +53,11 @@ void judgeFeasible(vector<Car*> carSet) {
             deleteCustomerSet(tempCust);    
         }
     }
-    if (mark == false) {
-        cout << "There are " << infeasibleNum << 
-            " customers with high priority left in the empty car!" << endl;
-        throw out_of_range("Invalid solution!");
-    }
+    return mark;
 }
 
-float* computeDTpara(vector<Customer*> allCustomer, vector<Customer*> waitCustomer, float maxd){
+float* computeDTpara(vector<Customer*> allCustomer, vector<Customer*> waitCustomer, Customer depot, float maxd,
+        float mind){
     // 计算对不同优先级顾客的奖惩系数
     // Args:
     //   * maxd: 所有顾客之间的最大距离
@@ -50,9 +65,9 @@ float* computeDTpara(vector<Customer*> allCustomer, vector<Customer*> waitCustom
     //   * waitCustomer: 低优先级顾客
     int PR2Num = (int) waitCustomer.size();
     int PR1Num = (int) allCustomer.size() - PR2Num;
-
+    vector<Customer*>::iterator custPtr;
     float DTH1, DTH2, DTL1, DTL2;
-    distToDepot = 0;    // 各个顾客节点到仓库的距离
+    float distToDepot = 0;    // 各个顾客节点到仓库的距离
     for(custPtr = allCustomer.begin(); custPtr < allCustomer.end(); custPtr++) {
         distToDepot += sqrt(pow((*custPtr)->x - depot.x, 2) + pow((*custPtr)->y - depot.y, 2));
     }
@@ -62,9 +77,9 @@ float* computeDTpara(vector<Customer*> allCustomer, vector<Customer*> waitCustom
     float tempsigma1 = 2*maxd + DTH2;
     //float tempsigma2 = 2*(PR1NUM + PR2NUM + PR3NUM) * maxd + PR2NUM * DT22 + PR3NUM * DT32 - 
     //	(PR1NUM + PR2NUM + PR3NUM) * mind + PR2NUM * DT21 + PR3NUM * DT31 - DT12;
-    float tempsigma2 = 2*distToDepot - DTH2 + PR2NUM * (DTL1 + DTL2) - (PR1NUM + PR2NUM + 1) * mind;
+    float tempsigma2 = 2*distToDepot - DTH2 + PR2Num * (DTL1 + DTL2) - (PR1Num + PR2Num + 1) * mind;
     DTH1 = max(tempsigma1, tempsigma2) + 1;
-    float DTpara[4];
+    float *DTpara = new float[4];
     DTpara[0] = DTH1;
     DTpara[1] = DTH2;
     DTpara[2] = DTL1;
@@ -81,12 +96,12 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     vector<Car*>::iterator carIter;
 
     // 如果计划中没有顾客，则抛出warning
-    if (customerTotalNum.size() == 0) {                                 
+    if (customerTotalNum == 0) {                                 
         cout << "WARNNING: In replan, but no customers!" << endl;            
     }                                                              
 
     // 计算对不同优先级顾客的奖惩系数
-    float *DTpara = computeDTpara(allCustomer, waitCustomer, maxd);
+    float *DTpara = computeDTpara(allCustomer, waitCustomer, depot, maxd, mind);
     resetDTpara(DTpara);
 	
     // 构造base solution
@@ -106,7 +121,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     }
     // 基准代价，如果得到的解优于这个解，则一定可行
     // 一般来说比这个解更差的解时不可行的
-    float baseCost = getCost(baseCarSet, DTpara);   
+    float baseCost = getCost(baseCarSet);   
 	
     // 构造初始全局最优解
     vector<Car*> currentCarSet(0);
@@ -119,7 +134,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     greedyInsert(currentCarSet, allCustomer, false);  
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
-    float currentCost = getCost(currentCarSet, DTpara);
+    float currentCost = getCost(currentCarSet);
     float globalCost = currentCost;
 
     vector<size_t> hashTable(0);  // 哈希表
@@ -269,7 +284,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
                 // 首先得到maxArrivedTime
                 float maxArrivedTime = -MAX_FLOAT;
                 for(i=0; i<(int)tempCarSet.size(); i++){
-                    tempCarSet[i]->getRoute().refreshArrivedTime
+                    // tempCarSet[i]->getRoute().refreshArrivedTime;
                     vector<float> temp = tempCarSet[i]->getRoute().getArrivedTime();
                     sort(temp.begin(), temp.end(), greater<float>());
                     if(temp[0] > maxArrivedTime) {
@@ -294,11 +309,11 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         // 执行insert heuristic
         switch(insertIndex) {
             case 0: {
-                greedyInsert(tempCarSet, removedCustomer, noiseAmount, noiseAdd);
+                greedyInsert(tempCarSet, removedCustomer, noiseAdd);
                 break;
             }
             case 1: {
-                regretInsert(tempCarSet, removedCustomer, noiseAmount, noiseAdd);
+                regretInsert(tempCarSet, removedCustomer, noiseAdd);
                 break;
             }
         }
@@ -398,7 +413,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
 	
     if(judgeFeasible(globalCarSet, infeasibleNum) == false) {
         // 如果搜索不到更好的解，则维持原来的解
-        ostr << "SSALNS: we should use the origin plan" << endl;
+        ostr << "SSALNS: we should use the origin plan, there are " << infeasibleNum << 
+            "high priority customers left in virtual vehicles." << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
         print_lck.unlock();
@@ -417,12 +433,15 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     }
 
     try {
-        judgeFeasible(finalCarSet);
-    }
+        if(judgeFeasible(finalCarSet, infeasibleNum) == false) {
+            throw out_of_range("In SSLR: The final carset is infeasible!!");
+        }
+    } 
     catch (exception &e) {
-        cout << "SSLR: " << e.what() << endl;
+        cout << e.what() << endl;
     }
 
+    delete [] DTpara;
     finalCost = globalCost;
     deleteCustomerSet(waitCustomer);
     deleteCustomerSet(allCustomer);

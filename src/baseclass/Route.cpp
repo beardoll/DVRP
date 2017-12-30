@@ -172,7 +172,7 @@ void Route::insertAtHead(Customer &item){
     }
 }
 
-bool Route::insertAtRear(Customer &item){   
+void Route::insertAtRear(Customer &item){   
     // 在表尾插入item
     // 只有当表尾不是current节点时返回true
     if(current != rear) {

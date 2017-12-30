@@ -8,6 +8,7 @@
 #include<cmath>
 #include<sstream>
 #include<limits>
+#include<sstream>
 
 void computeMax(vector<Customer*> allCustomer, float &maxd, float &mind, float &maxquantity){
     // 计算所有顾客之间的最大/最小距离以及顾客的最大货物需求量
@@ -39,7 +40,7 @@ LNSBase::LNSBase(int pshaw, int pworst, float eta, float capacity, float *random
         vector<Customer*> allCustomer, Customer depot, bool hierarchicalCar, 
         bool allowNegativeCost){
     this->allCustomer = allCustomer;
-    computeMax(allCustomer, maxd, maxt, maxquantity);
+    computeMax(allCustomer, maxd, mind, maxquantity);
     this->pshaw = pshaw;
     this->pworst = pworst;
     this->baseNoise = eta * maxquantity;
@@ -117,9 +118,11 @@ void removeCustomerFromCar(vector<int> removedIndexset, vector<int> customerNum,
         try {
             originCarSet[carIndex]->deleteCustomer(*allCustomerInOrder[currentIndex]);
         } catch (exception &e) {
-            cout << "Deleted customer #" << allCustomerInOrder[currentIndex]->id << 
+            ostringstream ostr;
+            ostr.str("");
+            ostr << "Deleted customer #" << allCustomerInOrder[currentIndex]->id << 
                 " from car #" << originCarSet[carIndex]->getCarIndex() << endl;
-            cout << e.what() << endl;
+            throw out_of_range(ostr.str());
         }
         Customer *temp = new Customer;
         *temp = *allCustomerInOrder[currentIndex];
@@ -257,8 +260,6 @@ void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet,
         }
     }
 }
-
-
 
 void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRoute, 
         Matrix<Customer> &minInsertPos, Matrix<float> &secondInsertPerRoute, 

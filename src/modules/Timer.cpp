@@ -40,7 +40,7 @@ Timer::Timer(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCusto
     // 构造函数，输入参数为所有顾客，以及各时间段开始值
     this->staticCustomerSet = staticCustomerSet;
     this->dynamicCustomerSet = dynamicCustomerSet;
-    this->capcity = capacity;
+    this->capacity = capacity;
     this->depot = depot;
     EventElement newEvent;
     int i;

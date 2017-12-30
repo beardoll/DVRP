@@ -11,7 +11,7 @@ const float MAX_FLOAT = numeric_limits<float>::max();
 Dispatcher::Dispatcher(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCustomerSet, 
         Customer depot, float capacity) {
     this->depot = depot;
-    this->capacity = capaicty;
+    this->capacity = capacity;
     int custNum = staticCustomerSet.end() - staticCustomerSet.begin();
     custNum += dynamicCustomerSet.end() - dynamicCustomerSet.begin(); // 总顾客数
     ServedCustomerId.reserve(custNum);     // 已经服务过的顾客id
@@ -87,7 +87,7 @@ void Dispatcher::carFinishTask(int carIndex){
     }
 }
 
-void Dispatcher::checkFeasible(vector<Car*> carSet, vector<int> promisedCustomerId){
+void checkFeasible(vector<Car*> carSet, vector<int> promisedCustomerId){
     // 判断promiseCustomerSet中的顾客是否都在carSet中
     vector<int> tempId = promisedCustomerId;  // 得到了promise的顾客id
     sort(tempId.begin(), tempId.end());

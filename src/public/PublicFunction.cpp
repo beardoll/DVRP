@@ -13,8 +13,8 @@
 #include<string>
 #include<functional>
 #include<cstddef>
-#include "Matrix.h"
-#include "ALNS.h"
+#include "../baseclass/Matrix.h"
+#include "../algorithm/ALNS.h"
 
 bool ascendSortForCustId(Customer* item1, Customer* item2) {
     return item1->id < item2->id;
@@ -255,22 +255,22 @@ vector<Customer*> extractCustomer(vector<Car*> plan) {
     vector<Car*>::iterator carIter;
     for (carIter=plan.begin(); carIter<plan.end(); carIter++) {
         vector<Customer*> temp = (*carIter)->getAllCustomer();
-        for (carIter=temp.begin(); carIter<temp.end(); carIter++) {
+        for (custIter=temp.begin(); custIter<temp.end(); custIter++) {
             allCustomer.push_back(*custIter);
         }
     }
     return allCustomer;
 }
 
-vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*>originCustomer) {
+vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*> originCustomer) {
     // 将waitCustomer和originCustomer融合为一个数组
     vector<Customer*> allCustomer;
-    vector<Customer*> custIter;
+    vector<Customer*>::iterator custIter;
     for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
-        allCustomer.push_back(new(**custIter));
+        allCustomer.push_back(new Customer(**custIter));
     }
     for(custIter = originCustomer.begin(); custIter < originCustomer.end(); custIter++) {
-        allCustomer.push_back(new(**custIter));
+        allCustomer.push_back(new Customer(**custIter));
     }
     return allCustomer;
 }

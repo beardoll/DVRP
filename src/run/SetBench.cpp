@@ -73,4 +73,4 @@ void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*>
         // 可容忍的最晚得到答复的时间，为0.3-0.6倍的时间窗长度 + startTime
         (*iter)->tolerantTime = (*iter)->startTime + random(0.6, 0.8) * timeWindowLen;
     }
-}`
+}

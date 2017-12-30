@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
         vector<Customer*> allCustomer;
         Customer depot;
         float capacity;
-        string solomonFileName = SOLOMON_PATH + "RC103_100.xml";
+        string solomonFileName = SOLOMON_FILENAME;
         bool mark = getData(solomonFileName, allCustomer, depot, capacity);
 
         // 建立新的benchmark（修改服务时间以及时间窗 + 分static和dynamic）

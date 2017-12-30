@@ -5,7 +5,7 @@
 
 void getFloatFromChildNode(TiXmlHandle parent, string childName, float &value) {
     // 获取XML文件中parent节点下名为childName的信息，赋值给value
-    TiXmlElement* elem = parent.FirstChild(childName).Element();
+    TiXmlElement* elem = parent.FirstChild(childName.c_str()).Element();
     value = (float)atof(elem->GetText());
 }
 
@@ -33,7 +33,7 @@ bool getData(string filename, vector<Customer*> &allCustomer,
             depot.id = tempINT;
             depot.prop = 0;
             getFloatFromChildNode(node, "cx", depot.x);
-            getFloatFromChildNode(node, "cy", depot.y)'
+            getFloatFromChildNode(node, "cy", depot.y);
             depot.type = 'D';
             depot.serviceTime = 0;
             depot.arrivedTime = 0;
@@ -45,7 +45,7 @@ bool getData(string filename, vector<Customer*> &allCustomer,
             nodeElem->QueryIntAttribute("property", 0);  //先设所有的顾客都是static的
             customer->prop = tempINT;
             getFloatFromChildNode(node, "cx", depot.x);
-            getFloatFromChildNode(node, "cy", depot.y)'
+            getFloatFromChildNode(node, "cy", depot.y);
             customer->type = 'P';
             customer->priority = 0;
             allCustomer.push_back(customer);
@@ -64,15 +64,15 @@ bool getData(string filename, vector<Customer*> &allCustomer,
         getFloatFromChildNode(twNode, "start", customer->startTime);
         getFloatFromChildNode(twNode, "end", customer->endTime);
         // quantity
-        getFloatArrayFromChildNode(request, "quantity", customer->quantity);
+        getFloatFromChildNode(request, "quantity", customer->quantity);
         // service time
-        getFloatArrayFromChildNode(request, "service_time", customer->serviceTime);
+        getFloatFromChildNode(request, "service_time", customer->serviceTime);
         TiXmlElement* serviceTimeElem = request.FirstChild("service_time").Element();
         count++;
     }
 
     // 读取capacity
-    TiXmlElement* capacityElem = hRoot.FirstChild("fleet").FirstChild("vehicle_profile").i
+    TiXmlElement* capacityElem = hRoot.FirstChild("fleet").FirstChild("vehicle_profile").
         FirstChild("capacity").Element();
     tempFLOAT = (float)atof(capacityElem->GetText());
     capacity = tempFLOAT;

@@ -31,7 +31,7 @@ class LNSBase {
         void updateWeight(int *freq, float *weight, int *score, float r, int num);
         void updateProb(float *removedProb, float *removedWeight, int removedNum);
 
-        float maxd, maxt, maxquantity; //节点间最大距离，最大时间窗间隔，最大货物量
+        float maxd, mind, maxt, maxquantity; //节点间最大距离，最大时间窗间隔，最大货物量
     protected:
         int pshaw;  // 增加shaw removal中的随机性
         int pworst; // 增加worst removal的随机性

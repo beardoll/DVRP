@@ -13,10 +13,10 @@ float RANDOM_RANGE_ALNS[2] = {0, 1};
 ALNS::ALNS(vector<Customer*> allCustomer, Customer depot, float capacity, int maxIter,
             bool verbose, int pshaw, int pworst, float eta): LNSBase(
                 pshaw, pworst, eta, capacity, RANDOM_RANGE_ALNS, allCustomer, depot) 
-    {
-        this->maxIter = maxIter;
-        this->verbose = verbose;
-    }
+{
+    this->maxIter = maxIter;
+    this->verbose = verbose;
+}
 
 
 void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){  

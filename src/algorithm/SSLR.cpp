@@ -15,18 +15,18 @@ SSLR::SSLR(vector<Customer*> waitCustomer, vector<Car*> originPlan, float capaci
         bool verbose, int pshaw, int pworst, float eta): LNSBase(pshaw, 
         pworst, eta, capacity, RANDOM_RANGE_SSLR, mergeCustomer(waitCustomer, 
         extractCustomer(originPlan)), originPlan[0]->getRearNode(), true, true) 
-    {
-        this->maxIter = maxIter;
-        this->verbose = verbose;
-        vector<Customer*>::iterator custPtr;
-        // 对waitCustomer，其优先级设为2
-        for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
-            Customer* newCust = new Customer(**custPtr);
-            newCust->priority = 2;
-            this->waitCustomer.push_back(newCust);
-        }
-        this->originPlan = copyPlan(originPlan);
+{
+    this->maxIter = maxIter;
+    this->verbose = verbose;
+    vector<Customer*>::iterator custPtr;
+    // 对waitCustomer，其优先级设为2
+    for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
+        Customer* newCust = new Customer(**custPtr);
+        newCust->priority = 2;
+        this->waitCustomer.push_back(newCust);
     }
+    this->originPlan = copyPlan(originPlan);
+}
 
 SSLR::~SSLR() {}
 

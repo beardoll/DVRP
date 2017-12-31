@@ -205,7 +205,8 @@ Car Car::capturePartRoute(float time){
         try {
             newCar.insertAtRear(**custIter);
         } catch (exception &e) {
-            cout << e.what() << endl;
+            cerr << e.what() << endl;
+            exit(1);
         }
     }
     deleteCustomerSet(tempCust);
@@ -331,10 +332,10 @@ EventElement Car::launchCar(float currentTime){
 
 
 //================ assessment相关 =================//
-void Car::removeInvalidCustomer(vector<int> validCustomerId){
+void Car::removeInvalidCustomer(vector<int> validCustomerId, int& retainNum){
     // 移除路径中的无效顾客
     // 记录保留下来的顾客在removeCustomerId中的位置，posVec
-    posVec = route.removeInvalidCustomer(validCustomerId);
+    posVec = route.removeInvalidCustomer(validCustomerId, retainNum);
 }
 
 

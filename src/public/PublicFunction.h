@@ -2,8 +2,10 @@
 #define _PUBLICFUNCTION_H
 
 #include "../baseclass/Car.h"
+#include "../baseclass/Customer.h"
 #include "../xml/tinystr.h"
 #include "../xml/tinyxml.h"
+#include<stdexcept>
 
 using namespace std;
 
@@ -39,6 +41,7 @@ void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &st
 bool ascendSortForCustId(Customer* item1, Customer* item2);
 void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost);
 void showAllCustomer(vector<Car*> carSet);
+void showAllCustomer(vector<Customer*> customerSet);
 int getCustomerNum(vector<Car*> originCarSet);
 bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2);
 bool customerSetEqual(vector<Customer*> c1, vector<Customer*> c2);
@@ -46,6 +49,8 @@ vector<Customer*> extractCustomer(vector<Car*> plan);
 vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*> originCustomer);
 template<class T> inline void setZero(T* p, int size);
 template<class T> inline void setOne(T *p, int size);
+vector<int> getID(vector<Customer*> customerSet);
+vector<int> getID(vector<Car*> carSet);
 
 // 模板函数和内联函数的实现
 inline void withdrawPlan(vector<Car*> &Plan){  
@@ -71,7 +76,11 @@ inline vector<Car*> copyPlan(vector<Car*> Plan) {
 inline void deleteCustomerSet(vector<Customer*> &customerSet){   // 删除CustomerSet
     vector<Customer*>::iterator iter;
     for(iter = customerSet.begin(); iter < customerSet.end(); iter++) {
-        delete(*iter);
+        try {
+            delete(*iter);
+        } catch (exception &e) {
+            throw out_of_range(e.what());
+        }
     }
     customerSet.clear();
 }

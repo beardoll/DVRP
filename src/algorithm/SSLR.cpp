@@ -9,50 +9,89 @@
 
 using namespace std;
 
-float RANDOM_RANGE_SSLR[2] = {-1, 1};
+float RANDOM_RANGE_SSLR[2] = {0, 1};
 
-SSLR::SSLR(vector<Customer*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter,
-        bool verbose, int pshaw, int pworst, float eta): LNSBase(pshaw, 
-        pworst, eta, capacity, RANDOM_RANGE_SSLR, mergeCustomer(waitCustomer, 
-        extractCustomer(originPlan)), originPlan[0]->getRearNode(), true, true) 
-{
-    this->maxIter = maxIter;
-    this->verbose = verbose;
+vector<Customer*> feedDataForLNSBase(vector<Customer*> waitCustomer, vector<Car*> originPlan) {
+    // 返回allCustomer，其中对waitCustomer优先级赋值为2，对originPlan的顾客优先级赋值为1
     vector<Customer*>::iterator custPtr;
-    // 对waitCustomer，其优先级设为2
+    vector<Customer*> lowPriorityCust;
     for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
         Customer* newCust = new Customer(**custPtr);
         newCust->priority = 2;
+        lowPriorityCust.push_back(newCust);
+    }
+    vector<Car*>::iterator carPtr;
+    vector<Customer*> highPriorityCust;
+    for(carPtr = originPlan.begin(); carPtr < originPlan.end(); carPtr++) {
+        vector<Customer*> custVec = (*carPtr)->getAllCustomer();
+        for(custPtr = custVec.begin(); custPtr < custVec.end(); custPtr++) {
+            (*custPtr)->priority = 1;
+            highPriorityCust.push_back(*custPtr);
+        }
+    }
+    vector<Customer*> output = mergeCustomer(lowPriorityCust, highPriorityCust);
+    deleteCustomerSet(highPriorityCust);
+    deleteCustomerSet(lowPriorityCust);
+    return output;
+}
+
+SSLR::SSLR(vector<Customer*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter,
+        bool verbose, int pshaw, int pworst, float eta): LNSBase(pshaw, 
+        pworst, eta, capacity, RANDOM_RANGE_SSLR, feedDataForLNSBase(waitCustomer, 
+        originPlan), originPlan[0]->getRearNode(), true, true) 
+{
+    this->maxIter = maxIter;
+    this->verbose = verbose;
+    vector<Customer*>::iterator custIter;
+    // 对waitCustomer，其优先级为2
+    for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
+        Customer* newCust = new Customer(**custIter);
+        newCust->priority = 2;
         this->waitCustomer.push_back(newCust);
     }
-    this->originPlan = copyPlan(originPlan);
+    vector<Car*>::iterator carIter;
+    for(carIter = originPlan.begin(); carIter < originPlan.end(); carIter++) {
+        Customer headNode = (*carIter)->getHeadNode();
+        Customer rearNode = (*carIter)->getRearNode();
+        int carIndex = (*carIter)->getCarIndex();
+        float capacity = (*carIter)->getCapacity();
+        Car* newCar = new Car(headNode, rearNode, capacity, carIndex);
+        vector<Customer*> custVec = (*carIter)->getAllCustomer();
+        for(custIter = custVec.begin(); custIter < custVec.end(); custIter++) {
+            (*custIter)->priority = 1;
+            newCar->insertAtRear(**custIter);
+        }
+        deleteCustomerSet(custVec);
+        this->originPlan.push_back(newCar);
+    }
 }
 
 SSLR::~SSLR() {}
 
-bool judgeFeasible(vector<Car*> carSet, int &infeasibleNum) {
+bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleNum) {
 	// 判断carSet是否可行
+    infeasibleNum = 0;
     bool mark = true;
     vector<Car*>::iterator carIter;
+    vector<int> refIDs = getID(refCarSet);
+    vector<int>::iterator iter, iter1;
+    sort(refIDs.begin(), refIDs.end());
+    vector<Car*> workingCarSet;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
-        //检查是否有空车
-        if ((*carIter) == NULL) {            
-            throw out_of_range("Empty cars in the solution!");
-        }                                                              
-
-        if((*carIter)->judgeArtificial() == true) {
-            // 判断artificial车上是否有priority为1的节点
-            vector<Customer*> tempCust = (*carIter)->getAllCustomer();
-            for(vector<Customer*>::iterator custIter = tempCust.begin(); custIter < tempCust.end(); 
-                    custIter++) {
-                if((*custIter)->priority == 1) {
-                    mark = false;
-                    infeasibleNum++;
-                }
-            }
-            deleteCustomerSet(tempCust);    
+        if((*carIter)->judgeArtificial() == false) {
+            workingCarSet.push_back(*carIter);
         }
     }
+    vector<int> currentIDs = getID(workingCarSet);
+    for(iter = currentIDs.begin(); iter < currentIDs.end(); iter++) {
+        iter1 = find(refIDs.begin(), refIDs.end(), *iter);
+        if(iter1 < refIDs.end()) {
+            refIDs.erase(iter1);
+        }
+        sort(refIDs.begin(), refIDs.end());
+    }
+    infeasibleNum = refIDs.size();
+    mark = (infeasibleNum==0);
     return mark;
 }
 
@@ -84,6 +123,8 @@ float* computeDTpara(vector<Customer*> allCustomer, vector<Customer*> waitCustom
     DTpara[1] = DTH2;
     DTpara[2] = DTL1;
     DTpara[3] = DTL2;
+    //cout << "DTH1: " << DTpara[0] << " DTH2: " << DTpara[1] << " DTL1: " <<
+    //    DTpara[2] << " DTL2:" << DTpara[3] << endl;
     return DTpara;
 }
 
@@ -131,7 +172,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         currentCarSet.push_back(newCar);
     }
     // 以当前所拥有的working car为基础，构造初始解（完全重新构造）
-    greedyInsert(currentCarSet, allCustomer, false);  
+    regretInsert(currentCarSet, allCustomer, false);  
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
     float currentCost = getCost(currentCarSet);
@@ -181,8 +222,6 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     float w = 0.05f;      // 初始温度设定有关参数
     float T = w * abs(currentCost) / (float)log(2);   // 初始温度
     float ksi = 0.8f;    // 每次移除的最大节点数目占总节点数的比例
-    float eta = 0.025f;   // 噪声系数
-    float noiseAmount = eta * maxd;   // 噪声量
     float c = 0.9998f;    // 降温速率
     vector<Customer*> removedCustomer(0);    // 被移除的节点
     vector<Car*> tempCarSet = copyPlan(currentCarSet);      // 暂时存放当前解
@@ -324,7 +363,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
             }
         } 
         catch (exception &e) {
-            cout << e.what() << endl;
+            cerr << e.what() << endl;
+            exit(1);
         }
 
         // 移除空路径
@@ -402,7 +442,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
             withdrawPlan(tempCarSet);
             tempCarSet = copyPlan(currentCarSet);
         }
-    }
+    }    
+
     withdrawPlan(finalCarSet);
     finalCarSet.reserve(originPlan.size());
     ostringstream ostr;
@@ -410,37 +451,27 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     print_lck.lock();
     // unique_lock<mutex> lck(print_lck);
     int infeasibleNum;
-	
-    if(judgeFeasible(globalCarSet, infeasibleNum) == false) {
+    
+    if(judgeFeasible(globalCarSet, originPlan, infeasibleNum) == false) {
         // 如果搜索不到更好的解，则维持原来的解
-        ostr << "SSALNS: we should use the origin plan, there are " << infeasibleNum << 
-            "high priority customers left in virtual vehicles." << endl;
+        ostr << "SSLR: we should use the origin plan, there are " << infeasibleNum << 
+            " high priority customers left in virtual vehicles." << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
         print_lck.unlock();
         finalCarSet = copyPlan(originPlan);
     } else {
-        ostr << "SSALNS: we will use the new plan" << endl;
+        ostr << "SSLR: we will use the new plan" << endl;
         TxtRecorder::addLine(ostr.str());
-        cout << ostr.str();
-        print_lck.unlock();
         for (carIter = globalCarSet.begin(); carIter < globalCarSet.end(); carIter++) {
             if ((*carIter)->judgeArtificial() == false) {
                 Car *tempCar = new Car(**carIter);
                 finalCarSet.push_back(tempCar);
             }
         }
+        cout << ostr.str();
+        print_lck.unlock();
     }
-
-    try {
-        if(judgeFeasible(finalCarSet, infeasibleNum) == false) {
-            throw out_of_range("In SSLR: The final carset is infeasible!!");
-        }
-    } 
-    catch (exception &e) {
-        cout << e.what() << endl;
-    }
-
     delete [] DTpara;
     finalCost = globalCost;
     deleteCustomerSet(waitCustomer);

@@ -62,7 +62,7 @@ public:
     EventElement launchCar(float currentTime);         // 启动货车，当货车处于wait状态时有效
 
     // assessment相关
-    void removeInvalidCustomer(vector<int> validCustomerId);    // 移除路径中的无效顾客
+    void removeInvalidCustomer(vector<int> validCustomerId, int &retainNum);    // 移除路径中的无效顾客
     void updateTransformMatrix(Matrix<int> &transformMatrix);
     int computeScore(Matrix<int> transformMatrix);
 private:

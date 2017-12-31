@@ -19,6 +19,7 @@ SET(SRC_LIST main.cpp
         xml/tinyxmlparser.cpp
         )
 
+
 ADD_EXECUTABLE(main ${SRC_LIST})
 SET(CMAKE_EXE_LINKER_FLAGS "-pthread")
 

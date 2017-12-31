@@ -74,7 +74,7 @@ public:
     Route& capture();  
 
     // 其余辅助性质的函数
-    vector<int> removeInvalidCustomer(vector<int> validCustomerId);
+    vector<int> removeInvalidCustomer(vector<int> validCustomerId, int &retainNum);
     bool checkPassRoute();
 private:
     Customer *head, *current, *rear;  // 表头，表尾和当前指针，当前指针指向货车当前的驻地

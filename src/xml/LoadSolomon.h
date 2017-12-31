@@ -7,6 +7,6 @@
 
 using namespace std;
 
-bool getData(string filename, vector<Customer*> &allCustomer, Customer &depot, float &capacity);
+void getData(string filename, vector<Customer*> &allCustomer, Customer &depot, float &capacity);
 
 #endif

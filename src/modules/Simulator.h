@@ -3,6 +3,7 @@
 #include "../baseclass/Customer.h"
 #include "../baseclass/Car.h"
 #include<vector>
+#include<mutex>
 
 class Simulator{  // ·ÂÕæÆ÷Àà
 public:

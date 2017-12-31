@@ -139,7 +139,8 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Customer*> &rejectCustomer,
                     searchCustomer(currentEvent.customerId, dynamicCustomerSet, cust);
                 }
                 catch (exception &e) {
-                    cout << "In event \"newCustomer\": " << e.what() << endl;
+                    cerr << "In event \"newCustomer\": " << e.what() << endl;
+                    exit(1);
                 }
                 EventElement newEvent = disp.handleNewCustomer(slotIndex, cust);
                 updateEventElement(newEvent);

@@ -23,7 +23,8 @@ void computeMax(vector<Customer*> allCustomer, float &maxd, float &mind, float &
         D1.setValue(i,i, 0.0f);
         D2.setValue(i,i, MAX_FLOAT);
         for(int j=i+1; j<customerAmount; j++){
-            float temp = sqrt(pow(allCustomer[i]->x - allCustomer[j]->x, 2) + pow(allCustomer[i]->y - allCustomer[j]->y, 2));
+            float temp = sqrt(pow(allCustomer[i]->x - allCustomer[j]->x, 2) + 
+                    pow(allCustomer[i]->y - allCustomer[j]->y, 2));
             D1.setValue(i, j, temp);
             D2.setValue(i, j, temp);
             D1.setValue(j, i, temp);
@@ -89,7 +90,7 @@ void removeCustomerFromCar(vector<int> removedIndexset, vector<int> customerNum,
     // Returns:
     //   * OriginCarSet: 初始携带所有顾客，经本函数后移除掉removedCustomer
     int indexRemovedLen = removedIndexset.end() - removedIndexset.begin();
-    for (int i=0; i>indexRemovedLen; i++) {
+    for (int i=0; i<indexRemovedLen; i++) {
         int carIndex;
         // 被移除的顾客节点在allCustomerInOrder中的位置
         int currentIndex = removedIndexset[i]; 
@@ -230,22 +231,22 @@ void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet,
             if(removedCarSet[i]->judgeArtificial() == false){  // 如果不是虚拟车
                 switch(removedCustomer[j]->priority) {         // then give bonus
                     case 1: {
-                        noiseAmount = -DTH1;
+                        noiseAmount -= DTH1;
                         break;
                     }
                     case 2: {
-                        noiseAmount = -DTL1;
+                        noiseAmount -= DTL1;
                         break;
                     }
                 }
             } else {     // 如果是虚拟车，则需要进行惩罚
                 switch(removedCustomer[j]->priority) {
                     case 1: {
-                        noiseAmount = DTH2;
+                        noiseAmount += DTH2;
                         break;
                     }
                     case 2: {
-                        noiseAmount = DTL2;
+                        noiseAmount += DTL2;
                         break;
                     }
                 }
@@ -324,7 +325,8 @@ void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRout
             }		
         }
         float randomNoise = noiseAmount * random(randomRange[0], randomRange[1]);
-        removedCarSet[selectedCarPos]->computeInsertCost(*removedCustomer[index], minValue, customer1, secondValue, customer2, randomNoise, allowNegativeCost);
+        removedCarSet[selectedCarPos]->computeInsertCost(*removedCustomer[index], minValue, 
+                customer1, secondValue, customer2, randomNoise, allowNegativeCost);
         minInsertPerRoute.setValue(selectedCarPos, index, minValue);
         minInsertPos.setValue(selectedCarPos, index, customer1);
         secondInsertPerRoute.setValue(selectedCarPos, index, secondValue);
@@ -342,7 +344,6 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
     // Returns:	
     //    * originCarSet: 未执行remove操作前的货车集合
     //    * removedCarSet: 执行remove操作后的货车集合
-
     int phi = 9;
     int kai = 3;
     int psi = 2;
@@ -373,9 +374,10 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
                 R[i*customerTotalNum+j].second = j;
             }
             else{
-                temp1 = phi*sqrt(pow(allCustomerInOrder[i]->x-allCustomerInOrder[j]->x,2) + pow(allCustomerInOrder[i]->y-allCustomerInOrder[j]->y, 2))/maxd +
-                    kai * abs(allCustomerInOrder[i]->arrivedTime - allCustomerInOrder[j]->arrivedTime)/maxt +
-                    psi * abs(allCustomerInOrder[i]->quantity - allCustomerInOrder[j]->quantity)/maxquantity;
+                temp1 = phi*sqrt(pow(allCustomerInOrder[i]->x-allCustomerInOrder[j]->x,2) + 
+                        pow(allCustomerInOrder[i]->y-allCustomerInOrder[j]->y, 2))/maxd +
+                        kai * abs(allCustomerInOrder[i]->arrivedTime - allCustomerInOrder[j]->arrivedTime)/maxt +
+                        psi * abs(allCustomerInOrder[i]->quantity - allCustomerInOrder[j]->quantity)/maxquantity;
                 R[i*customerTotalNum+j].first = temp1;   // i行j列
                 R[i*customerTotalNum+j].second = j;
                 R[j*customerTotalNum+i].first = temp1;
@@ -389,9 +391,8 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
     selectedIndex = min(selectedIndex, customerTotalNum-1);   // 防止越界
     removedIndexset.push_back(selectedIndex);
     vector<int> indexsetInRoute(customerTotalNum-1);     // 尚在路径中的节点的下标集合
-
-
-    set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), removedIndexset.end(), indexsetInRoute.begin());
+    set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), 
+            removedIndexset.end(), indexsetInRoute.begin());
     while((int)removedIndexset.size() < q){ 
         // 要移除掉一共q个节点
         // 当前要进行排序的相似矩阵（向量），仅包含尚在路径中的节点
@@ -419,7 +420,8 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
         selectedIndex = removedIndexset[randint];
         sort(removedIndexset.begin(), removedIndexset.end());
         vector<int>::iterator iterINT;
-        iterINT = set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), removedIndexset.end(), indexsetInRoute.begin());
+        iterINT = set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), 
+                removedIndexset.end(), indexsetInRoute.begin());
         indexsetInRoute.resize(iterINT - indexsetInRoute.begin());
     }
 
@@ -429,7 +431,8 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
         checkRepeatID(removedIndexset);
     }
     catch (exception &e) {
-        cout << "In shaw removal: " << e.what() << endl;
+        cerr << "In shaw removal: " << e.what() << endl;
+        exit(1);
     }
 
     // 清空变量
@@ -437,7 +440,8 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removed
         removeCustomerFromCar(removedIndexset, customerNumInCar, allCustomerInOrder, originCarSet, 
                                 removedCustomer);
     } catch (exception &e) {
-        cout << "In shaw removal: " << e.what() << endl;
+        cerr << "In shaw removal: " << e.what() << endl;
+        exit(1);
     }
     deleteCustomerSet(allCustomerInOrder);
 }
@@ -487,7 +491,8 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Customer*> &remov
         checkRepeatID(removedIndexset);
     }
     catch (exception &e) {
-        cout << "In random removal: " << e.what() << endl;
+        cerr << "In random removal: " << e.what() << endl;
+        exit(1);
     }
 
     try {
@@ -495,7 +500,8 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Customer*> &remov
                 originCarSet, removedCustomer);
     } 
     catch (exception &e){
-        cout << "In random remove: " << e.what() << endl;
+        cerr << "In random remove: " << e.what() << endl;
+        exit(1);
     }
     deleteCustomerSet(allCustomerInOrder);
 }
@@ -551,7 +557,8 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Customer*> &remove
         checkRepeatID(removedIndexset);
     }
     catch (exception &e) {
-        cout << "In worst removal: " << e.what() << endl;
+        cerr << "In worst removal: " << e.what() << endl;
+        exit(1);
     }
 
     try {
@@ -559,7 +566,8 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Customer*> &remove
                             originCarSet, removedCustomer); 
     } 
     catch (exception &e) {
-        cout << "In worst removal: " << e.what() << endl;
+        cerr << "In worst removal: " << e.what() << endl;
+        exit(1);
     }
     deleteCustomerSet(allCustomerInOrder);
 }
@@ -585,7 +593,8 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
         } 
     }
     catch (exception &e){
-        cout << "In greedy insertion: " << e.what() << endl;
+        cerr << "In greedy insertion: " << e.what() << endl;
+        exit(1);
     }
 
     int newCarIndex = removedCarSet[carNum-1]->getCarIndex()+1;  // 新车的起始标号
@@ -602,23 +611,19 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
     vector<int> allIndex(0);   // 对removedCustomer进行编号,1,2,3,...
 
     float tempBaseNoise = baseNoise;
-    float *tempDTpara = new float[4];
+    float *tempRandomRange = new float[2];
     if(noiseAdd == false) {
-        // 不需要添加噪声量，则将所有与噪声有关变量置零
+        // 不需要添加噪声量，则将噪声随机性降为0，并且将baseNoise置为0
         tempBaseNoise = 0;
-        tempDTpara[0] = 0;
-        tempDTpara[1] = 0;
-        tempDTpara[2] = 0;
-        tempDTpara[3] = 0;
+        tempRandomRange[0] = 1;
+        tempRandomRange[1] = 1;
     } else {
-        tempDTpara[0] = DTpara[0];
-        tempDTpara[1] = DTpara[1];
-        tempDTpara[2] = DTpara[2];
-        tempDTpara[3] = DTpara[3];
+        tempRandomRange[0] = randomRange[0];
+        tempRandomRange[1] = randomRange[1];
     }
     generateMatrix(allIndex, removedCarSet, removedCustomer, minInsertPerRoute,  
             minInsertPos, secondInsertPerRoute, secondInsertPos, 
-            tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
+            tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
     // 剩下没有插入到路径中的节点下标，相对于removedCustomer
     vector<int> restCustomerIndex = allIndex;  
     // 各个removedcustomer的最小插入代价
@@ -644,7 +649,8 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
                 removedCarSet[selectedCarPos]->insertAfter(minInsertPos.getElement(selectedCarPos, 
                             selectedCustIndex), *removedCustomer[selectedCustIndex]);
             } catch (exception &e) {
-                cout << "In greedy insert: " << e.what() << endl;
+                cerr << "In greedy insert: " << e.what() << endl;
+                exit(1);
             }
             alreadyInsertIndex.push_back(selectedCustIndex);
             vector<int>::iterator iterINT;
@@ -656,7 +662,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
             restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
             updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
                     secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                    tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
+                    tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
         } 
         else {  // 没有可行插入位置，则再新开一辆货车
             int selectedCarPos = carNum++;  // 被选中的车辆位置
@@ -664,7 +670,8 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
             try {
                 newCar->insertAtHead(*removedCustomer[selectedCustIndex]);
             } catch (exception &e) {
-                cout << "In greedy insert: " << e.what() << endl;
+                cerr << "In greedy insert: " << e.what() << endl;
+                exit(1);
             }
             removedCarSet.push_back(newCar);  // 添加到货车集合中
             alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
@@ -680,10 +687,10 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
             secondInsertPos.addOneRow();
             updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
                     secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                    tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
+                    tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
         }
     }
-    delete[] tempDTpara;
+    delete[] tempRandomRange;
 }
 
 void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removedCustomer,
@@ -705,7 +712,8 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
             throw invalid_argument("Empty car in removedCarSet!");
         } 
     } catch (exception &e){
-        cout << "In greedy insertion: " << e.what() << endl;
+        cerr << "In greedy insertion: " << e.what() << endl;
+        exit(1);
     }
     int newCarIndex = removedCarSet[carNum - 1]->getCarIndex();  // 新车编号
     int i;
@@ -722,24 +730,19 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
     vector<int> allIndex(0);   // 对removedCustomer进行编号
 
     float tempBaseNoise = baseNoise;
-    float *tempDTpara = new float[4];
+    float *tempRandomRange = new float[2];
     if(noiseAdd == false) {
-        // 不需要添加噪声量，则将所有与噪声有关变量置零
+        // 不需要添加噪声量，则将噪声随机性降为0，并且将baseNoise置为0
         tempBaseNoise = 0;
-        tempDTpara[0] = 0;
-        tempDTpara[1] = 0;
-        tempDTpara[2] = 0;
-        tempDTpara[3] = 0;
+        tempRandomRange[0] = 1;
+        tempRandomRange[1] = 1;
     } else {
-        tempDTpara[0] = DTpara[0];
-        tempDTpara[1] = DTpara[1];
-        tempDTpara[2] = DTpara[2];
-        tempDTpara[3] = DTpara[3];
+        tempRandomRange[0] = randomRange[0];
+        tempRandomRange[1] = randomRange[1];
     }
-
     generateMatrix(allIndex, removedCarSet, removedCustomer, minInsertPerRoute,  
             minInsertPos, secondInsertPerRoute, secondInsertPos, 
-            tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
+            tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
     // 尚未插入到路径中的节点位置，相对于最初的removedCustomer
     vector<int> restCustomerIndex = allIndex;  
     // 各个removedCustomer的最小插入代价与次小插入代价之差
@@ -762,7 +765,7 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
             secondValue2 = secondInsertPerRoute.getMinAtCol(index, pos3);   // 候选次小插入代价
             if(minValue == MAX_FLOAT){  
                 // 如果发现某个节点已经没有可行插入点，则优先安排之
-                // regretdiffPerRestCust.push_back(make_pair(MAX_FLOAT, make_pair(index, pos1)));
+                regretdiffPerRestCust.push_back(make_pair(MAX_FLOAT, make_pair(index, pos1)));
             } else if(minValue != MAX_FLOAT && secondValue1==MAX_FLOAT && secondValue2==MAX_FLOAT){
                 // 如果只有一个可行插入点，则应该优先安排
                 // 按照minValue的值，最小者应该率先被安排
@@ -784,53 +787,54 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Customer*> remove
         sort(regretdiffPerRestCust.begin(), regretdiffPerRestCust.end(), 
                 descendSort<float, pair<int, int> >);
         if(regretdiffPerRestCust[0].first == MAX_FLOAT) {
-        // 如果所有的节点都没有可行插入点，则开辟新车
-        selectedCarPos= carNum++;
-        selectedCustIndex = regretdiffPerRestCust[0].second.first;
-        Car *newCar = new Car(depot, depot, capacity, newCarIndex++, hierarchicalCar);
-        try {
-            newCar->insertAtHead(*removedCustomer[selectedCustIndex]);
-        } catch (exception &e) {
-            cout << "In regret insert: " << e.what() << endl;
-        }
-        removedCarSet.push_back(newCar);  // 添加到货车集合中
-        alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
-        sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
-        vector<int>::iterator iterINT;
-        // 更新restCustomerIndex
-        iterINT = set_difference(allIndex.begin(), allIndex.end(), alreadyInsertIndex.begin(), 
-                alreadyInsertIndex.end(), restCustomerIndex.begin());
-        restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
-        minInsertPerRoute.addOneRow();   // 增加一行
-        minInsertPos.addOneRow();
-        secondInsertPerRoute.addOneRow();
-        secondInsertPos.addOneRow();
-        updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
-                secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);	
-        } 
-        else {
-        // 否则，不需要开辟新车
-        selectedCarPos = regretdiffPerRestCust[0].second.second;
-        selectedCustIndex = regretdiffPerRestCust[0].second.first;
-        alreadyInsertIndex.push_back(selectedCustIndex);
-        try {
-            removedCarSet[selectedCarPos]->insertAfter(minInsertPos.getElement(selectedCarPos, 
+            // 如果所有的节点都没有可行插入点，则开辟新车
+            selectedCarPos = carNum++;
+            selectedCustIndex = regretdiffPerRestCust[0].second.first;
+            Car *newCar = new Car(depot, depot, capacity, newCarIndex++, hierarchicalCar);
+            try {
+                newCar->insertAtHead(*removedCustomer[selectedCustIndex]);
+            } catch (exception &e) {
+                cerr << "In regret insert: " << e.what() << endl;
+                exit(1);
+            }
+            removedCarSet.push_back(newCar);  // 添加到货车集合中
+            alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
+            sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
+            vector<int>::iterator iterINT;
+            // 更新restCustomerIndex
+            iterINT = set_difference(allIndex.begin(), allIndex.end(), alreadyInsertIndex.begin(), 
+                    alreadyInsertIndex.end(), restCustomerIndex.begin());
+            restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
+            minInsertPerRoute.addOneRow();   // 增加一行
+            minInsertPos.addOneRow();
+            secondInsertPerRoute.addOneRow();
+            secondInsertPos.addOneRow();
+            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
+                    secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
+                    tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);	
+        } else {
+            // 否则，不需要开辟新车
+            selectedCarPos = regretdiffPerRestCust[0].second.second;
+            selectedCustIndex = regretdiffPerRestCust[0].second.first;
+            alreadyInsertIndex.push_back(selectedCustIndex);
+            try {
+                removedCarSet[selectedCarPos]->insertAfter(minInsertPos.getElement(selectedCarPos, 
                         selectedCustIndex), *removedCustomer[selectedCustIndex]);
-        } catch (exception &e) {
-            cout << "In regret insert: " << e.what() << endl;
-        }
-        sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
-        vector<int>::iterator iterINT;
-        iterINT = set_difference(allIndex.begin(), allIndex.end(), alreadyInsertIndex.begin(), 
-                alreadyInsertIndex.end(), restCustomerIndex.begin());
-        restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
-        updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
-                secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                tempBaseNoise, tempDTpara, randomRange, allowNegativeCost);
+            } catch (exception &e) {
+                cerr << "In regret insert: " << e.what() << endl;
+                exit(1);
+            }
+            sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
+            vector<int>::iterator iterINT;
+            iterINT = set_difference(allIndex.begin(), allIndex.end(), alreadyInsertIndex.begin(), 
+                    alreadyInsertIndex.end(), restCustomerIndex.begin());
+            restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
+            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
+                        secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
+                        tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
         }
     }
-    delete[] tempDTpara;
+    delete[] tempRandomRange;
 }
 
 void LNSBase::reallocateCarIndex(vector<Car*> &originCarSet){  

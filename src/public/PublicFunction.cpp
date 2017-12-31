@@ -178,32 +178,8 @@ void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
     depot.prop = 0;
     ALNS alg(allCustomer, depot, capacity, 25000);
     alg.run(bestRoute, bestCost);
-    deleteCustomerSet(allCustomer);
 }
 
-void showAllCustomer(vector<Car*> carSet) {
-    // 显示carSet中所有顾客的id信息
-    vector<int> allCustomerId;
-    for(int i=0; i<(int)carSet.size(); i++) {
-        vector<Customer*> tempCust = carSet[i]->getAllCustomer();
-        vector<Customer*>::iterator custIter;
-        for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
-            allCustomerId.push_back((*custIter)->id);
-        }
-        deleteCustomerSet(tempCust);
-    }
-    sort(allCustomerId.begin(), allCustomerId.end());
-    vector<int>::iterator intIter;
-    int count = 0;
-    for(intIter = allCustomerId.begin(); intIter < allCustomerId.end(); intIter++) {
-        if (count % 8 == 0) {
-            cout << endl;
-        }
-        cout << (*intIter) << '\t';
-        count++;
-    }
-    cout << endl;
-}
 
 int getCustomerNum(vector<Car*> originCarSet) {
     // 获得路径集中顾客节点的数目
@@ -273,5 +249,61 @@ vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*
         allCustomer.push_back(new Customer(**custIter));
     }
     return allCustomer;
+}
+
+vector<int> getID(vector<Customer*> customerSet){
+    // 得到customerSet的所有ID
+    vector<int> ids(0);
+    ids.reserve(customerSet.end() - customerSet.begin());
+    vector<Customer*>::iterator iter = customerSet.begin();
+    for(iter; iter<customerSet.end(); iter++){
+        ids.push_back((*iter)->id);
+    }
+    sort(ids.begin(), ids.end());
+    return ids;
+}
+
+vector<int> getID(vector<Car*> carSet) {
+    vector<int> ids(0);
+    vector<Car*>::iterator carIter;
+    for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
+        vector<Customer*> tempCust = (*carIter)->getAllCustomer();
+        vector<int> currentIDs = getID(tempCust);
+        ids.insert(ids.end(), currentIDs.begin(), currentIDs.end());
+        deleteCustomerSet(tempCust);
+    }
+    sort(ids.begin(), ids.end());
+    return ids;
+}
+
+void showAllCustomer(vector<Car*> carSet) {
+    // 显示carSet中所有顾客的id信息
+    vector<int> allCustomerId = getID(carSet);
+    sort(allCustomerId.begin(), allCustomerId.end());
+    vector<int>::iterator intIter;
+    int count = 0;
+    for(intIter = allCustomerId.begin(); intIter < allCustomerId.end(); intIter++) {
+        if (count % 8 == 0) {
+            cout << endl;
+        }
+        cout << (*intIter) << '\t';
+        count++;
+    }
+    cout << endl;
+}
+
+void showAllCustomer(vector<Customer*> customerSet) {
+    vector<int> allCustomerId = getID(customerSet);
+    sort(allCustomerId.begin(), allCustomerId.end());
+    vector<int>::iterator intIter;
+    int count = 0;
+    for(intIter = allCustomerId.begin(); intIter < allCustomerId.end(); intIter++) {
+        if (count % 8 == 0) {
+            cout << endl;
+        }
+        cout << (*intIter) << '\t';
+        count++;
+    }
+    cout << endl;
 }
 

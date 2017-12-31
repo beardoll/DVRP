@@ -619,7 +619,6 @@ void Route::replaceRoute(const Route &route) {  // ÒÔrouteÌæ»»µôcurrentÖ¸ÕëºóµÄÂ
     return;
 }
 
-
 //=============== ÆäÓà¸¨ÖúĞÔÖÊµÄº¯Êı ================//
 bool Route::checkPassRoute(){
     // ¼ì²éÒÑ×ß¹ıµÄÂ·¾¶ÊÇ·ñÎ¥·´Ê±¼ä´°Ô¼Êø
@@ -643,7 +642,7 @@ bool Route::checkPassRoute(){
     }
 }
 
-vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId){
+vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId, int &retainNum){
     // ½ö±£ÁôidÔÚvalidCustomerIdÖĞµÄ½Úµã
     // ·µ»Ø±£ÁôµÄ½ÚµãÔÚvalidCustomerIdÖĞµÄÎ»ÖÃ
     vector<int> posVec;
@@ -660,6 +659,7 @@ vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId){
             ptr1->front->next = ptr1->next;
             ptr1->next->front = ptr1->front; 
         } else {
+            retainNum++;
             int pos = intIter - validCustomerId.begin();
             posVec.push_back(pos);
         } 

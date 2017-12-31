@@ -1,6 +1,7 @@
 #include "BenchWrapper.h"
 #include "../run/Config.h"
-#include "sstream"
+#include<sstream>
+#include<stdexcept>
 
 void BenchWrapper::insertFloatToNode(TiXmlElement *element, float data) {
     // 将浮点型数据装入xml节点"element"中
@@ -109,6 +110,7 @@ void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomer,
     root->LinkEndChild(vehicleNode);
 
     doc.SaveFile(path.c_str());
+    cout << "Saved new benchmark to " << path << endl;
 }
 
 void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Customer*> rejectCustomers, 
@@ -183,7 +185,7 @@ void BenchWrapper::getFloatArrayFromChildNode(TiXmlHandle parent, string childNa
     // 获取XML文件中parent节点下名为childName（多个）节点存放的float数组信息
     TiXmlElement *childElem = parent.FirstChild(childName.c_str()).Element();
     int c = 0;
-    for (childElem; childElem; childElem->NextSiblingElement()) {
+    for (childElem; childElem; childElem = childElem->NextSiblingElement()) {
         array[c++] = (float)atof(childElem->GetText());
     }
 }
@@ -210,7 +212,7 @@ void BenchWrapper::loadCustomerInfo(vector<Customer*> &customers, TiXmlElement *
         getFloatFromChildNode(node, "tolerantTime", customer->tolerantTime);
         getFloatFromChildNode(node, "serviceTime", customer->serviceTime);
         // 顾客的概率信息存放于更低一层级中
-        TiXmlElement *probInfoNode = node.FirstChild("ProbInfo").Element();
+        TiXmlElement *probInfoNode = node.FirstChild("probInfo").Element();
         TiXmlHandle subNode(probInfoNode);
         getFloatArrayFromChildNode(subNode, "timeProb", customer->timeProb);
 
@@ -218,12 +220,15 @@ void BenchWrapper::loadCustomerInfo(vector<Customer*> &customers, TiXmlElement *
     }
 }
 
-bool BenchWrapper::loadBench(string fileName, vector<Customer*> &staticCustomers, vector<Customer*> &dynamicCustomers, 
+void BenchWrapper::loadBench(string fileName, vector<Customer*> &staticCustomers, vector<Customer*> &dynamicCustomers,
         Customer &depot, float &capacity) {
     // 读取数据集中的数据到相应的实体中
     // 首先，加载XML文件
     TiXmlDocument doc(fileName.c_str());
-    if (!doc.LoadFile()) return false;   // 如果无法读取文件，则返回false
+    if (!doc.LoadFile()) { 
+        // 如果无法读取文件，则抛出异常
+        throw out_of_range("Cannot load the benchmark!!");
+    }
     TiXmlHandle hDoc(&doc);      // hDoc是&doc指向的对象
     TiXmlElement* pElem;         // 指向根节点的指针
     pElem = hDoc.FirstChildElement().Element();
@@ -252,7 +257,6 @@ bool BenchWrapper::loadBench(string fileName, vector<Customer*> &staticCustomers
     TiXmlElement* vehicleElem = hRoot.FirstChild("vehicle").Element();
     TiXmlHandle vehicleNode(vehicleElem);
     getFloatFromChildNode(vehicleNode, "capacity", capacity);
-    return true;
 }
 
 

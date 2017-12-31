@@ -2,6 +2,7 @@
 #include "tinystr.h"
 #include "tinyxml.h"
 #include<iostream>
+#include<stdexcept>
 
 void getFloatFromChildNode(TiXmlHandle parent, string childName, float &value) {
     // 获取XML文件中parent节点下名为childName的信息，赋值给value
@@ -9,11 +10,14 @@ void getFloatFromChildNode(TiXmlHandle parent, string childName, float &value) {
     value = (float)atof(elem->GetText());
 }
 
-bool getData(string filename, vector<Customer*> &allCustomer, 
+void getData(string filename, vector<Customer*> &allCustomer, 
         Customer &depot, float &capacity){
     // 读取xml内容于allCustomers, depot, capacity中
     TiXmlDocument doc(filename.c_str());     // 读入XML文件
-    if(!doc.LoadFile()) return false;    // 如果无法读取文件，则返回
+    if(!doc.LoadFile()) {
+        // 如果无法读取文件，则返回抛出异常
+        throw out_of_range("cannot open bench file!");
+    }
     TiXmlHandle hDoc(&doc);         // hDoc是&doc指向的对象
     TiXmlElement* pElem;            // 指向元素的指针
     pElem = hDoc.FirstChildElement().Element(); //指向根节点
@@ -44,8 +48,8 @@ bool getData(string filename, vector<Customer*> &allCustomer,
             customer->id = tempINT;  
             nodeElem->QueryIntAttribute("property", 0);  //先设所有的顾客都是static的
             customer->prop = tempINT;
-            getFloatFromChildNode(node, "cx", depot.x);
-            getFloatFromChildNode(node, "cy", depot.y);
+            getFloatFromChildNode(node, "cx", customer->x);
+            getFloatFromChildNode(node, "cy", customer->y);
             customer->type = 'P';
             customer->priority = 0;
             allCustomer.push_back(customer);
@@ -76,6 +80,5 @@ bool getData(string filename, vector<Customer*> &allCustomer,
         FirstChild("capacity").Element();
     tempFLOAT = (float)atof(capacityElem->GetText());
     capacity = tempFLOAT;
-    return true;
 }
 

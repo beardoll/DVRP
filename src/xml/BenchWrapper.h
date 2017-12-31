@@ -25,7 +25,7 @@ class BenchWrapper{
         void getFloatFromChildNode(TiXmlHandle parent, string childName, float &value);
         void getFloatArrayFromChildNode(TiXmlHandle parent, string childName, float *array);
         void loadCustomerInfo(vector<Customer*> &customers, TiXmlElement *nodeElem);
-        bool loadBench(string fileName, vector<Customer*> &staticCustomers, 
+        void loadBench(string fileName, vector<Customer*> &staticCustomers, 
                 vector<Customer*> &dynamicCustomers, Customer &depot, float &capacity);
 
 };

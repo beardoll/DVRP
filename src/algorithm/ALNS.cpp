@@ -8,7 +8,7 @@
 
 using namespace std;
 
-float RANDOM_RANGE_ALNS[2] = {0, 1};
+float RANDOM_RANGE_ALNS[2] = {-1, 1};
 
 ALNS::ALNS(vector<Customer*> allCustomer, Customer depot, float capacity, int maxIter,
             bool verbose, int pshaw, int pworst, float eta): LNSBase(
@@ -209,7 +209,8 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
             }
         }
         catch (exception &e) {
-            cout << e.what() << endl;
+            cerr << e.what() << endl;
+            exit(1);
         }
         removeNullRoute(tempCarSet);
 

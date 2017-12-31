@@ -22,7 +22,7 @@ public:
 private:
     vector<Customer*> allCustomer;    // 所有的顾客
     vector<int> dynamicCustomerId;    // 动态到达的顾客的id
-    vector<int> ServedCustomerId;     // 已经服务过的顾客id
+    vector<int> servedCustomerId;     // 已经服务过的顾客id
     vector<int> promisedCustomerId;   // (未服务过的)已经得到'OK' promise的顾客id
     vector<int> waitCustomerId;       // (未服务过的且已知的)还在等待'OK' promise的顾客id
     vector<int> rejectCustomerId;     // (未服务过的且已知的)得到了'NO' promise的顾客id

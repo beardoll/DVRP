@@ -35,7 +35,12 @@ int main(int argc, char *argv[]){
         Customer depot;
         float capacity;
         string solomonFileName = SOLOMON_FILENAME;
-        bool mark = getData(solomonFileName, allCustomer, depot, capacity);
+        try {
+            getData(solomonFileName, allCustomer, depot, capacity);
+        } catch (exception &e) {
+            cerr << e.what() << endl;
+            exit(1);
+        } 
 
         // 建立新的benchmark（修改服务时间以及时间窗 + 分static和dynamic）
         vector<Customer*> staticCustomer, dynamicCustomer;
@@ -58,11 +63,18 @@ int main(int argc, char *argv[]){
         vector<Customer*> staticCustomer, dynamicCustomer;
         Customer depot;
         float capacity;
-        bw.loadBench(loadFileName, staticCustomer, dynamicCustomer, depot, capacity);
-
+        try {
+            bw.loadBench(loadFileName, staticCustomer, dynamicCustomer, depot, capacity);
+        } catch (exception &e) {
+            cerr << e.what() << endl;
+            exit(1);
+        }
         // txt文件地址
         string txtFileName = BENCH_FILE_PATH + "result.txt";
         TxtRecorder::changeFile(txtFileName);
+
+        cout << "There are " << staticCustomer.size() << " static customers and " << 
+            dynamicCustomer.size() << " dynamic customers" << endl;
 
         Timer timer(staticCustomer, dynamicCustomer, capacity, depot);
         vector<Customer*> rejectCustomer;

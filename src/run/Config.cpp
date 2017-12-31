@@ -14,6 +14,6 @@ int CORE_NUM = 10;
 string SOLOMON_FILENAME = "./solomon-1987-rc1/RC103_100.xml";
 
 // ******** Path for the bench we construct ******** //
-string BENCH_FILE_PATH = "./simulation";
+string BENCH_FILE_PATH = "./simulation/";
 
 

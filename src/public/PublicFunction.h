@@ -40,8 +40,6 @@ void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &st
         vector<Customer*> &dynamicCustomer, float dynamicism);
 bool ascendSortForCustId(Customer* item1, Customer* item2);
 void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost);
-void showAllCustomer(vector<Car*> carSet);
-void showAllCustomer(vector<Customer*> customerSet);
 int getCustomerNum(vector<Car*> originCarSet);
 bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2);
 bool customerSetEqual(vector<Customer*> c1, vector<Customer*> c2);
@@ -51,6 +49,9 @@ template<class T> inline void setZero(T* p, int size);
 template<class T> inline void setOne(T *p, int size);
 vector<int> getID(vector<Customer*> customerSet);
 vector<int> getID(vector<Car*> carSet);
+void showAllCustomerID(vector<Car*> carSet);
+void showAllCustomerID(vector<Customer*> customerSet);
+void showDetailForPlan(vector<Car*> carSet);
 
 // 模板函数和内联函数的实现
 inline void withdrawPlan(vector<Car*> &Plan){  

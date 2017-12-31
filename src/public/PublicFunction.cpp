@@ -276,7 +276,7 @@ vector<int> getID(vector<Car*> carSet) {
     return ids;
 }
 
-void showAllCustomer(vector<Car*> carSet) {
+void showAllCustomerID(vector<Car*> carSet) {
     // 显示carSet中所有顾客的id信息
     vector<int> allCustomerId = getID(carSet);
     sort(allCustomerId.begin(), allCustomerId.end());
@@ -292,7 +292,7 @@ void showAllCustomer(vector<Car*> carSet) {
     cout << endl;
 }
 
-void showAllCustomer(vector<Customer*> customerSet) {
+void showAllCustomerID(vector<Customer*> customerSet) {
     vector<int> allCustomerId = getID(customerSet);
     sort(allCustomerId.begin(), allCustomerId.end());
     vector<int>::iterator intIter;
@@ -307,3 +307,22 @@ void showAllCustomer(vector<Customer*> customerSet) {
     cout << endl;
 }
 
+void showDetailForPlan(vector<Car*> carSet) {
+    // 展示carSet中每一条路径的具体信息
+    // 包括顾客顺序，以及每个顾客的位置，时间窗，到达时间等
+    vector<Car*>::iterator carIter;
+    vector<Customer*>::iterator custIter;
+    for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
+        int index = carIter - carSet.begin();
+        cout << "----------------------" << endl;
+        cout << "Route " << index << ":" << endl;
+        cout << "Depot: x-" << 40 << "\t" << " y-" << 50 << endl;
+        vector<Customer*> tempCust = (*carIter)->getAllCustomer();
+        for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
+            cout << "Customer #" << custIter-tempCust.begin() << ": x-" << (*custIter)->x << "\t" <<
+                "y-" << (*custIter)->y << "\t" << "AT-" << (*custIter)->arrivedTime << "\t" << "ST-" <<
+                (*custIter)->startTime << "\t" << "ET-" << (*custIter)->endTime << endl;
+        }
+        cout << "Depot: x-" << 40 << "\t" <<  "y-" << 50 << endl;
+    }
+}

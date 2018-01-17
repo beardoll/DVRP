@@ -35,7 +35,7 @@ EventElement Timer::pop(){
     return newElement;
 }
 
-Timer::Timer(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCustomerSet, 
+Timer::Timer(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet, 
         float capacity, Customer depot) {   
     // 构造函数，输入参数为所有顾客，以及各时间段开始值
     this->staticCustomerSet = staticCustomerSet;
@@ -49,7 +49,7 @@ Timer::Timer(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCusto
         newEvent = EventElement(i*TIME_SLOT_LEN, newTimeSlot, -1, -1);
         eventList.push_back(newEvent);
     }
-    vector<Customer*>::iterator iter = dynamicCustomerSet.begin();
+    vector<Spot*>::iterator iter = dynamicCustomerSet.begin();
     for(iter; iter< dynamicCustomerSet.end(); iter++) {  
         // 增加“新顾客到达事件”
         newEvent = EventElement((*iter)->startTime, newCustomer, -1, (*iter)->id);
@@ -81,10 +81,10 @@ void Timer::deleteEventElement(int carIndex){
     }
 }
 
-void searchCustomer(int customerId, vector<Customer*> customerSet, Customer &customer) {
+void searchCustomer(int customerId, vector<Spot*> customerSet, Spot &customer) {
     // 根据customerId在customerSet中寻找顾客
     bool mark = false;
-    vector<Customer*>::iterator custIter;
+    vector<Spot*>::iterator custIter;
     for(custIter = customerSet.begin(); custIter < customerSet.end(); custIter++) {
         if((*custIter)->id == customerId) {
             mark = true;
@@ -125,7 +125,7 @@ void Timer::updateEventElement(EventElement &newEvent){
 
 // enum EventType{newCustomer, carArrived, finishedService, carDepature, newTimeSlot, carOffWork};
 
-void Timer::run(vector<Car*> &finishedPlan, vector<Customer*> &rejectCustomer, 
+void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer, 
         float &travelDistance, float &addAveDistance) {
     // 调度中心初始化
     Dispatcher disp(staticCustomerSet, dynamicCustomerSet, depot, capacity);
@@ -134,7 +134,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Customer*> &rejectCustomer,
         EventElement currentEvent = pop();  // 弹出最近事件
         switch(currentEvent.eventType) {
             case newCustomer: {   // 新顾客到达
-                Customer cust;
+                Spot cust;
                 try {
                     searchCustomer(currentEvent.customerId, dynamicCustomerSet, cust);
                 }
@@ -174,8 +174,8 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Customer*> &rejectCustomer,
             }
         }
     }
-    vector<Customer*> allCustomer;
-    vector<Customer*>::iterator custIter;
+    vector<Spot*> allCustomer;
+    vector<Spot*>::iterator custIter;
     for(custIter = staticCustomerSet.begin(); custIter < staticCustomerSet.end(); custIter++) {
         allCustomer.push_back(*custIter);
     }

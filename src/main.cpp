@@ -10,12 +10,12 @@
 #include<cstdlib>
 
 #include "run/SetBench.h"
-#include "modules/Timer.h"
+//#include "modules/Timer.h"
 #include "run/TxtRecorder.h"
-#include "baseclass/Car.h"
-#include "algorithm/ALNS.h"
+//#include "baseclass/Car.h"
+//#include "algorithm/ALNS.h"
 #include "public/PublicFunction.h"
-#include "xml/LoadSolomon.h"
+//#include "xml/LoadSolomon.h"
 #include "xml/BenchWrapper.h"
 #include "run/Config.h"
 
@@ -31,26 +31,22 @@ int main(int argc, char *argv[]){
         srand(unsigned(time(0)));
         
         // 获取benchmark中的数据
-        vector<Customer*> allCustomer;
-        Customer depot;
+        vector<Spot*> allCustomer;
+        Spot depot;
         float capacity;
-        string solomonFileName = SOLOMON_FILENAME;
-        try {
-            getData(solomonFileName, allCustomer, depot, capacity);
-        } catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
-        } 
 
         // 建立新的benchmark（修改服务时间以及时间窗 + 分static和dynamic）
-        vector<Customer*> staticCustomer, dynamicCustomer;
-        SetBench sb(allCustomer);
-        sb.construct(staticCustomer, dynamicCustomer);
+        vector<Spot*> staticCustomer, dynamicCustomer;
+        vector<Spot*> store;
+
+        SetBench sb();
+        sb.construct(staticCustomer, dynamicCustomer, store, depot);
         string savePath = BENCH_FILE_PATH + "bench_exp.xml";
         BenchWrapper bw;
-        bw.saveBench(savePath, staticCustomer, dynamicCustomer, depot, capacity);
+        bw.saveBench(savePath, staticCustomer, dynamicCustomer, store, depot, capacity);
         cout << "OK, new version of bench has been established!" << endl;
     }
+    /*
     else if(condition == 1) {
         BenchWrapper bw;
         srand(unsigned(time(0)));
@@ -100,6 +96,6 @@ int main(int argc, char *argv[]){
                         
         withdrawPlan(finalCarSet);
         withdrawPlan(bestCarSet);
-    }
+    }*/
     return 0;
 }

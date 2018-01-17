@@ -10,7 +10,7 @@ using namespace std;
 
 float RANDOM_RANGE_ALNS[2] = {-1, 1};
 
-ALNS::ALNS(vector<Customer*> allCustomer, Customer depot, float capacity, int maxIter,
+ALNS::ALNS(vector<Spot*> allCustomer, Customer depot, float capacity, int maxIter,
             bool verbose, int pshaw, int pworst, float eta): LNSBase(
                 pshaw, pworst, eta, capacity, RANDOM_RANGE_ALNS, allCustomer, depot) 
 {
@@ -80,7 +80,7 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
     float T = w * currentCost / (float)log(2);   // 初始温度
     float ksi = 0.4f;     // 每次移除的最大节点数目占总节点数的比例
     float c = 0.9998f;    // 降温速率
-    vector<Customer*> removedCustomer(0);                // 被移除的节点
+    vector<Spot*> removedCustomer(0);                // 被移除的节点
     vector<Car*> tempCarSet = copyPlan(currentCarSet);   // 暂时存放当前解
     for(int iter=0; iter<maxIter; iter++){
         if(iter%segment == 0){  

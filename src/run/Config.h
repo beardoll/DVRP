@@ -2,6 +2,7 @@
 #define CONFIG_h
 
 #include<string>
+#include<vector>
 
 using namespace std;
 
@@ -15,7 +16,14 @@ extern int SAMPLE_RATE;
 extern int NUM_OF_CUSTOMER;
 extern int TIME_SLOT_LEN;
 extern int TIME_SLOT_NUM;
+extern float R1;
+extern float R2;
+extern float R3;
 extern int CORE_NUM;
+extern int STORE_NUM;
+extern int SUBCIRCLE_NUM;
+extern vector<float> LAMBDA;
+extern float ALPHA;
 
 // ******** Noise param for Algorithm ******** //
 extern float* RANDOM_RANGE_ALNS;

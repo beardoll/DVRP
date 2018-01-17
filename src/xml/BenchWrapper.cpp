@@ -20,12 +20,12 @@ TiXmlElement* BenchWrapper::createNode(string name, float data){
     return elem;
 }
 
-void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *root) {
+void BenchWrapper::saveSpotInfo(vector<Spot*> customers, TiXmlElement *root) {
     // 将customers数据存为XML格式
     // Args:
-    //   customers: Customer类型的指针数组
+    //   customers: Spot类型的指针数组
     //   root: 上级节点，比如<Customer>
-    vector<Customer*>::iterator custIter;
+    vector<Spot*>::iterator custIter;
     TiXmlElement *elem;
 
     for (custIter=customers.begin(); custIter<customers.end(); custIter++) {
@@ -40,21 +40,20 @@ void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *r
             case 'D':
                 elem->SetAttribute("type", "D");
                 break;
-            case 'P':
-                elem->SetAttribute("type", "P");
-                elem->SetAttribute("property", (*custIter)->prop);
+            case 'S':
+                elem->SetAttribute("type", "S");
+                TiXmlElement* serviceTimeElem = createNode("serviceTime", (*custIter)->serviceTime);
+                elem->LinkEndChild(serviceTimeElem);
+                break;
+            case 'C':
+                elem->SetAttribute("type", "C");
                 TiXmlElement* quantityElem = createNode("quantity", (*custIter)->quantity);
                 TiXmlElement* startTimeElem = createNode("startTime", (*custIter)->startTime);
                 TiXmlElement* endTimeElem = createNode("endTime", (*custIter)->endTime);
                 TiXmlElement* arrivedTimeElem = createNode("arrivedTime", (*custIter)->arrivedTime);
                 TiXmlElement* tolerantTimeElem = createNode("tolerantTime", (*custIter)->tolerantTime);
                 TiXmlElement* serviceTimeElem = createNode("serviceTime", (*custIter)->serviceTime);
-                // 建立两层结构存储提取需求的概率
-                TiXmlElement* probInfoElem = new TiXmlElement("probInfo");
-                for (int i=0; i<TIME_SLOT_NUM; i++) {
-                    TiXmlElement *timeProb = createNode("timeProb", (*custIter)->timeProb[i]);
-                    probInfoElem->LinkEndChild(timeProb);
-                }
+                TiXmlElement* choiceElem = createNode("choice", (*custIter)->choice->id);
                 // 将所有节点都挂载到单个顾客节点node上
                 elem->LinkEndChild(quantityElem);
                 elem->LinkEndChild(startTimeElem);
@@ -62,7 +61,7 @@ void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *r
                 elem->LinkEndChild(arrivedTimeElem);
                 elem->LinkEndChild(tolerantTimeElem);
                 elem->LinkEndChild(serviceTimeElem);
-                elem->LinkEndChild(probInfoElem);
+                elem->LinkEndChild(choiceElem);
                 break;
         }
         // 将elem节点挂在到root节点上
@@ -70,13 +69,15 @@ void BenchWrapper::saveCustomerInfo(vector<Customer*> customers, TiXmlElement *r
     }
 }
 
-void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomer, 
-        vector<Customer*> dynamicCustomer, Customer depot, float capacity) {
+void BenchWrapper::saveBench(string path, vector<Spot*> staticCustomer, 
+        vector<Spot*> dynamicCustomer, vector<Spot*> store, Spot depot, 
+        float capacity) {
     // 将生成的数据集存放于xml文件中
     // Args:
     //   path: 相对路径，生成的文件名
     //   staticCustomer: 静态顾客集合（指针数组）
     //   dynamicCustomer: 动态顾客集合（指针数组）
+    //   Store: 商铺
     //   depot: 仓库
     //   capacity: 车载量
     TiXmlDocument doc;
@@ -89,11 +90,15 @@ void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomer,
     doc.LinkEndChild(root);
 
     TiXmlElement *staticElem = new TiXmlElement("staticCustomer");
-    saveCustomerInfo(staticCustomer, staticElem);
+    saveSpotInfo(staticCustomer, staticElem);
     TiXmlElement *dynamicElem = new TiXmlElement("dynamicCustomer");
-    saveCustomerInfo(dynamicCustomer, dynamicElem);
+    saveSpotInfo(dynamicCustomer, dynamicElem);
     root->LinkEndChild(staticElem);
     root->LinkEndChild(dynamicElem);
+
+    TiXmlElement *storeElem = new TiXmlElement("store");
+    saveSpotInfo(store, storeElem);
+    root->LinkEndChild(storeElem);
 
     TiXmlElement *depotElem = new TiXmlElement("depot");
     depotElem->SetAttribute("id", depot.id);
@@ -113,8 +118,8 @@ void BenchWrapper::saveBench(string path, vector<Customer*> staticCustomer,
     cout << "Saved new benchmark to " << path << endl;
 }
 
-void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Customer*> rejectCustomers, 
-        vector<Customer*> dynamicCustomers, Customer depot, float travelLen, float extra) {
+void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Spot*> rejectCustomers, 
+        vector<Spot*> dynamicCustomers, Spot depot, float travelLen, float extra) {
     // 将实验结果存放于fileName为名的XML文件中
     TiXmlDocument doc;
     TiXmlComment *comment;
@@ -140,17 +145,17 @@ void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Custo
         // 写入Route节点，为RouteSetElem的子节点
         routeElem = new TiXmlElement("Route");
         routeElem->SetAttribute("index", (*carIter)->getCarIndex());
-        vector<Customer*> tempCust = (*carIter)->getRoute().getAllCustomer();
+        vector<Spot*> tempCust = (*carIter)->getRoute().getAllCustomer();
         // tempCust首尾均不含depot节点，因此在下面添加depot节点
         // 这里考虑到销毁tempCust时会对里面所有指针的实例进行销毁，因此
         // 添加两个depot节点的复制品，他们拥有不同的地址
-        Customer* newdepot1 = new Customer(depot);
-        Customer* newdepot2 = new Customer(depot);
-        vector<Customer*>::iterator custIter = tempCust.begin();
+        Spot* newdepot1 = new Customer(depot);
+        Spot* newdepot2 = new Customer(depot);
+        vector<Spot*>::iterator custIter = tempCust.begin();
         tempCust.insert(custIter, newdepot1);
         tempCust.push_back(newdepot2);
         // 然后依次将tempCust中的节点信息写入XML文件中
-        saveCustomerInfo(tempCust, routeElem);
+        saveSpotInfo(tempCust, routeElem);
         routeSetElem->LinkEndChild(routeElem);
     }
 
@@ -164,12 +169,12 @@ void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Custo
 
     // 未能接受服务的顾客
     TiXmlElement *rejectCustomerElem = new TiXmlElement("rejectCustomer");
-    saveCustomerInfo(rejectCustomers, rejectCustomerElem);
+    saveSpotInfo(rejectCustomers, rejectCustomerElem);
     root->LinkEndChild(rejectCustomerElem);
 
     // 动态顾客
     TiXmlElement *dynamicCustomerElem = new TiXmlElement("dynamicCustomer");
-    saveCustomerInfo(dynamicCustomers, dynamicCustomerElem);
+    saveSpotInfo(dynamicCustomers, dynamicCustomerElem);
     root->LinkEndChild(dynamicCustomerElem);
 
     doc.SaveFile(fileName.c_str());
@@ -190,12 +195,12 @@ void BenchWrapper::getFloatArrayFromChildNode(TiXmlHandle parent, string childNa
     }
 }
 
-void BenchWrapper::loadCustomerInfo(vector<Customer*> &customers, TiXmlElement *nodeElem) {
+void BenchWrapper::loadCustomerInfo(vector<Spot*> &customers, TiXmlElement *nodeElem) {
     // 读取XML中的customer信息
     // nodeElem指向第一个存放顾客信息的XML节点
     for(nodeElem; nodeElem; nodeElem=nodeElem->NextSiblingElement()) {
         // 挨个读取节点信息，并且存入到Customer结构体中
-        Customer *customer = new Customer;
+        Spot *customer = new Spot();
         // 读取nodeElem属性值
         nodeElem->QueryIntAttribute("id", &customer->id);
         nodeElem->QueryIntAttribute("property", &customer->prop);
@@ -220,8 +225,8 @@ void BenchWrapper::loadCustomerInfo(vector<Customer*> &customers, TiXmlElement *
     }
 }
 
-void BenchWrapper::loadBench(string fileName, vector<Customer*> &staticCustomers, vector<Customer*> &dynamicCustomers,
-        Customer &depot, float &capacity) {
+void BenchWrapper::loadBench(string fileName, vector<Spot*> &staticCustomers, vector<Spot*> &dynamicCustomers,
+        Spot &depot, float &capacity) {
     // 读取数据集中的数据到相应的实体中
     // 首先，加载XML文件
     TiXmlDocument doc(fileName.c_str());

@@ -11,52 +11,52 @@ using namespace std;
 
 float RANDOM_RANGE_SSLR[2] = {0, 1};
 
-vector<Customer*> feedDataForLNSBase(vector<Customer*> waitCustomer, vector<Car*> originPlan) {
+vector<Spot*> feedDataForLNSBase(vector<Spot*> waitCustomer, vector<Car*> originPlan) {
     // 返回allCustomer，其中对waitCustomer优先级赋值为2，对originPlan的顾客优先级赋值为1
-    vector<Customer*>::iterator custPtr;
-    vector<Customer*> lowPriorityCust;
+    vector<Spot*>::iterator custPtr;
+    vector<Spot*> lowPriorityCust;
     for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
-        Customer* newCust = new Customer(**custPtr);
+        Spot* newCust = new Spot(**custPtr);
         newCust->priority = 2;
         lowPriorityCust.push_back(newCust);
     }
     vector<Car*>::iterator carPtr;
-    vector<Customer*> highPriorityCust;
+    vector<Spot*> highPriorityCust;
     for(carPtr = originPlan.begin(); carPtr < originPlan.end(); carPtr++) {
-        vector<Customer*> custVec = (*carPtr)->getAllCustomer();
+        vector<Spot*> custVec = (*carPtr)->getAllCustomer();
         for(custPtr = custVec.begin(); custPtr < custVec.end(); custPtr++) {
             (*custPtr)->priority = 1;
             highPriorityCust.push_back(*custPtr);
         }
     }
-    vector<Customer*> output = mergeCustomer(lowPriorityCust, highPriorityCust);
+    vector<Spot*> output = mergeCustomer(lowPriorityCust, highPriorityCust);
     deleteCustomerSet(highPriorityCust);
     deleteCustomerSet(lowPriorityCust);
     return output;
 }
 
-SSLR::SSLR(vector<Customer*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter,
+SSLR::SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter,
         bool verbose, int pshaw, int pworst, float eta): LNSBase(pshaw, 
         pworst, eta, capacity, RANDOM_RANGE_SSLR, feedDataForLNSBase(waitCustomer, 
         originPlan), originPlan[0]->getRearNode(), true, true) 
 {
     this->maxIter = maxIter;
     this->verbose = verbose;
-    vector<Customer*>::iterator custIter;
+    vector<Spot*>::iterator custIter;
     // 对waitCustomer，其优先级为2
     for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
-        Customer* newCust = new Customer(**custIter);
+        Spot* newCust = new Spot(**custIter);
         newCust->priority = 2;
         this->waitCustomer.push_back(newCust);
     }
     vector<Car*>::iterator carIter;
     for(carIter = originPlan.begin(); carIter < originPlan.end(); carIter++) {
-        Customer headNode = (*carIter)->getHeadNode();
-        Customer rearNode = (*carIter)->getRearNode();
+        Spot headNode = (*carIter)->getHeadNode();
+        Spot rearNode = (*carIter)->getRearNode();
         int carIndex = (*carIter)->getCarIndex();
         float capacity = (*carIter)->getCapacity();
         Car* newCar = new Car(headNode, rearNode, capacity, carIndex);
-        vector<Customer*> custVec = (*carIter)->getAllCustomer();
+        vector<Spot*> custVec = (*carIter)->getAllCustomer();
         for(custIter = custVec.begin(); custIter < custVec.end(); custIter++) {
             (*custIter)->priority = 1;
             newCar->insertAtRear(**custIter);
@@ -95,7 +95,7 @@ bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleN
     return mark;
 }
 
-float* computeDTpara(vector<Customer*> allCustomer, vector<Customer*> waitCustomer, Customer depot, float maxd,
+float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> waitCustomer, Customer depot, float maxd,
         float mind){
     // 计算对不同优先级顾客的奖惩系数
     // Args:
@@ -104,7 +104,7 @@ float* computeDTpara(vector<Customer*> allCustomer, vector<Customer*> waitCustom
     //   * waitCustomer: 低优先级顾客
     int PR2Num = (int) waitCustomer.size();
     int PR1Num = (int) allCustomer.size() - PR2Num;
-    vector<Customer*>::iterator custPtr;
+    vector<Spot*>::iterator custPtr;
     float DTH1, DTH2, DTL1, DTL2;
     float distToDepot = 0;    // 各个顾客节点到仓库的距离
     for(custPtr = allCustomer.begin(); custPtr < allCustomer.end(); custPtr++) {
@@ -133,7 +133,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     int i;
     int customerTotalNum = (int)allCustomer.size();  // 总的顾客数
     int originCarNum = (int)originPlan.size();   // 初始拥有的货车数量
-    vector<Customer*>::iterator custPtr;
+    vector<Spot*>::iterator custPtr;
     vector<Car*>::iterator carIter;
 
     // 如果计划中没有顾客，则抛出warning
@@ -223,7 +223,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     float T = w * abs(currentCost) / (float)log(2);   // 初始温度
     float ksi = 0.8f;    // 每次移除的最大节点数目占总节点数的比例
     float c = 0.9998f;    // 降温速率
-    vector<Customer*> removedCustomer(0);    // 被移除的节点
+    vector<Spot*> removedCustomer(0);    // 被移除的节点
     vector<Car*> tempCarSet = copyPlan(currentCarSet);      // 暂时存放当前解
 
     pair<bool, int> removalSelectTrend = make_pair(false, 0);

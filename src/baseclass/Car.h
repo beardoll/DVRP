@@ -9,7 +9,7 @@ enum State{wait, depature, serving, offwork};
 
 class Car{
 public:
-    Car(Customer &headNode, Customer &rearNode, float capacity, int index, 
+    Car(Spot &headNode, Spot &rearNode, float capacity, int index, 
             bool artificial = false);  // 构造函数
     ~Car();          // 析构函数
     Car(const Car& item);  //复制构造函数
@@ -20,7 +20,7 @@ public:
     bool judgeArtificial() {return artificial;} // 返回车辆性质
     Route getRoute(){ return route;}      // 得到本车路径
     float getCapacity() {return route.getCapacity();}    // 返回车容量
-    vector<Customer*> getAllCustomer() { return route.getAllCustomer();}
+    vector<Spot*> getAllCustomer() { return route.getAllCustomer();}
     int getCustomerNum(){ return route.getSize();}       // 获取顾客数目
     Car getNullCar();  // 将所有的顾客删除掉，返回一辆空车
     float getTravelDistance() { return travelDistance; } // 获取货车走过的总路长
@@ -34,21 +34,21 @@ public:
     void setProperty(bool newProperty) { artificial = newProperty; } // 设置货车的新属性
 
     // 计算insert cost和remove cost
-    void computeInsertCost(Customer item, float &minValue, Customer &customer1, 
-            float &secondValue, Customer &customer2, float randomNose=0, 
+    void computeInsertCost(Spot item, float &minValue, Spot &customer1, 
+            float &secondValue, Spot &customer2, float randomNose=0, 
             bool allowNegativeCost=false);
     vector<float> computeReducedCost(float DTpara[]);  // 计算所有节点的移除代价
 
     // getCustomer方法
-    Customer& getHeadNode(){return route.getHeadNode();}    // 得到车辆的头结点
-    Customer& getRearNode(){return route.getRearNode();}    // 得到车辆的尾节点
-    Customer& getCurrentNode() {return route.currentPos();} // 得到current指针指向的节点
+    Spot& getHeadNode(){return route.getHeadNode();}    // 得到车辆的头结点
+    Spot& getRearNode(){return route.getRearNode();}    // 得到车辆的尾节点
+    Spot& getCurrentNode() {return route.currentPos();} // 得到current指针指向的节点
 
     // insert 和 delete Customer方法
-    void insertAtRear(Customer &item);   // 在路径的尾部插入节点
-    void insertAtHead(Customer &item);   // 在路径头部插入节点
-    void insertAfter(const Customer &item1, const Customer &item2);     //  在item1后插入item2
-    void deleteCustomer(Customer &item); // 在路径中删除item节点
+    void insertAtRear(Spot &item);   // 在路径的尾部插入节点
+    void insertAtHead(Spot &item);   // 在路径头部插入节点
+    void insertAfter(const Spot &item1, const Spot &item2);     //  在item1后插入item2
+    void deleteCustomer(Spot &item); // 在路径中删除item节点
 
     // part Route操作
     // 将newCar的路径插入到当前货车路径的current节点之后

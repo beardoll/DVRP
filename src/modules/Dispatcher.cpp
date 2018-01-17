@@ -8,8 +8,8 @@
 
 const float MAX_FLOAT = numeric_limits<float>::max();
 
-Dispatcher::Dispatcher(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCustomerSet, 
-        Customer depot, float capacity) {
+Dispatcher::Dispatcher(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet, 
+        Spot depot, float capacity) {
     this->depot = depot;
     this->capacity = capacity;
     int custNum = staticCustomerSet.end() - staticCustomerSet.begin();
@@ -18,15 +18,15 @@ Dispatcher::Dispatcher(vector<Customer*> staticCustomerSet, vector<Customer*> dy
     promisedCustomerId.reserve(custNum);
     waitCustomerId.reserve(custNum);
     rejectCustomerId.reserve(custNum);
-    vector<Customer*>::iterator custIter = staticCustomerSet.begin();
+    vector<Spot*>::iterator custIter = staticCustomerSet.begin();
     for(custIter; custIter < staticCustomerSet.end(); custIter++) {
         // 在计划开始前已经提出需求的顾客都属于promiseCustomer
-        Customer* newCust = new Customer(**custIter);
+        Spot* newCust = new Customer(**custIter);
         allCustomer.push_back(newCust);
         promisedCustomerId.push_back(newCust->id);
     }
     for(custIter = dynamicCustomerSet.begin(); custIter < dynamicCustomerSet.end(); custIter++) {
-        Customer* newCust = new Customer(**custIter);
+        Spot* newCust = new Spot(**custIter);
         allCustomer.push_back(newCust);	
         dynamicCustomerId.push_back(newCust->id);
     }
@@ -93,8 +93,8 @@ void checkFeasible(vector<Car*> carSet, vector<int> promisedCustomerId){
     sort(tempId.begin(), tempId.end());
     vector<Car*>::iterator carIter;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {  
-        vector<Customer*> tempCust = (*carIter)->getAllCustomer();
-        vector<Customer*>::iterator custIter;
+        vector<Spot*> tempCust = (*carIter)->getAllCustomer();
+        vector<Spot*>::iterator custIter;
         for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
             vector<int>::iterator intIter = find(tempId.begin(), tempId.end(), (*custIter)->id);
             if(intIter < tempId.end()) {
@@ -112,9 +112,9 @@ void checkFeasible(vector<Car*> carSet, vector<int> promisedCustomerId){
 
 vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){ 
     // 新时间段开始
-    vector<Customer*> promiseCustomerSet;
-    vector<Customer*> waitCustomerSet;
-    vector<Customer*> dynamicCustomerSet;
+    vector<Spot*> promiseCustomerSet;
+    vector<Spot*> waitCustomerSet;
+    vector<Spot*> dynamicCustomerSet;
     vector<int>::iterator custIdIter;
     vector<Car*>::iterator carIter;
     vector<Car*> updatedPlan;
@@ -153,7 +153,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         cout << ostr.str();
         float currentTime = slotIndex * TIME_SLOT_LEN;
         for(custIdIter = waitCustomerId.begin(); custIdIter < waitCustomerId.end(); custIdIter++) {
-            Customer *temp = new Customer;
+            Spot *temp = new Customer;
             *temp = *allCustomer[*custIdIter - 1];
             waitCustomerSet.push_back(temp);
         }
@@ -173,7 +173,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                     delayCustomerId, capacity);
             withdrawPlan(futurePlan);
             //updatedPlan = smu.no_replan();
-            vector<Customer*>::iterator custIter;
+            vector<Spot*>::iterator custIter;
 
             // 更新promiseCustomerId, rejectCustomerId以及waitCustomerId
             vector<int>::iterator intIter;
@@ -257,7 +257,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
     return newEventList;
 } 
 
-EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCustomer){  
+EventElement Dispatcher::handleNewCustomer(int slotIndex, const Spot& newCustomer){  
     // 处理新顾客到达
     ostringstream ostr;
     ostr.str("");
@@ -269,13 +269,13 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
     dynamicCustomerId.erase(intIter);
     float minInsertCost = MAX_FLOAT;
     // 第一个int是货车编号（于currentPlan中的位置），第二个Customer是插入点前面的顾客
-    pair<int, Customer> insertPos;   
+    pair<int, Spot> insertPos;   
     vector<Car*>::iterator carIter;
     float currentTime = newCustomer.startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
     for (carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
         // 求newCustomer在每条route的最小插入代价
         Car tempCar = (*carIter)->capturePartRoute(currentTime);
-        Customer customer1, customer2;
+        Spot customer1, customer2;
         float minValue, secondValue;
         tempCar.computeInsertCost(newCustomer, minValue, customer1, secondValue, customer2);
         if(minValue < minInsertCost) {
@@ -308,7 +308,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
         promisedCustomerId.push_back(newCustomer.id);  // 这些顾客一定会得到服务
         sort(promisedCustomerId.begin(), promisedCustomerId.end());
         int selectedCarPos = insertPos.first;
-        Customer selectedCustomer = insertPos.second;
+        Spot selectedCustomer = insertPos.second;
         try {
             currentPlan[selectedCarPos]->insertAfter(selectedCustomer, newCustomer);
         } catch (exception &e) {

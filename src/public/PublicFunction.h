@@ -2,7 +2,7 @@
 #define _PUBLICFUNCTION_H
 
 #include "../baseclass/Car.h"
-#include "../baseclass/Customer.h"
+#include "../baseclass/Spot.h"
 #include "../xml/tinystr.h"
 #include "../xml/tinyxml.h"
 #include<stdexcept>
@@ -34,23 +34,23 @@ int roulette(vector<float> probability);
 int roulette(float *probability, int num);
 inline void withdrawPlan(vector<Car*> &Plan);    // 销毁计划
 inline vector<Car*> copyPlan(vector<Car*> Plan); // 复制计划
-inline void deleteCustomerSet(vector<Customer*> &customerSet);            // 删除customerSet
-inline vector<Customer*> copyCustomerSet(vector<Customer*> customerSet);  // 复制customerSet
-void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &staticCustomer, 
-        vector<Customer*> &dynamicCustomer, float dynamicism);
-bool ascendSortForCustId(Customer* item1, Customer* item2);
+inline void deleteCustomerSet(vector<Spot*> &customerSet);            // 删除customerSet
+inline vector<Spot*> copyCustomerSet(vector<Spot*> customerSet);  // 复制customerSet
+void seperateCustomer(vector<Spot*> originCustomerSet, vector<Spot*> &staticCustomer, 
+        vector<Spot*> &dynamicCustomer, float dynamicism);
+bool ascendSortForCustId(Spot* item1, Spot* item2);
 void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost);
 int getCustomerNum(vector<Car*> originCarSet);
 bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2);
-bool customerSetEqual(vector<Customer*> c1, vector<Customer*> c2);
-vector<Customer*> extractCustomer(vector<Car*> plan);
-vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*> originCustomer);
+bool customerSetEqual(vector<Spot*> c1, vector<Spot*> c2);
+vector<Spot*> extractCustomer(vector<Car*> plan);
+vector<Spot*> mergeCustomer(vector<Spot*> waitCustomer, vector<Spot*> originCustomer);
 template<class T> inline void setZero(T* p, int size);
 template<class T> inline void setOne(T *p, int size);
-vector<int> getID(vector<Customer*> customerSet);
+vector<int> getID(vector<Spot*> customerSet);
 vector<int> getID(vector<Car*> carSet);
 void showAllCustomerID(vector<Car*> carSet);
-void showAllCustomerID(vector<Customer*> customerSet);
+void showAllCustomerID(vector<Spot*> customerSet);
 void showDetailForPlan(vector<Car*> carSet);
 
 // 模板函数和内联函数的实现
@@ -74,8 +74,8 @@ inline vector<Car*> copyPlan(vector<Car*> Plan) {
     return outputPlan;
 }
 
-inline void deleteCustomerSet(vector<Customer*> &customerSet){   // 删除CustomerSet
-    vector<Customer*>::iterator iter;
+inline void deleteCustomerSet(vector<Spot*> &customerSet){   // 删除CustomerSet
+    vector<Spot*>::iterator iter;
     for(iter = customerSet.begin(); iter < customerSet.end(); iter++) {
         try {
             delete(*iter);
@@ -86,11 +86,11 @@ inline void deleteCustomerSet(vector<Customer*> &customerSet){   // 删除Customer
     customerSet.clear();
 }
 
-inline vector<Customer*> copyCustomerSet(vector<Customer*> customerSet){  // 复制customerSet
-    vector<Customer*> outputCust;
-    vector<Customer*>::iterator custIter;
+inline vector<Spot*> copyCustomerSet(vector<Spot*> customerSet){  // 复制customerSet
+    vector<Spot*> outputCust;
+    vector<Spot*>::iterator custIter;
     for(custIter = customerSet.begin(); custIter < customerSet.end(); custIter++) {
-        Customer *newCust = new Customer(**custIter);
+        Spot *newCust = new Spot(**custIter);
         outputCust.push_back(newCust);
     }
     return outputCust;

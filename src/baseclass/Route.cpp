@@ -1,5 +1,5 @@
 #include "Route.h"
-#include "Customer.h"
+#include "Spot.h"
 #include<iostream>
 #include<cassert>
 #include<vector>
@@ -12,12 +12,12 @@
 const float MAX_FLOAT = numeric_limits<float>::max();
 
 using namespace std;
-Route::Route(Customer &headNode, Customer &rearNode, float capacity):capacity(capacity)
+Route::Route(Spot &headNode, Spot &rearNode, float capacity):capacity(capacity)
 { 
     // ¹¹Ôìº¯Êı
-    head = new Customer;
+    head = new Spot;
     *head = headNode;  // ¸´ÖÆ½Úµã
-    rear = new Customer;
+    rear = new Spot;
     *rear = rearNode; 
     head->front = NULL;
     head->next = rear;
@@ -43,18 +43,18 @@ void Route::copy(const Route &L){
     this->quantity = L.quantity;
     this->leftQuantity = L.leftQuantity;
     this->arrivedTime = L.arrivedTime;
-    Customer* originPtr = L.head;
-    Customer* copyPtr = head;
-    Customer* temp = NULL;
+    Spot* originPtr = L.head;
+    Spot* copyPtr = head;
+    Spot* temp = NULL;
     while(originPtr!=NULL){
         // ´ÓÍ·½ÚµãÒ»Ö±¸´ÖÆµ½Î²½Úµã
         if(originPtr == L.head){  // ÕıÔÚ¸´ÖÆµÚÒ»¸ö½Úµã
-            copyPtr = new Customer;
+            copyPtr = new Spot;
             copyPtr->front = NULL;
             head = copyPtr;
             *copyPtr = *L.head;
         } else{
-            temp = new Customer;
+            temp = new Spot;
             *temp = *originPtr;
             temp->front = copyPtr;
             copyPtr->next = temp;
@@ -70,18 +70,18 @@ void Route::copy(const Route &L){
     rear = temp;
 }
 
-Customer& Route::operator[] (int k){
+Spot& Route::operator[] (int k){
     assert(k>=0 && k<size);
-    Customer* temp = head->next;
+    Spot* temp = head->next;
     for(int i=0; i<k; i++){
         temp = temp->next;
     }
     return *temp;
 }
 
-const Customer& Route::operator[] (int k) const{
+const Spot& Route::operator[] (int k) const{
     assert(k>=0 && k<size);
-    Customer* temp = head->next;
+    Spot* temp = head->next;
     for(int i=0; i<k; i++){
         temp = temp->next;
     }
@@ -105,8 +105,8 @@ bool Route::isEmpty(){ //ÅĞ¶ÏÁ´±íÊÇ·ñÎª¿Õ
 }
 
 void Route::clear(){  // Çå¿ÕÁ´±í£¬²»Çå¿Õhead½ÚµãºÍrear½Úµã?
-    Customer* ptr1 = head;
-    Customer* ptr2;
+    Spot* ptr1 = head;
+    Spot* ptr2;
     while(ptr1!=NULL){
         ptr2 = ptr1->next;
         delete ptr1;
@@ -119,7 +119,7 @@ void Route::clear(){  // Çå¿ÕÁ´±í£¬²»Çå¿Õhead½ÚµãºÍrear½Úµã?
 }
 
 void Route::printRoute(){ // ´òÓ¡Á´±í
-    Customer* ptr = head;
+    Spot* ptr = head;
     for(; ptr!=NULL; ptr=ptr->next) {
         cout << "id:" << ptr->id << ' ' << "type:" << ' ' << ptr->type << endl;
     }
@@ -127,11 +127,11 @@ void Route::printRoute(){ // ´òÓ¡Á´±í
 
 
 //=============== ²åÈëÒÔ¼°É¾³ı½Úµã²Ù×÷ ================//
-void Route::insertAfter(Customer &item1, Customer &item2){
+void Route::insertAfter(Spot &item1, Spot &item2){
     // ÔÚÁ´±íÖĞÓëitem1ÏàÍ¬µÄ½ÚµãºóÃæ²åÈë½Úµãitem2
-    Customer* temp = new Customer;
+    Spot* temp = new Spot;
     *temp = item2;
-    Customer* ptr = head;
+    Spot* ptr = head;
     while(ptr!=rear){
         if (ptr->id == item1.id){  // ¸ù¾İidÀ´ÅĞ¶ÏÁ½¸ö½ÚµãÊÇ·ñÏàÍ¬
             break;
@@ -153,11 +153,11 @@ void Route::insertAfter(Customer &item1, Customer &item2){
     }
 }
 
-void Route::insertAtHead(Customer &item){ 
+void Route::insertAtHead(Spot &item){ 
     // ÔÚ±íÍ·²åÈëitem
     // Ö»ÓĞµ±currentÖ¸ÕëÎªheadÊ±·µ»Øtrue
     if(current == head) {
-        Customer *temp = new Customer;
+        Spot *temp = new Spot;
         *temp = item;
         temp->next = head->next;
         head->next->front = temp;
@@ -172,11 +172,11 @@ void Route::insertAtHead(Customer &item){
     }
 }
 
-void Route::insertAtRear(Customer &item){   
+void Route::insertAtRear(Spot &item){   
     // ÔÚ±íÎ²²åÈëitem
     // Ö»ÓĞµ±±íÎ²²»ÊÇcurrent½ÚµãÊ±·µ»Øtrue
     if(current != rear) {
-        Customer *temp = new Customer;
+        Spot *temp = new Spot;
         *temp = item;
         temp->next = rear;
 	    temp->front = rear->front;
@@ -190,14 +190,14 @@ void Route::insertAtRear(Customer &item){
     }
 }
 
-void Route::deleteNode(Customer &item){
+void Route::deleteNode(Spot &item){
     // É¾³ıÁ´±íÖĞÓëitemÏàÍ¬µÄ½Úµã
     // Ö»ÄÜÉ¾³ıcurrentÖ¸ÕëºóÃæµÄ½Úµã
     if(current == rear) {
         // ÒÑ¾­×ßÍêÁËÂ·¾¶ÖĞµÄËùÓĞ½Úµã£¬½ûÖ¹É¾³ı
         throw out_of_range("Forbid deleting for we have finished the route!");
     }
-    Customer* temp1 = current->next;
+    Spot* temp1 = current->next;
 
     if (current == NULL) {
         throw out_of_range("The current node is NULL!");
@@ -215,8 +215,8 @@ void Route::deleteNode(Customer &item){
 	if(temp1 == rear) {  // Ã»ÓĞÕÒµ½
         throw out_of_range("We want to delete inexistent customer!");
 	} else {
-        Customer* nextNode = temp1->next;
-        Customer* frontNode = temp1->front;
+        Spot* nextNode = temp1->next;
+        Spot* frontNode = temp1->front;
         frontNode->next = nextNode;
         nextNode->front = frontNode;
         delete temp1;
@@ -228,17 +228,17 @@ void Route::deleteNode(Customer &item){
 
 
 //=============== »ñµÃµ¥½Úµã²Ù×÷ ================//
-Customer& Route::currentPos(){ // ·µ»Øµ±Ç°Î»ÖÃ
+Spot& Route::currentPos(){ // ·µ»Øµ±Ç°Î»ÖÃ
     return *current;
 }
 
-Customer& Route::getHeadNode() {
-    Customer* newCust = new Customer(*head);
+Spot& Route::getHeadNode() {
+    Spot* newCust = new Spot(*head);
     return *newCust; 
 }
 
-Customer& Route::getRearNode() {
-    Customer* newCust = new Customer(*rear);
+Spot& Route::getRearNode() {
+    Spot* newCust = new Spot(*rear);
     return *newCust; 
 }
 
@@ -248,13 +248,13 @@ int Route::getSize() {
     return this->size;
 }
 
-vector<Customer*> Route::getAllCustomer(){  // µÃµ½Â·¾¶ÖĞËùÓĞµÄ¹Ë¿Í½Úµã
+vector<Spot*> Route::getAllCustomer(){  // µÃµ½Â·¾¶ÖĞËùÓĞµÄ¹Ë¿Í½Úµã
     // ·µ»ØµÄcustomerÊÇÓÃnew²úÉúµÄ¶Ñ¶ÔÏó£¬Èç¹ûÄÚ´æÒç³öÎñ±Ø×¢Òâ´Ë´¦
-    vector<Customer*> customerSet(size);
-    Customer* ptr = head->next;
-    Customer* ptr2;
+    vector<Spot*> customerSet(size);
+    Spot* ptr = head->next;
+    Spot* ptr2;
     for(int i=0; i<size; i++){
-        ptr2 = new Customer;
+        ptr2 = new Spot();
         *ptr2 = *ptr;
         customerSet[i] = ptr2;
         ptr = ptr->next;
@@ -272,8 +272,8 @@ float Route::getLen(float DTpara[], bool artificial){   // µÃµ½Â·¾¶³¤¶È
     DTL1 = *(DTIter++);
     DTL2 = *(DTIter++);
 
-    Customer *ptr1 = head;
-    Customer *ptr2 = head->next;
+    Spot *ptr1 = head;
+    Spot *ptr2 = head->next;
     if(artificial == false) { // real vehicle routing scheme
         float len = 0;
         while(ptr2 != NULL){
@@ -328,8 +328,8 @@ float Route::getLen(float DTpara[], bool artificial){   // µÃµ½Â·¾¶³¤¶È
 float Route::getOriginLen() {  
     // µÃµ½·şÎñ¾²Ì¬½ÚµãµÄÂ·¾¶´ú¼Û
     // ×¢Òâ£¬ÒÔproperty±êÊ¶¹Ë¿ÍÊôĞÔ£¬µ±propertyÎª0Ê±±íÊ¾¾²Ì¬£¬Îª1±íÊ¾¶¯Ì¬
-    Customer* front = head;         // ËÑË÷µÄÆğÊ¼½Úµã
-    Customer* back = front->next;   // ÏÂÒ»¸ö½Úµã
+    Spot* front = head;         // ËÑË÷µÄÆğÊ¼½Úµã
+    Spot* back = front->next;   // ÏÂÒ»¸ö½Úµã
     float originLen = 0;
     while(back != NULL) {
         // Ê×Î²½Úµã£¬¼´²Ö¿â£¬ÔÚ´Ë¼ÆËã·¶Î§Ö®ÄÚ
@@ -378,8 +378,8 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
     DTL1 = *(DTIter++);
     DTL2 = *(DTIter++);
     vector<float> costArr(0);
-    Customer *ptr1 = head;   // Ç°½Úµã
-    Customer *ptr2, *ptr3;
+    Spot *ptr1 = head;   // Ç°½Úµã
+    Spot *ptr2, *ptr3;
     for(int i=0; i<size; i++){
         ptr2 = ptr1->next;  // µ±Ç°½Úµã
         ptr3 = ptr2->next;  // ºó½Úµã
@@ -425,12 +425,12 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
     return costArr;
 } 
 
-bool Route::timeWindowJudge(Customer *pre, int pos, Customer item){  
+bool Route::timeWindowJudge(Spot *pre, int pos, Spot item){  
     // ¼ÆËã°Ñitem²åÈëµ½preºóÃæÊÇ·ñ»áÎ¥·´Ê±¼ä´°Ô¼Êø
     // ÔİÊ±²»¿¼ÂÇ²Ö¿âµÄ¹Ø²ÖÊ±¼ä
     // posÊÇpreµÄÎ»ÖÃ, 0±íÊ¾²Ö¿â
     float time = arrivedTime[pos];
-    Customer *ptr1, *ptr2;
+    Spot *ptr1, *ptr2;
 
     // ½ÓÏÂÀ´ÊÇÅĞ¶Ï²åÈëitemºó»á²»»áÎ¥·´item»òÕßÆäºó¼Ì½ÚµãµÄÊ±¼ä´°Ô¼Êø
     if(time < pre->startTime){   // arrivedTime[pos]Ö»¼Óµ½ÁËpreµÄarrived time£¬Ã»ÓĞÅĞ¶ÏÊÇ·ñÌáÇ°µ½´ï
@@ -482,22 +482,22 @@ bool Route::timeWindowJudge(Customer *pre, int pos, Customer item){
     return mark;
 }
 
-void Route::computeInsertCost(Customer item, float &minValue, Customer &customer1, 
-        float &secondValue, Customer &customer2,
+void Route::computeInsertCost(Spot item, float &minValue, Spot &customer1, 
+        float &secondValue, Spot &customer2,
         float randomNoise, bool allowNegativeCost){
     // ¼ÆËãitem½ÚµãÔÚÂ·¾¶ÖĞµÄ×îĞ¡²åÈë´ú¼ÛºÍ´ÎĞ¡²åÈë´ú¼Û
     // ·µ»ØÆä×î¼Ñ/´Î¼Ñ²åÈëµãÇ°ÃæµÄ¹Ë¿Í½Úµã
     // pertubation: ÈÅ¶¯µÄÔëÉùÁ¿
     // allowNegativeCost: Îªtrue±íÊ¾²åÈë´ú¼ÛÈ¡·Ç¸ºÊı£¬Îªfalse±íÊ¾¿ÉÈ¡¸ºÊı
     // randomNoise: Ëæ»úÔëÉùÁ¿
-    Customer *pre = current;   // Ö»ÄÜ²åÈëµ½Î´×ß¹ıµÄ½ÚµãÇ°
-    Customer *succ = pre->next;
+    Spot *pre = current;   // Ö»ÄÜ²åÈëµ½Î´×ß¹ıµÄ½ÚµãÇ°
+    Spot *succ = pre->next;
     minValue = MAX_FLOAT;
     secondValue = MAX_FLOAT;
     customer1.id = -1;
     customer2.id = -1;
     int startPos = 0;
-    Customer* temp = head;
+    Spot* temp = head;
     while(temp!= pre) {
         temp = temp->next;
         startPos++;
@@ -531,14 +531,14 @@ void Route::refreshArrivedTime(){
     // ¸üĞÂÒ»ÏÂ¸÷¸ö½ÚµãµÄµ½´ïÊ±¿Ì
     // Í·½áµãµÄarrivedTime + serviceTime½«×÷Îª»ù×¼Ê±¼ä
     arrivedTime.clear();
-    Customer* tfront = head;
+    Spot* tfront = head;
     while(tfront != current->next){
         // ´ÓÍ·½áµãµ½current½ÚµãÖ®Ç°µÄarrivedTime¶¼²»ĞèÒªÖØĞÂ¼ÆËã
         arrivedTime.push_back(tfront->arrivedTime);
         tfront = tfront->next;
     }
     tfront = current;
-    Customer* tcurrent = current->next;
+    Spot* tcurrent = current->next;
     float time = current->arrivedTime + current->serviceTime;
     while(tcurrent != rear){
         // current½ÚµãºóÃæµÄarrivedTimeĞèÒªÖØĞÂ¼ÆËã
@@ -564,12 +564,12 @@ Route& Route::capture(){
     if(current->next == rear) { // currentÖ¸ÕëºóÒÑ¾­Ã»ÓĞÂ·¾¶
         return *ptr1;
     }
-    Customer *ptr2 = current->next;
-    Customer *ptr3 = NULL;
-    Customer *ptr4 = NULL;
+    Spot *ptr2 = current->next;
+    Spot *ptr3 = NULL;
+    Spot *ptr4 = NULL;
     ptr4 = ptr1->head;
     while(ptr2 != rear) {
-        ptr3 = new Customer;
+        ptr3 = new Spot;
         *ptr3 = *ptr2;
         ptr4->next = ptr3;
         ptr3->front = ptr4;
@@ -586,8 +586,8 @@ Route& Route::capture(){
 }
 
 void Route::replaceRoute(const Route &route) {  // ÒÔrouteÌæ»»µôcurrentÖ¸ÕëºóµÄÂ·¾¶
-    Customer* ptr1;
-    Customer *ptr2, *ptr3;
+    Spot* ptr1;
+    Spot *ptr2, *ptr3;
     if(current->next != rear) { // currentºóÃæ»¹ÓĞ½Úµã£¬ĞèÒªÏÈÇå³ıÔ­ÓĞÂ·¾¶
         ptr2 = current->next;
         // Çå³ıÔ­Â·¾¶ÖĞcurrentÖ¸ÕëºóÃæµÄÔªËØ
@@ -605,7 +605,7 @@ void Route::replaceRoute(const Route &route) {  // ÒÔrouteÌæ»»µôcurrentÖ¸ÕëºóµÄÂ
     ptr3 = current;
     while(ptr1 != route.rear){  
         quantity = quantity + ptr1->quantity;
-        ptr2 = new Customer;
+        ptr2 = new Spot();
         *ptr2 = *ptr1;
         ptr3->next = ptr2;
         ptr2->front = ptr3;
@@ -623,8 +623,8 @@ void Route::replaceRoute(const Route &route) {  // ÒÔrouteÌæ»»µôcurrentÖ¸ÕëºóµÄÂ
 bool Route::checkPassRoute(){
     // ¼ì²éÒÑ×ß¹ıµÄÂ·¾¶ÊÇ·ñÎ¥·´Ê±¼ä´°Ô¼Êø
     // ÕâÀïÖ»¼ì²éµ½´ïÏÂÒ»¸ö½ÚµãµÄÊ±¿ÌÊÇ·ñĞ¡ÓÚÇ°Ò»¸ö½ÚµãµÄÊ±¼ä´°ÆğÊ¼Ê±¿Ì
-    Customer* ptr1 = head;
-    Customer* ptr2 = head->next;
+    Spot* ptr1 = head;
+    Spot* ptr2 = head->next;
     bool mark = true;
     if(current == head) {  // ³µ×Ó»¹Ã»´Ó²Ö¿â³ö·¢£¬ÎŞĞè¼ì²é
         return true;
@@ -647,7 +647,7 @@ vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId, int &retai
     // ·µ»Ø±£ÁôµÄ½ÚµãÔÚvalidCustomerIdÖĞµÄÎ»ÖÃ
     vector<int> posVec;
     posVec.push_back(0);   // ²Ö¿â½ÚµãÎ»ÖÃ
-    Customer* ptr1 = head->next;
+    Spot* ptr1 = head->next;
     while(ptr1 != rear) {
         int currentId = ptr1->id;
         vector<int>::iterator intIter = find(validCustomerId.begin(), 

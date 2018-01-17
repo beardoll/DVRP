@@ -1,7 +1,7 @@
 #ifndef _LNSBASE_H
 #define _LNSBASE_H
 
-#include "../baseclass/Customer.h"
+#include "../baseclass/Spot.h"
 #include "../baseclass/Car.h"
 #include <vector>
 
@@ -13,16 +13,16 @@ using namespace std;
 class LNSBase {
     public:
         LNSBase(int pshaw, int pworst, float eta, float capacity, float *randomRange, 
-                vector<Customer*> allCustomer, Customer depot, bool herarchicalCar=false, 
+                vector<Spot*> allCustomer, Spot depot, bool herarchicalCar=false, 
                 bool allowNegativeCost=false);
         ~LNSBase() { delete DTpara; }
         void resetDTpara(float *DTpara);
-        void shawRemoval(vector<Car*> &originCarSet, vector<Customer*> &removedCustomer, int q);
-        void randomRemoval(vector<Car*> &originCarSet, vector<Customer*> &removedCustomer, int q);
-        void worstRemoval(vector<Car*> &originCarSet, vector<Customer*> &removedCustomer, int q);
-        void greedyInsert(vector<Car*> &removedCarSet, vector<Customer*> removedCustomer, 
+        void shawRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCustomer, int q);
+        void randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCustomer, int q);
+        void worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCustomer, int q);
+        void greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCustomer, 
                 bool noiseAdd);
-        void regretInsert(vector<Car*> &removedCarSet, vector<Customer*> removedCustomer, 
+        void regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCustomer, 
                 bool noiseAdd);
         void reallocateCarIndex(vector<Car*> &originCarSet);
         void removeNullRoute(vector<Car*> &originCarSet, bool mark=false);
@@ -39,8 +39,8 @@ class LNSBase {
         float baseNoise;
         float *DTpara; // 不同优先级顾客的奖惩因子
         float *randomRange; // 随机化噪声量的随机数左值和右值
-        vector<Customer*> allCustomer;
-        Customer depot;
+        vector<Spot*> allCustomer;
+        Spot depot;
         // 是否存在virtual car，若存在则插入过程中新开车辆只能是
         // virtual car
         bool hierarchicalCar;

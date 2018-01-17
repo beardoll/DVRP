@@ -16,7 +16,7 @@
 #include "../baseclass/Matrix.h"
 #include "../algorithm/ALNS.h"
 
-bool ascendSortForCustId(Customer* item1, Customer* item2) {
+bool ascendSortForCustId(Spot* item1, Spot* item2) {
     return item1->id < item2->id;
 }
 
@@ -113,8 +113,8 @@ int roulette(float *probability, int num) {
 
 
 
-void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &staticCustomer, 
-        vector<Customer*> &dynamicCustomer, float dynamicism) {
+void seperateCustomer(vector<Spot*> originCustomerSet, vector<Spot*> &staticCustomer, 
+        vector<Spot*> &dynamicCustomer, float dynamicism) {
     // 将顾客集分成static和dynamic两个集合
     // Args:
     //   * originCustomerSet: 所有的顾客集合
@@ -130,10 +130,10 @@ void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &st
     vector<int> staticPos;          	
     // 动态到达的BHs在BHs集合下的坐标
     vector<int> dynamicPos = getRandom(0, customerAmount, dynamicNum, staticPos);
-    vector<Customer*>::iterator iter;
+    vector<Spot*>::iterator iter;
     staticCustomer.resize(0);
     dynamicCustomer.resize(0);
-    vector<Customer*> originCopy = copyCustomerSet(originCustomerSet);
+    vector<Spot*> originCopy = copyCustomerSet(originCustomerSet);
     for (iter=originCopy.begin(); iter < originCopy.end(); iter++) {
         // 当前顾客节点于originCustomerSet中的定位
         // 这里默认originCustomerSet是按id升序排列
@@ -159,13 +159,13 @@ void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
     // Returns:
     //   * bestRoute: 最佳服务路线，由ALNS求得
     //   * bestCost: 最小代价
-    Customer depot = carSet[0]->getRearNode();
+    Spot depot = carSet[0]->getRearNode();
     float capacity = carSet[0]->getCapacity();
-    vector<Customer*> allCustomer;
+    vector<Spot*> allCustomer;
     vector<Car*>::iterator carIter;
-    vector<Customer*>::iterator custIter;
+    vector<Spot*>::iterator custIter;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
-        vector<Customer*> tempCust = (*carIter)->getAllCustomer();
+        vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         cout << "Loading the " << carIter - carSet.begin() << "car data!" << endl;
         for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
             allCustomer.push_back(*custIter);
@@ -195,8 +195,8 @@ bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2){
     if(carSet1.size() != carSet2.size()) {return false;}
     bool mark = true;
     for(int i=0; i<(int)carSet1.size(); i++){
-        vector<Customer*> cust1 = carSet1[i]->getRoute().getAllCustomer();
-        vector<Customer*> cust2 = carSet2[i]->getRoute().getAllCustomer();
+        vector<Spot*> cust1 = carSet1[i]->getRoute().getAllCustomer();
+        vector<Spot*> cust2 = carSet2[i]->getRoute().getAllCustomer();
         if(cust1.size() != cust2.size()) {mark = false; break;}
         for(int j=0; j<(int)cust1.size(); j++) {
             if(cust1[j]->id != cust2[j]->id) {
@@ -210,7 +210,7 @@ bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2){
     return mark;
 }
 
-bool customerSetEqual(vector<Customer*>c1, vector<Customer*>c2){
+bool customerSetEqual(vector<Spot*>c1, vector<Spot*>c2){
     // 判断customer集合c1与c2是否一样（根据id判断）
     if(c1.size() != c2.size()) {return false;}
     bool mark = true;
@@ -224,13 +224,13 @@ bool customerSetEqual(vector<Customer*>c1, vector<Customer*>c2){
 
 }
 
-vector<Customer*> extractCustomer(vector<Car*> plan) {
+vector<Spot*> extractCustomer(vector<Car*> plan) {
     // 将plan中的顾客节点全部抽取出来
-    vector<Customer*> allCustomer;
-    vector<Customer*>::iterator custIter;
+    vector<Spot*> allCustomer;
+    vector<Spot*>::iterator custIter;
     vector<Car*>::iterator carIter;
     for (carIter=plan.begin(); carIter<plan.end(); carIter++) {
-        vector<Customer*> temp = (*carIter)->getAllCustomer();
+        vector<Spot*> temp = (*carIter)->getAllCustomer();
         for (custIter=temp.begin(); custIter<temp.end(); custIter++) {
             allCustomer.push_back(*custIter);
         }
@@ -238,10 +238,10 @@ vector<Customer*> extractCustomer(vector<Car*> plan) {
     return allCustomer;
 }
 
-vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*> originCustomer) {
+vector<Spot*> mergeCustomer(vector<Spot*> waitCustomer, vector<Spot*> originCustomer) {
     // 将waitCustomer和originCustomer融合为一个数组
-    vector<Customer*> allCustomer;
-    vector<Customer*>::iterator custIter;
+    vector<Spot*> allCustomer;
+    vector<Spot*>::iterator custIter;
     for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
         allCustomer.push_back(new Customer(**custIter));
     }
@@ -251,11 +251,11 @@ vector<Customer*> mergeCustomer(vector<Customer*> waitCustomer, vector<Customer*
     return allCustomer;
 }
 
-vector<int> getID(vector<Customer*> customerSet){
+vector<int> getID(vector<Spot*> customerSet){
     // 得到customerSet的所有ID
     vector<int> ids(0);
     ids.reserve(customerSet.end() - customerSet.begin());
-    vector<Customer*>::iterator iter = customerSet.begin();
+    vector<Spot*>::iterator iter = customerSet.begin();
     for(iter; iter<customerSet.end(); iter++){
         ids.push_back((*iter)->id);
     }
@@ -267,7 +267,7 @@ vector<int> getID(vector<Car*> carSet) {
     vector<int> ids(0);
     vector<Car*>::iterator carIter;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
-        vector<Customer*> tempCust = (*carIter)->getAllCustomer();
+        vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         vector<int> currentIDs = getID(tempCust);
         ids.insert(ids.end(), currentIDs.begin(), currentIDs.end());
         deleteCustomerSet(tempCust);
@@ -292,7 +292,7 @@ void showAllCustomerID(vector<Car*> carSet) {
     cout << endl;
 }
 
-void showAllCustomerID(vector<Customer*> customerSet) {
+void showAllCustomerID(vector<Spot*> customerSet) {
     vector<int> allCustomerId = getID(customerSet);
     sort(allCustomerId.begin(), allCustomerId.end());
     vector<int>::iterator intIter;
@@ -311,13 +311,13 @@ void showDetailForPlan(vector<Car*> carSet) {
     // 展示carSet中每一条路径的具体信息
     // 包括顾客顺序，以及每个顾客的位置，时间窗，到达时间等
     vector<Car*>::iterator carIter;
-    vector<Customer*>::iterator custIter;
+    vector<Spot*>::iterator custIter;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
         int index = carIter - carSet.begin();
         cout << "----------------------" << endl;
         cout << "Route " << index << ":" << endl;
         cout << "Depot: x-" << 40 << "\t" << " y-" << 50 << endl;
-        vector<Customer*> tempCust = (*carIter)->getAllCustomer();
+        vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
             cout << "Customer #" << custIter-tempCust.begin() << ": x-" << (*custIter)->x << "\t" <<
                 "y-" << (*custIter)->y << "\t" << "AT-" << (*custIter)->arrivedTime << "\t" << "ST-" <<

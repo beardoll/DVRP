@@ -4,6 +4,7 @@ SET(SRC_LIST main.cpp
         algorithm/SSLR.cpp
         baseclass/Car.cpp
         baseclass/Route.cpp
+        baseclass/Spot.cpp
         modules/Dispatcher.cpp
         modules/Simulator.cpp
         modules/Timer.cpp
@@ -11,7 +12,6 @@ SET(SRC_LIST main.cpp
         run/SetBench.cpp
         run/TxtRecorder.cpp
         run/Config.cpp
-        xml/LoadSolomon.cpp
         xml/BenchWrapper.cpp
         xml/tinystr.cpp
         xml/tinyxml.cpp

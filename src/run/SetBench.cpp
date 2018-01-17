@@ -4,31 +4,75 @@
 #include<algorithm>
 #include<cmath>
 
-SetBench::SetBench(vector<Customer*> originCustomerSet) {
-    this->originCustomerSet = copyCustomerSet(originCustomerSet);
+SetBench::SetBench() {
+    // 将整个地图分成三圈，depot为中心，商家处于最内环，而顾客处于最外环
+    // Args(来自于Config.h):
+    //   * R1, R2, R3: 各环与depot的距离
+    //   * NUM_STORE: 商家数目
+    //   * NUM_CUSTOMER: 顾客数目
+    //   * NUM_SUBCIRCLE: 顾客区域划分数目
+    //   * LAMBDA: Poisson到达过程参数，vector类型，长度等于NUM_SUBCIRCLE
+    this->r1 = R1;
+    this->r2 = R2;
+    this->r3 = R3;
+    this->numStore = NUM_STORE;
+    this->numSubcircle = NUM_SUBCIRCLE;
+    this->lambda = LAMBDA;
+    this->currentID;
 } // 构造函数
 
-void SetBench::constructProbInfo(){ 
-    // 设置各个节点的概率信息
-    vector<int> BHsPos(0); // BHs的位置
-    int i;
-    // float temp[6] = {0.4, 0.2, 0.2, 0.1, 0.1, 0};
-    vector<Customer*>::iterator iter = originCustomerSet.begin();
-    for(iter; iter < originCustomerSet.end(); iter++) {
-        // vector<float> dist = randomVec(timeSlotNum);   // 在各个slot提出需求的概率
-        // vector<float> dist(temp, temp+6);
-        int index = random(0, TIME_SLOT_NUM-1);
-        for(i=0; i<TIME_SLOT_NUM; i++) {
-            if(i == index) {
-                (*iter)->timeProb[i] = 0.5;
-            } else if(i == TIME_SLOT_NUM - 1) {
-                (*iter)->timeProb[i] = 0;
-            } else {
-                (*iter)->timeProb[i] = 0.5/(TIME_SLOT_NUM - 1);
+vector<Customer*> SetBench::constructStoreSet() {
+    // 构造商家集合
+    float innerR = r1;
+    float outerR = r2;
+    vector<Customer*> storeSet;
+    for(int i=0; i<numStore; i++) {
+        float r = random(innerR, outerR);
+        float theta = random(0, 2*PI);
+        Customer store = new Customer;
+        store->id = currentID++;
+        store->x = r * sin(theta);
+        store->y = r * cos(theta);
+        store->type = "P";
+        store->startTime = 0;
+        store->serviceTime = random(0, 10);
+        store->prop = 0;
+        storeSet.push_back(store);
+    }
+    return storeSet;
+}
+
+vector<Customer*> SetBench::constructCustomerSet() {
+    vector<Customer*> customerSet;
+    float innerR = r2;
+    float outerR = r3;
+    int count = 0;
+    float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM;
+    float deltaT = 10; // 采样间隔时间
+    float deltaAngle = 2 * PI / numSubcircle;  // 各个区域夹角
+    int numSlice = int(timeHorizon/deltaT);
+    while(Customer.size() < numCustomer){
+        for(int t=0; t<numSlice; t++) {
+            for(int j=0; j<numSubcircle; j++) {
+                float p = lambda[j] * deltaT * exp(-lambda[j] * deltaT);
+                if(p < random(0,1)) {
+                    // 按概率生成顾客
+                    float theta = random(deltaAngle*j, deltaAngle*(j+1));
+                    float r = random(innerR, outerR);
+                    Customer c = new Customer;
+                    c->id = currentID++;
+                    c->x = r * sin(theta);
+                    c->y = r * cos(theta);
+                    c->serviceTime = random(0, 10);
+                    c->prop = 0;
+                    c->choice = int(random(0, numStore));
+                    customerSet.push_back(c);
+                    if(customerSet.size() == numCustomer) break;
+                }
             }
-            //(*iter)->timeProb[i] = dist[i];
         }
     }
+    return customerSet;
 }
 
 void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*> &dynamicCustomerSet){

@@ -21,17 +21,17 @@ public:
     void clear();     // 清空链表
 
     // 插入以及删除节点操作
-    void insertAfter(Spot &item1, Spot &item2); // 在链表中与item1相同的节点后面插入节点item2
-    void insertAtHead(Spot &item);   // 在表头插入item
-    void insertAtRear(Spot &item);    // 在表尾插入item
-    void deleteNode(Spot &item);   // 在链表中删除与item相同的节点
+    // 在链表中与item1相同的节点后面插入节点item2
+    void insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer); 
+    void insertAtHead(Spot *store, Spot *customer);   // 在表头插入item
+    void deleteNode(Spot *store, Spot *customer);   // 在链表中删除与item相同的节点
 
     // 获得单节点操作
-    Spot& currentPos();   // 返回当前位置
-    Spot& nextPos() {return *(current->next);}      // 下一个节点的位置
-    Spot& pastPos() {return *(current->front);}     // 前一个节点的位置
-    Spot& getHeadNode();    // 得到头结点
-    Spot& getRearNode();    // 得到尾节点
+    Spot* currentPos();   // 返回当前位置
+    Spot* nextPos() {return *(current->next);}      // 下一个节点的位置
+    Spot* pastPos() {return *(current->front);}     // 前一个节点的位置
+    Spot* getHeadNode();    // 得到头结点
+    Spot* getRearNode();    // 得到尾节点
 
     // 获取链表属性
     float getQuantity() {return this->quantity;}            // 得到本车已使用的容量(装载顾客)

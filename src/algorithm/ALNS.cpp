@@ -10,7 +10,7 @@ using namespace std;
 
 float RANDOM_RANGE_ALNS[2] = {-1, 1};
 
-ALNS::ALNS(vector<Spot*> allCustomer, Customer depot, float capacity, int maxIter,
+ALNS::ALNS(vector<Spot*> allCustomer, Spot depot, float capacity, int maxIter,
             bool verbose, int pshaw, int pworst, float eta): LNSBase(
                 pshaw, pworst, eta, capacity, RANDOM_RANGE_ALNS, allCustomer, depot) 
 {

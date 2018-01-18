@@ -18,6 +18,7 @@
 //#include "xml/LoadSolomon.h"
 #include "xml/BenchWrapper.h"
 #include "run/Config.h"
+#include "baseclass/Spot.h"
 
 using namespace std;
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]){
         vector<Spot*> staticCustomer, dynamicCustomer;
         vector<Spot*> store;
 
-        SetBench sb();
+        SetBench sb;
         sb.construct(staticCustomer, dynamicCustomer, store, depot);
         string savePath = BENCH_FILE_PATH + "bench_exp.xml";
         BenchWrapper bw;

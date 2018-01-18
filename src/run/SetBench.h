@@ -12,6 +12,7 @@ public:
     ~SetBench(){};  // 析构函数
     void constructStoreSet();
     void constructCustomerSet();
+    void constructDepot();
     void construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynamicCustomerSet,
             vector<Spot*> &storeSet, Spot &depot);   // 创造顾客样本
 private:

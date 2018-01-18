@@ -95,8 +95,8 @@ bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleN
     return mark;
 }
 
-float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> waitCustomer, Customer depot, float maxd,
-        float mind){
+float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> waitCustomer, Spot depot,
+        float maxd, float mind){
     // 计算对不同优先级顾客的奖惩系数
     // Args:
     //   * maxd: 所有顾客之间的最大距离

@@ -11,8 +11,12 @@
 #include<sstream>
 
 void computeMax(vector<Spot*> allCustomer, float &maxd, float &mind, float &maxquantity){
-    // 计算所有顾客之间的最大/最小距离以及顾客的最大货物需求量
+    // 计算Pickup-Delivery对之间的最大/最小距离以及Delivery节点的最大货物需求量
+    // e.g: (p1, d1)与(p2, d2)之间的距离为dist(p1, p2) + dist(d1, d2)
+    // 我们利用customer节点的choice指针来找到它所选择的商店
     int customerAmount = (int)allCustomer.size();
+    // D1: 将对角线元素设置为0(便于取最大值)
+    // D2: 将对角线元素设置为MAX_FLOAT(便于取最小值)
     Matrix<float> D1(customerAmount, customerAmount);
     Matrix<float> D2(customerAmount, customerAmount);
     float tempmax = -MAX_FLOAT;
@@ -23,8 +27,12 @@ void computeMax(vector<Spot*> allCustomer, float &maxd, float &mind, float &maxq
         D1.setValue(i,i, 0.0f);
         D2.setValue(i,i, MAX_FLOAT);
         for(int j=i+1; j<customerAmount; j++){
-            float temp = sqrt(pow(allCustomer[i]->x - allCustomer[j]->x, 2) + 
-                    pow(allCustomer[i]->y - allCustomer[j]->y, 2));
+            Spot *p1 = allCustomer[i];
+            Spot *d1 = allCustomer[i]->choice;
+            Spot *p2 = allCustomer[j];
+            Spot *d2 = allCustomer[j]->choice;
+            float temp = sqrt(pow(p1->x - p2->x, 2) + pow(p1->y - p2->y, 2)) + 
+                sqrt(pow(d1->x - d2->x, 2) + pow(d1->y - d2->y, 2));
             D1.setValue(i, j, temp);
             D2.setValue(i, j, temp);
             D1.setValue(j, i, temp);
@@ -38,7 +46,7 @@ void computeMax(vector<Spot*> allCustomer, float &maxd, float &mind, float &maxq
 }
 
 LNSBase::LNSBase(int pshaw, int pworst, float eta, float capacity, float *randomRange, 
-        vector<Spot*> allCustomer, Customer depot, bool hierarchicalCar, 
+        vector<Spot*> allCustomer, Spot depot, bool hierarchicalCar, 
         bool allowNegativeCost){
     this->allCustomer = allCustomer;
     computeMax(allCustomer, maxd, mind, maxquantity);
@@ -603,11 +611,11 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
     // 在每条路径中的最小插入代价矩阵（行坐标：车辆，列坐标：顾客）
     Matrix<float> minInsertPerRoute(carNum, removedCustomerNum);     	
     // 在每条路径中的最小插入代价所对应的节点
-    Matrix<Customer> minInsertPos(carNum, removedCustomerNum);       	
+    Matrix<Spot> minInsertPos(carNum, removedCustomerNum);       	
     // 在每条路径中的次小插入代价矩阵
     Matrix<float> secondInsertPerRoute(carNum, removedCustomerNum);  	
     // 在每条路径中次小插入代价所对应的节点
-    Matrix<Customer> secondInsertPos(carNum, removedCustomerNum);
+    Matrix<Spot> secondInsertPos(carNum, removedCustomerNum);
     vector<int> allIndex(0);   // 对removedCustomer进行编号,1,2,3,...
 
     float tempBaseNoise = baseNoise;

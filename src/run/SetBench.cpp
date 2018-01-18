@@ -84,13 +84,13 @@ void SetBench::constructCustomerSet() {
     this->customerSet = customerSet;
 }
 
-void constructDepot() {
+void SetBench::constructDepot() {
     // ²Ö¿â½Úµã
     Spot depot = new Spot();
     depot->x = 0;
     depot->y = 0;
     depot->id = -1;
-
+    this->depot = depot;
 }
 
 void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynamicCustomerSet,

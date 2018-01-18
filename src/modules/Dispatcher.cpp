@@ -21,7 +21,7 @@ Dispatcher::Dispatcher(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCus
     vector<Spot*>::iterator custIter = staticCustomerSet.begin();
     for(custIter; custIter < staticCustomerSet.end(); custIter++) {
         // 在计划开始前已经提出需求的顾客都属于promiseCustomer
-        Spot* newCust = new Customer(**custIter);
+        Spot* newCust = new Spot(**custIter);
         allCustomer.push_back(newCust);
         promisedCustomerId.push_back(newCust->id);
     }
@@ -153,7 +153,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         cout << ostr.str();
         float currentTime = slotIndex * TIME_SLOT_LEN;
         for(custIdIter = waitCustomerId.begin(); custIdIter < waitCustomerId.end(); custIdIter++) {
-            Spot *temp = new Customer;
+            Spot *temp = new Spot();
             *temp = *allCustomer[*custIdIter - 1];
             waitCustomerSet.push_back(temp);
         }

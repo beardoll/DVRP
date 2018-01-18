@@ -1,5 +1,4 @@
 #include "Route.h"
-#include "Spot.h"
 #include<iostream>
 #include<cassert>
 #include<vector>
@@ -15,10 +14,8 @@ using namespace std;
 Route::Route(Spot &headNode, Spot &rearNode, float capacity):capacity(capacity)
 { 
     // 构造函数
-    head = new Spot;
-    *head = headNode;  // 复制节点
-    rear = new Spot;
-    *rear = rearNode; 
+    head = new Spot(headNode);
+    rear = new Spot(rearNode);
     head->front = NULL;
     head->next = rear;
     rear->front = head;
@@ -49,13 +46,12 @@ void Route::copy(const Route &L){
     while(originPtr!=NULL){
         // 从头节点一直复制到尾节点
         if(originPtr == L.head){  // 正在复制第一个节点
-            copyPtr = new Spot;
+            copyPtr = new Spot();
             copyPtr->front = NULL;
             head = copyPtr;
             *copyPtr = *L.head;
         } else{
-            temp = new Spot;
-            *temp = *originPtr;
+            temp = new Spot(*originPtr);
             temp->front = copyPtr;
             copyPtr->next = temp;
             copyPtr = temp;
@@ -127,119 +123,122 @@ void Route::printRoute(){ // 打印链表
 
 
 //=============== 插入以及删除节点操作 ================//
-void Route::insertAfter(Spot &item1, Spot &item2){
-    // 在链表中与item1相同的节点后面插入节点item2
-    Spot* temp = new Spot;
-    *temp = item2;
-    Spot* ptr = head;
-    while(ptr!=rear){
-        if (ptr->id == item1.id){  // 根据id来判断两个节点是否相同
+void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
+    // 在链表中refStore指针指向的节点后面插入store指针指向节点
+    // 在链表中refCustomer指针指向的节点后面插入customer指向节点
+    Spot *tempstore = new Spot(store);
+    Spot *tempCustomer = new Spot(customer)
+    Spot *ptr = head;
+    int count = 2;   // 必须两个ref节点都找到
+    while(ptr != rear){
+        if (ptr == refStore){  
+            count--;
+        }
+        if (ptr == refCustomer) {
+            count--;
+        }
+        if(count == 0) {
             break;
         }
         ptr = ptr->next;
     }
-    if(ptr == rear) {
-        // 没有找到，返回false
-        delete temp;
+    if(count > 0) {
+        // 没有完全找到，返回false
         throw out_of_range("Cannot find the position to insert!");
     } else{
-        quantity = quantity + item2.quantity;
-        temp->next = ptr->next;
-        ptr->next->front = temp;
-        temp->front = ptr;
-        ptr->next = temp;
+        // 更新quantity的值，并且插入store以及customer
+        quantity += customer->quantity;
+        refStore->next->front = tempStore;
+        tempStore->next = refStore->next;
+        refStore->next = tempStore;
+        tempstore->front = refStore;
+        refCustomer->next->front = tempCustomer;
+        tempCustomer->next = refCustomer->next;
+        refCustomer->next = refCustomer;
+        tempCustomer->front = refCustomer;
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
     }
 }
 
-void Route::insertAtHead(Spot &item){ 
-    // 在表头插入item
+void Route::insertAtHead(Spot *store, Spot *customer){ 
+    // 在表头插入store和customer
+    // 注意store须在customer前面（对于pickup-delivery问题，本函数慎用）
     // 只有当current指针为head时返回true
-    if(current == head) {
-        Spot *temp = new Spot;
-        *temp = item;
-        temp->next = head->next;
-        head->next->front = temp;
-        head->next = temp;
-        temp->front = head;
-        quantity = quantity + item.quantity;
+    if(current == head && size == 0) {
+        // 要求路径必须为空才可以这种方式插入
+        Spot *tempStore = new Spot(*store);
+        Spot *tempCustomer = new Spot(*customer);
+        head->next = tempStore;
+        tempStore->next = tempCustomer;
+        tempStore->front = head;
+        rear->front = tempCustomer;
+        tempCustomer->next = rear;
+        quantity = quantity + tempCustomer->quantity;
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
     }
     else{
-        throw out_of_range("The car has departured, cannot insert node after head!");
+        throw out_of_range("Cannot insert node after head!");
     }
 }
 
-void Route::insertAtRear(Spot &item){   
-    // 在表尾插入item
-    // 只有当表尾不是current节点时返回true
-    if(current != rear) {
-        Spot *temp = new Spot;
-        *temp = item;
-        temp->next = rear;
-	    temp->front = rear->front;
-	    rear->front->next = temp;
-	    rear->front = temp;
-	    quantity = quantity + item.quantity;
-	    size++;
-	    refreshArrivedTime();  // 插入节点后，更新arrivedTime
-	} else {
-        throw out_of_range("Has reached the end node, cannot insert any nodes!");
-    }
-}
 
-void Route::deleteNode(Spot &item){
-    // 删除链表中与item相同的节点
+void Route::deleteNode(Spot *store, Spot *customer){
+    // 删除链表中指针值与store和customer相同的节点
     // 只能删除current指针后面的节点
     if(current == rear) {
         // 已经走完了路径中的所有节点，禁止删除
         throw out_of_range("Forbid deleting for we have finished the route!");
     }
-    Spot* temp1 = current->next;
 
     if (current == NULL) {
         throw out_of_range("The current node is NULL!");
     }
-    if (temp1 == NULL) {
-        throw out_of_range("We have reached the rear!");
-    }
 
+    Spot* temp1 = current->next;
+    int count = 2;  // 需要同时找到store和customer才可删除
     while(temp1!=rear) {
-        if(temp1->id == item.id) {
-            break;
+        if(temp1 == store) {
+            count--;
         }
+        if(temp1 == customer) {
+            count--;
+        }
+        if(count == 0) breakl
         temp1 = temp1->next;
 	}
-	if(temp1 == rear) {  // 没有找到
+	if(count > 0) {  
+        // 没有完全找到
         throw out_of_range("We want to delete inexistent customer!");
 	} else {
-        Spot* nextNode = temp1->next;
-        Spot* frontNode = temp1->front;
-        frontNode->next = nextNode;
-        nextNode->front = frontNode;
-        delete temp1;
+        store->front->next = store->next;
+        store->next->front = store->front;
+        customer->front->next = customer->next;
+        customer->next->front = customer->front;
+        delete store;
+        delete customer;
         size--;
-        quantity = quantity - item.quantity;
+        quantity = quantity - customer.quantity;
         refreshArrivedTime();  // 删除节点后，更新arrivedTime
     }
 }
 
 
 //=============== 获得单节点操作 ================//
-Spot& Route::currentPos(){ // 返回当前位置
-    return *current;
+Spot* Route::currentPos(){ 
+    // 返回当前位置
+    return current;
 }
 
-Spot& Route::getHeadNode() {
-    Spot* newCust = new Spot(*head);
-    return *newCust; 
+Spot* Route::getHeadNode() {
+    // 返回头结点
+    return head; 
 }
 
-Spot& Route::getRearNode() {
-    Spot* newCust = new Spot(*rear);
-    return *newCust; 
+Spot* Route::getRearNode() {
+    // 返回尾节点
+    return rear; 
 }
 
 
@@ -248,7 +247,8 @@ int Route::getSize() {
     return this->size;
 }
 
-vector<Spot*> Route::getAllCustomer(){  // 得到路径中所有的顾客节点
+vector<Spot*> Route::getAllCustomer(){  
+    // 得到路径中所有的顾客节点
     // 返回的customer是用new产生的堆对象，如果内存溢出务必注意此处
     vector<Spot*> customerSet(size);
     Spot* ptr = head->next;
@@ -425,23 +425,26 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
     return costArr;
 } 
 
-bool Route::timeWindowJudge(Spot *pre, int pos, Spot item){  
-    // 计算把item插入到pre后面是否会违反时间窗约束
-    // 暂时不考虑仓库的关仓时间
-    // pos是pre的位置, 0表示仓库
+bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
+    // 判断将store插入到refStore后面并且将customer插入到refCustomer后面是否会违反时间窗约束
+    // 注意refStore和refCustomer都可能是"store"或者"customer"
     float time = arrivedTime[pos];
     Spot *ptr1, *ptr2;
 
     // 接下来是判断插入item后会不会违反item或者其后继节点的时间窗约束
-    if(time < pre->startTime){   // arrivedTime[pos]只加到了pre的arrived time，没有判断是否提前到达
+    if(pre->type == 'C' && time < pre->startTime){   
+        // arrivedTime[pos]只加到了pre的arrived time，没有判断是否提前到达
+        // 只考虑customer节点的时间窗
         time = pre->startTime;
     }
     time += pre->serviceTime;
     time = time + sqrt(pow(pre->x - item.x, 2) + pow(pre->y - item.y, 2));
-    if(time > item.endTime) {  // 违反了时间窗约束
+    if(time > item.endTime && item.type=="C") {  
+        // 违反了时间窗约束
+        // 只考虑customer节点的时间窗
         return false;
     } else{
-        if(time < item.startTime) {
+        if(time < item.startTimei && item.type=="C") {
             time = item.startTime;
         }
         time = time + item.serviceTime;
@@ -545,7 +548,8 @@ void Route::refreshArrivedTime(){
         time = time + sqrt(pow(tfront->x - tcurrent->x, 2) + pow(tfront->y - tcurrent->y, 2));
         arrivedTime.push_back(time);
         // tcurrent->arrivedTime = time;
-        if(time < tcurrent->startTime){
+        if(tcurrent->type == "C" && time < tcurrent->startTime){
+            // 只有顾客节点有“时间窗”
             time = tcurrent->startTime;
         }
         time = time + tcurrent->serviceTime;
@@ -569,8 +573,7 @@ Route& Route::capture(){
     Spot *ptr4 = NULL;
     ptr4 = ptr1->head;
     while(ptr2 != rear) {
-        ptr3 = new Spot;
-        *ptr3 = *ptr2;
+        ptr3 = new Spot(*ptr2);
         ptr4->next = ptr3;
         ptr3->front = ptr4;
         ptr4 = ptr3;

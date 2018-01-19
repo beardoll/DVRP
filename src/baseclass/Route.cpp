@@ -428,13 +428,13 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
 bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
     // 判断将store插入到refStore后面并且将customer插入到refCustomer后面是否会违反时间窗约束
     // 注意refStore和refCustomer都可能是"store"或者"customer"
-	// 但是refStore必定在refCustomer前面
+    // 但是refStore必定在refCustomer前面
     int pos = 0;
-	for(Spot *temp=head; temp!=refStore; temp=temp->next) {
-		// 找到refStore在路径中的位置，以提取arrivedTime。
-		pos++;
-	}
-	float time = arrivedTime[pos];
+    for(Spot *temp=head; temp!=refStore; temp=temp->next) {
+        // 找到refStore在路径中的位置，以提取arrivedTime。
+        pos++;
+    }
+    float time = arrivedTime[pos];
     Spot *ptr1, *ptr2;
 
     // 接下来是判断插入store以及customer会否违反时间窗约束
@@ -443,41 +443,41 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
         // 只考虑customer节点的时间窗
         time = refStore->startTime;
     }
-	// 判断是否违反store后面的时间窗约束
-	// 注意store本身没有时间窗约束
-	time += store->serviceTime;
-	Spot* pre, current;
-	pre = store;
-	current = refStore->next;
-	bool mark = true; 
-	while(true) {
-		if(current == rear) break;
-		if(pre == refCustomer) {
-			// customer插入到refCustomer后面
-			current = customer;
-		}
-		float travelLen = sqrt(pow(pre->x - current->x, 2) + pow(pre->y - current->y, 2));
-		time += travelLen;
-		if(current->type == "C") {
-			if(time > current->endTime) {
-				mark = false;
-				break;
-			}
-			if(time < current->startTime) {
-				time = current->startTime;
-			}
-		}
-		time += current->serviceTime;
-		if(pre == refCustomer) {
-			// pre由customer暂时代替，但是不真正地将customer插入
-			current = pre->next;
-			pre = customer;
-		} else {
-			pre = current;
-			current = current->next;
-		}
-	}
-	return mark;
+    // 判断是否违反store后面的时间窗约束
+    // 注意store本身没有时间窗约束
+    time += store->serviceTime;
+    Spot* pre, current;
+    pre = store;
+    current = refStore->next;
+    bool mark = true; 
+    while(true) {
+        if(current == rear) break;
+        if(pre == refCustomer) {
+            // customer插入到refCustomer后面
+            current = customer;
+        }
+        float travelLen = sqrt(pow(pre->x - current->x, 2) + pow(pre->y - current->y, 2));
+        time += travelLen;
+        if(current->type == "C") {
+            if(time > current->endTime) {
+                mark = false;
+                break;
+            }
+            if(time < current->startTime) {
+                time = current->startTime;
+            }
+        }
+        time += current->serviceTime;
+        if(pre == refCustomer) {
+            // pre由customer暂时代替，但是不真正地将customer插入
+            current = pre->next;
+            pre = customer;
+        } else {
+            pre = current;
+            current = current->next;
+        }
+    }
+    return mark;
 }
 
 void Route::computeInsertCost(Spot item, float &minValue, Spot &customer1, 

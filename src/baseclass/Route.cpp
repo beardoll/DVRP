@@ -428,61 +428,56 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
 bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
     // 判断将store插入到refStore后面并且将customer插入到refCustomer后面是否会违反时间窗约束
     // 注意refStore和refCustomer都可能是"store"或者"customer"
-    float time = arrivedTime[pos];
+	// 但是refStore必定在refCustomer前面
+    int pos = 0;
+	for(Spot *temp=head; temp!=refStore; temp=temp->next) {
+		// 找到refStore在路径中的位置，以提取arrivedTime。
+		pos++;
+	}
+	float time = arrivedTime[pos];
     Spot *ptr1, *ptr2;
 
-    // 接下来是判断插入item后会不会违反item或者其后继节点的时间窗约束
-    if(pre->type == 'C' && time < pre->startTime){   
-        // arrivedTime[pos]只加到了pre的arrived time，没有判断是否提前到达
+    // 接下来是判断插入store以及customer会否违反时间窗约束
+    if(refStore->type == 'C' && time < refStore->startTime){   
+        // arrivedTime[pos]只加到了refStore的arrived time，没有判断是否提前到达
         // 只考虑customer节点的时间窗
-        time = pre->startTime;
+        time = refStore->startTime;
     }
-    time += pre->serviceTime;
-    time = time + sqrt(pow(pre->x - item.x, 2) + pow(pre->y - item.y, 2));
-    if(time > item.endTime && item.type=="C") {  
-        // 违反了时间窗约束
-        // 只考虑customer节点的时间窗
-        return false;
-    } else{
-        if(time < item.startTimei && item.type=="C") {
-            time = item.startTime;
-        }
-        time = time + item.serviceTime;
-        ptr2 = pre->next;
-        if(ptr2 == rear){  // item后面的是终点，暂时不计算
-            return true;
-        } else {
-            time = time + sqrt(pow(ptr2->x - item.x, 2) + pow(ptr2->y - item.y, 2));
-            if(time > ptr2->endTime) {
-                return false;
-            } else {
-                if(time < ptr2->startTime) {
-                    time = ptr2->startTime;
-                }
-                time = time + ptr2->serviceTime;
-            }
-        }
-    }
-
-    // 然后判断会不会违反更靠后的节点的时间窗约束
-    bool mark = true;
-    ptr1 = pre->next;
-    ptr2 = ptr1->next;
-    while(mark == true && ptr2 !=rear){ 
-        time = time + sqrt(pow(ptr1->x - ptr2->x, 2) + pow(ptr1->y - ptr2->y, 2));	
-        if(time > ptr2->endTime){
-            mark = false;
-            break;
-        } else {
-            if(time < ptr2->startTime){
-                time = ptr2->startTime;
-            }
-            time = time + ptr2->serviceTime;
-        }
-        ptr1 = ptr1->next;
-        ptr2 = ptr2->next;
-    }
-    return mark;
+	// 判断是否违反store后面的时间窗约束
+	// 注意store本身没有时间窗约束
+	time += store->serviceTime;
+	Spot* pre, current;
+	pre = store;
+	current = refStore->next;
+	bool mark = true; 
+	while(true) {
+		if(current == rear) break;
+		if(pre == refCustomer) {
+			// customer插入到refCustomer后面
+			current = customer;
+		}
+		float travelLen = sqrt(pow(pre->x - current->x, 2) + pow(pre->y - current->y, 2));
+		time += travelLen;
+		if(current->type == "C") {
+			if(time > current->endTime) {
+				mark = false;
+				break;
+			}
+			if(time < current->startTime) {
+				time = current->startTime;
+			}
+		}
+		time += current->serviceTime;
+		if(pre == refCustomer) {
+			// pre由customer暂时代替，但是不真正地将customer插入
+			current = pre->next;
+			pre = customer;
+		} else {
+			pre = current;
+			current = current->next;
+		}
+	}
+	return mark;
 }
 
 void Route::computeInsertCost(Spot item, float &minValue, Spot &customer1, 

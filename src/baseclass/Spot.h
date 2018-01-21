@@ -22,6 +22,7 @@ public:
     float arrivedTime;   // 货车到达此节点时间，对于"D"，此值为0
     float serviceTime;   // 服务时间
     int prop;            // 0表示静态顾客，1表示动态顾客
+    bool visit;          // 该节点是否被访问过（完成服务）
     Spot *next;     // 指向下一个节点的指针
     Spot *front;    // 指向上一个节点的指针
     Spot *choice;   // 顾客选用的商家（仅"C"有效）

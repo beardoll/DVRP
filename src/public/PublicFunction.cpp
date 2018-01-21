@@ -111,7 +111,13 @@ int roulette(float *probability, int num) {
     return k;
 }
 
+float dist(Spot *current, Spot *next) {
+    // 计算current与next节点之间的距离
+    float cost = sqrt(pow(current->x - next->x, 2) + 
+            pow(current->y - next->y, 2));
+    return cost;
 
+}
 
 void seperateCustomer(vector<Spot*> originCustomerSet, vector<Spot*> &staticCustomer, 
         vector<Spot*> &dynamicCustomer, float dynamicism) {

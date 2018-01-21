@@ -21,10 +21,11 @@ public:
     void clear();     // 清空链表
 
     // 插入以及删除节点操作
-    // 在链表中与item1相同的节点后面插入节点item2
+    void insertAfter(Spot *pre, Spot *current);    
     void insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer); 
-    void insertAtHead(Spot *store, Spot *customer);   // 在表头插入item
-    void deleteNode(Spot *store, Spot *customer);   // 在链表中删除与item相同的节点
+    void insertAtHead(Spot *store, Spot *customer);
+    void deleteNode(Spot *node);
+    void deleteNode(Spot *store, Spot *customer);
 
     // 获得单节点操作
     Spot* currentPos();   // 返回当前位置

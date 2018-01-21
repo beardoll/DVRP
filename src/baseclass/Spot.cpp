@@ -7,6 +7,7 @@ Spot::Spot() {
     this->x = 0;
     this->y = 0;
     this->prop = 0;
+    this->visit = false;
     this->startTime = 0;
     this->endTime = TIME_SLOT_NUM * TIME_SLOT_LEN;
     this->serviceTime = 0;
@@ -26,6 +27,7 @@ Spot::Spot(const Spot &s) {
     this->y = s.y;
     this->startTime = s.startTime;
     this->prop = s.prop;
+    this->visit = s.visit;
     this->endTime = s.endTime;
     this->arrivedTime = s.arrivedTime;
     this->serviceTime = s.serviceTime;
@@ -45,6 +47,7 @@ Spot& Spot::operator= (const Spot &s) {
     this->y = s.y;
     this->startTime = s.startTime;
     this->prop = s.prop;
+    this->visit = s.visit;
     this->endTime = s.endTime;
     this->arrivedTime = s.arrivedTime;
     this->serviceTime = s.serviceTime;

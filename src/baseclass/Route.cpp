@@ -100,7 +100,8 @@ bool Route::isEmpty(){ //判断链表是否为空
     return (size==0);
 }
 
-void Route::clear(){  // 清空链表，不清空head节点和rear节点?
+void Route::clear(){  
+    // 清空链表，包括head节点和rear节点
     Spot* ptr1 = head;
     Spot* ptr2;
     while(ptr1!=NULL){
@@ -123,6 +124,31 @@ void Route::printRoute(){ // 打印链表
 
 
 //=============== 插入以及删除节点操作 ================//
+void Route::insertAfter(Spot *ref, Spot *current) {
+    // 在ref节点后面插入current节点
+    Spot *ptr = head;
+    bool mark = false;
+    while(ptr!=rear) {
+        if(ptr == ref) {
+            mark = true;
+            break;
+        }
+    }
+    if(mark == false) {
+        throw out_of_range("Cannot find the position to insert!");
+        return;
+    }
+    ref->next->front = current;
+    current->next = ref->next;
+    current->front = ref;
+    ref->next = current;
+    if(current->type == 'C') {
+        quantity += current->quantity;
+    }
+    size++;
+    refreshArrivedTime()
+}
+
 void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
     // 在链表中refStore指针指向的节点后面插入store指针指向节点
     // 在链表中refCustomer指针指向的节点后面插入customer指向节点
@@ -183,6 +209,27 @@ void Route::insertAtHead(Spot *store, Spot *customer){
     }
 }
 
+void Route::deleteNode(Spot *node) {
+    // 删除node节点
+    bool mark = false;
+    for(Spot* ptr = current; ptr != rear; ptr = ptr->next) {
+        if(ptr == node) {
+            mark = true;
+            break;
+        }
+    }
+    if(mark == false) {
+        throw out_of_range("Cannot find the node to delete!");
+    }
+    node->front->next = node->next;
+    node->next->front = node->front;
+    if(node->type == 'C') {
+        quantity -= node->quantity;
+    }
+    size--;
+    refreshArrivedTime();
+    delete node;
+}
 
 void Route::deleteNode(Spot *store, Spot *customer){
     // 删除链表中指针值与store和customer相同的节点
@@ -249,22 +296,28 @@ int Route::getSize() {
 
 vector<Spot*> Route::getAllCustomer(){  
     // 得到路径中所有的顾客节点
-    // 返回的customer是用new产生的堆对象，如果内存溢出务必注意此处
+    // 返回的customer是用new产生的堆对象，需要在外部销毁
+    // Returns:
+    //   * customerSet: 路径中所有的顾客节点（按顺序）
     vector<Spot*> customerSet(size);
     Spot* ptr = head->next;
     Spot* ptr2;
-    for(int i=0; i<size; i++){
-        ptr2 = new Spot();
-        *ptr2 = *ptr;
-        customerSet[i] = ptr2;
-        ptr = ptr->next;
+    for(Spot *ptr=head; ptr!=rear; ptr=ptr->next){
+        if(ptr->type == 'C') {
+            Spot *customer = new Spot(*ptr);
+            customerSet.push_back(customer);
+        }
     }
     return customerSet;
 }
 
-float Route::getLen(float DTpara[], bool artificial){   // 得到路径长度
-    // 返回值为实际的路径长度加上惩罚因子
-    // 提取DTpara
+float Route::getLen(float DTpara[], bool artificial){   
+    // 得到路径长度（根据需要添加惩罚）
+    // Args:
+    //   * DTpara: 对不同类型的车/顾客组合的惩罚因子
+    //   * artificial: 车辆属性，为true表示virtual car
+    // Returns:
+    //   * len: 路径长度
     float DTH1, DTH2, DTL1, DTL2;
     float *DTIter = DTpara;
     DTH1 = *(DTIter++);
@@ -274,76 +327,75 @@ float Route::getLen(float DTpara[], bool artificial){   // 得到路径长度
 
     Spot *ptr1 = head;
     Spot *ptr2 = head->next;
+    float len = 0;
     if(artificial == false) { // real vehicle routing scheme
-        float len = 0;
-        while(ptr2 != NULL){
-            float temp1 = 0;
-            switch(ptr1->priority){
-                case 0: {
-                    temp1 = 0.0f;
-                    break;
-                }
-                case 1: {
-                    temp1 = -DTH1;
-                    break;
-                }
-                case 2: {
-                    temp1 = -DTL1;
-                    break;
+        for(Spot *ptr = head->next; ptr != rear; ptr = ptr->next) {
+            Spot *pre = ptr->front;
+            Spot *next = ptr->next;
+            float cost = dist(pre, ptr) + dist(ptr, next);
+            if(ptr->type == 'C') {
+                switch(ptr->priority){
+                    case 0: {
+                        cost += 0.0f;
+                        break;
+                    }
+                    case 1: {
+                        cost -= DTH1;
+                        break;
+                    }
+                    case 2: {
+                        cost -= DTL1;
+                        break;
+                    }
                 }
             }
-            len = len + sqrt(pow(ptr1->x - ptr2->x, 2)+pow(ptr1->y - ptr2->y, 2));
-            len += temp1;
-            ptr2 = ptr2->next;
-            ptr1 = ptr1->next;
+            len += cost;
         }
-        return len;
     } else {
-        float len = 0;
-        while(ptr2 != NULL){
-            float temp1 = 1.0f;
-            switch(ptr1->priority){
-                case 0: {
-                    temp1 = 0.0f;
-                    break;
-            }
-                case 1: {
-                    temp1 = DTH2;
-                    break;
+        for(Spot *ptr = head->next; ptr != rear; ptr = ptr->next) {
+            Spot *pre = ptr->front;
+            Spot *next = ptr->next;
+            float cost = dist(pre, ptr) + dist(ptr, next);
+            if(ptr->type == 'C') {
+                switch(ptr->priority){
+                    case 0: {
+                        cost += 0.0f;
+                        break;
+                    }
+                    case 1: {
+                        cost += DTH2;
+                        break;
+                    }
+                    case 2: {
+                        cost += DTL2;
+                        break;
+                    }
                 }
-                case 2: {
-                    temp1 = DTL2;
-                break;
-                }
             }
-            len = len + sqrt(pow(ptr1->x - ptr2->x, 2)+pow(ptr1->y - ptr2->y, 2));
-            len += temp1;
-            ptr2 = ptr2->next;
-            ptr1 = ptr1->next;
+            len += cost;
         }
-        return len;		
     }
+    return len;
 }
 
 float Route::getOriginLen() {  
     // 得到服务静态节点的路径代价
-    // 注意，以property标识顾客属性，当property为0时表示静态，为1表示动态
+    // 以property标识顾客属性，当property为0时表示静态，为1表示动态
     Spot* front = head;         // 搜索的起始节点
     Spot* back = front->next;   // 下一个节点
     float originLen = 0;
-    while(back != NULL) {
-        // 首尾节点，即仓库，在此计算范围之内
-        if(back->prop != 0) {
-            back = back->next;
-        } 
-        else {
-            originLen += sqrt(pow(front->x - back->x, 2) + pow(front->y - back->y, 2));
-            front = back;
-            back = back->next;
+    for(Spot* ptr=head; ptr != rear; ptr = ptr->next) {
+        if(ptr->type == 'C' && ptr->prop == 1) {
+            Spot *customer = ptr;
+            Spot *store = ptr->choice;
+            Spot *customerPre = customer->front;
+            Spot *customerNext = customer->next;
+            Spot *storePre = store->front;
+            Spot *storeNext = store->next;
+            originLen = originLen + dist(storePre, store) + 
+                dist(store, storeNext) + dist(CustomerPre, customer) + 
+                dist(customer, customerNext);
         }
-        //originLen += sqrt(pow(front->x - back->x, 2) + pow(front->y - back->y, 2));
-        //front = back;
-        //back = back->next;
     }
     return originLen;
 }
@@ -356,6 +408,7 @@ vector<float> Route::getArrivedTime(){     // 得到本车所有节点的arrivedTime
 
 //=============== 修改链表属性 ================//
 bool Route::moveForward(){
+    current->visit = true;
     current = current->next;
     if(current == NULL) {  // 已经完成任务
         return false;
@@ -367,10 +420,13 @@ bool Route::moveForward(){
 
 //=============== 计算插入/删除节点代价 ================//
 vector<float> Route::computeReducedCost(float DTpara[], bool artificial){ 
-    // 得到所有顾客节点的移除代价
-    // 值越小表示移除它可以节省更多的代价
-    // artificial: 为true表示是一辆虚假的车
-    // 如果需要真正的移除代价，则下面的DT都取为0即可
+    // 得到所有服务对(P-D)的移除代价，值越小表示移除它可以节省更多的代价
+    // Args:
+    //   * artificial: 为true表示是一辆虚假的车
+    //   * DTpara[]: 对不同种类的顾客/车辆的惩罚系数。如果需要得到
+    //               真正的reduce cost，则全部设置为0即可
+    // Returns:
+    //   * costArr: 所有服务对的移除代价，按照路径中customer的顺序
     float DTH1, DTH2, DTL1, DTL2;
     float *DTIter = DTpara;
     DTH1 = *(DTIter++);
@@ -378,49 +434,53 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
     DTL1 = *(DTIter++);
     DTL2 = *(DTIter++);
     vector<float> costArr(0);
-    Spot *ptr1 = head;   // 前节点
-    Spot *ptr2, *ptr3;
-    for(int i=0; i<size; i++){
-        ptr2 = ptr1->next;  // 当前节点
-        ptr3 = ptr2->next;  // 后节点
-        float temp =  -sqrt(pow(ptr1->x - ptr2->x, 2) + pow(ptr1->y - ptr2->y, 2)) - 
-            sqrt(pow(ptr2->x - ptr3->x, 2) + pow(ptr2->y - ptr3->y, 2)) +
-            sqrt(pow(ptr1->x - ptr3->x, 2) + pow(ptr1->y - ptr3->y, 2));
-        float temp1 = 0;
-        if(artificial == true) {
-            switch(ptr1->priority){
-                case 0: {
-                    temp1 = 0;
-                    break;
+    for(Spot* ptr = head; ptr != rear; ptr = ptr->next) {
+        if(ptr->type == 'C') {
+            // 从customer寻迹找到store
+            Spot *customer = ptr;
+            Spot *customerPre = customer->front;
+            Spot *customerNext = customer->next;
+            Spot *store = ptr->choice;
+            Spot *storePre = store->front;
+            Spot *storeNext = store->next;
+            float diff1 = -dist(customerPre, customer) - dist(customer, 
+                    customerNext) + dist(customerPre, customerNext);
+            float diff2 = -dist(storePre, store) - dist(store, storeNext) + 
+                    dist(storePre, storeNext);
+            float cost = diff1 + diff2;
+            if(artificial == true) {
+                switch(ptr->priority){
+                    case 0: {
+                        cost += 0;
+                        break;
+                    }
+                    case 1: {
+                        cost -= DTH2;
+                        break;
+                    }
+                    case 2: {
+                        cost -= DTL2;
+                        break;
+                    }
                 }
-                case 1: {
-                    temp1 = -DTH2;
-                    break;
-                }
-                case 2: {
-                    temp1 = -DTL2;
-                    break;
-                }
+            } else {
+                switch(ptr1->priority){
+                    case 0: {
+                        cost += 0;
+                        break;
+                    }
+                    case 1: {
+                        cost += DTH1;
+                        break;
+                    }
+                    case 2: {
+                        cost += DTL1;
+                        break;
+                    }
+                }		
             }
-        } else {
-            switch(ptr1->priority){
-                case 0: {
-                    temp1 = 0;
-                    break;
-                }
-                case 1: {
-                    temp1 = DTH1;
-                    break;
-                }
-                case 2: {
-                    temp1 = DTL1;
-                    break;
-                }
-            }		
+            costArr.push_back(cost);
         }
-        temp += temp1;
-        costArr.push_back(temp);
-        ptr1 = ptr1->next;
     }
     return costArr;
 } 
@@ -446,19 +506,52 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
     // 判断是否违反store后面的时间窗约束
     // 注意store本身没有时间窗约束
     time += store->serviceTime;
-    Spot* pre, current;
-    pre = store;
-    current = refStore->next;
+    Spot *pre, *current;
+    // 有可能refStore和refCustomer是同一个节点，对此作特殊处理
+    if(refStore == refCustomer) {
+        // store -> customer
+        float travelLen = dist(store, customer);
+        time += travelLen;
+        if(time < customer->startTime) {
+            time = customer->startTime;
+        }
+        if(time > customer->endTime) {
+            return false;
+        }
+        time += customer->serviceTime;
+        // customer -> store->next
+        if(refStore->next == rear) {
+            // 已经将store, customer放置于路径尾端
+            return true;
+        } else {
+            float travelLen = dist(customer, refStore->next);
+            time += travelLen;
+            if(refStore->next->type == 'C') {
+                if(time < refStore->next->startTime) {
+                    time = refStore->next->startTime;
+                }
+                if(time > refStore->next->endTime) {
+                    return false;
+                }
+            }
+            time += refStore->next->serviceTime;
+        }
+        pre = refStore->next;
+        current = pre->next;
+    } else {
+        pre = store;
+        current = refStore->next;
+    }
     bool mark = true; 
     while(true) {
         if(current == rear) break;
         if(pre == refCustomer) {
-            // customer插入到refCustomer后面
+            // 前一节点是refCustomer，那么下一节点应该是customer
             current = customer;
         }
-        float travelLen = sqrt(pow(pre->x - current->x, 2) + pow(pre->y - current->y, 2));
+        float travelLen = dist(pre, current);
         time += travelLen;
-        if(current->type == "C") {
+        if(current->type == 'C') {
             if(time > current->endTime) {
                 mark = false;
                 break;
@@ -470,6 +563,7 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
         time += current->serviceTime;
         if(pre == refCustomer) {
             // pre由customer暂时代替，但是不真正地将customer插入
+            // 此时current指针指向的是路径中实际存在的节点（customer之后）
             current = pre->next;
             pre = customer;
         } else {
@@ -480,47 +574,78 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
     return mark;
 }
 
-void Route::computeInsertCost(Spot item, float &minValue, Spot &customer1, 
-        float &secondValue, Spot &customer2,
-        float randomNoise, bool allowNegativeCost){
-    // 计算item节点在路径中的最小插入代价和次小插入代价
-    // 返回其最佳/次佳插入点前面的顾客节点
-    // pertubation: 扰动的噪声量
-    // allowNegativeCost: 为true表示插入代价取非负数，为false表示可取负数
-    // randomNoise: 随机噪声量
-    Spot *pre = current;   // 只能插入到未走过的节点前
-    Spot *succ = pre->next;
+void Route::computeInsertCost(Spot *store, Spot* customer, float &minValue, 
+        Spot *refStore1, Spot refCustomer1, float &secondValue, Spot *refStore2,
+        Spot *refCustomer2, float randomNoise, bool allowNegativeCost){
+    // 计算服务对(store, customer)在路径中的最小插入代价和次小插入代价
+    // 返回其最佳/次佳插入点(refStore, refCustomer)
+    // 如果store == head，则refStore没有意义（这种情况出现在当货车已经经过顾客
+    // 点C指定的store后，路径重新规划，则此时货车所在地（head节点）将充当store的角色）
+    // Args:
+    //   * pertubation: 扰动的噪声量
+    //   * allowNegativeCost: 为true表示插入代价取非负数，为false表示可取负数
+    //   * randomNoise: 随机噪声量
+    // Returns:
+    //   * refStore1, refCustomer1: 若minValue=MAX_FLOAT，则二者均为NULL
+    //   * refStore2, refCustomer2: 若secondVlue=MAX_FLOAT，则二者均为NULL
+    refStore1 = NULL;
+    refCustomer1 = NULL;
+    refStore2 = NULL;
+    refCustomer2 = NULL;
     minValue = MAX_FLOAT;
     secondValue = MAX_FLOAT;
-    customer1.id = -1;
-    customer2.id = -1;
-    int startPos = 0;
-    Spot* temp = head;
-    while(temp!= pre) {
-        temp = temp->next;
-        startPos++;
+    if(quantity + refCustomer->quantity > capacity) {
+        // 超出车容量约束，则无需计算
+        return;
     }
-    for(int i=startPos; i<=size; i++) {  // 一共有size+1个位置可以考虑插入
-        if(quantity + item.quantity <= capacity){   // 容量约束
-            if(timeWindowJudge(pre, i, item) == true) { // 满足时间窗约束
-                float temp = sqrt(pow(pre->x - item.x, 2) + pow(pre->y - item.y, 2)) +
-                    sqrt(pow(item.x - succ->x, 2) + pow(item.y - succ->y, 2)) -
-                    sqrt(pow(pre->x - succ->x, 2) + pow(pre->y - succ->y, 2));
-                temp += randomNoise;
+    if(store == head) {
+        for(Spot* refCustomer=current; refCustomer != rear; refCustomer = 
+                refCustomer->next) {
+            if(timeWindowJudge(head, refCustomer, store, customer) == true) {
+                float diff = dist(refCustomer, customer) + dist(customer, 
+                        refCustomer->next) - dist(refCustomer, refCustomer->next);
+                float cost = diff + randomNoise;
                 if(allowNegativeCost == false) {
-                    temp = max(0.0f, temp);
+                    cost = max(0.0f, cost);
                 }
-                if(temp <= minValue){  // 找到了更小的，更新minValue和secondValue
+                if(cost <= minValue) {
+                    // 找到了新的最小者，更新返回值
                     secondValue = minValue;
-                    customer2 = customer1;
-                    minValue = temp;
-                    customer1 = *pre;
+                    refCustomer2 = refCustomer1;
+                    refStore2 = NULL;
+                    refCustomer1 = refCustomer;
+                    refStore1 = NULL;
+                    minValue = cost;
                 }
+
             }
         }
-        pre = pre->next;
-        if(succ != rear){
-            succ = succ->next;
+    } else {
+        for(Spot* refStore=current; refStore != rear; refStore=refStore->next) {
+            for(Spot* refCustomer=refStore; refCustomer != rear; 
+                    refCustomer = refCustomer->next) {
+                if(timeWindowJudge(refStore, refCustomer, store, customer) 
+                        == true) {
+                    // 满足时间窗约束
+                    float diff1 = dist(refStore, store) + dist(store, 
+                            refStore->next) - dist(refStore, refStore->next);
+                    float diff2 = dist(refCustomer, customer) + dist(customer, 
+                        refCustomer->next) - dist(refCustomer, refCustomer->next);
+                    float cost = diff1 + diff2 + randomNoise;
+                    if(allowNegativeCost == false) {
+                        cost = max(0.0f, cost);
+                    }
+                    if(cost <= minValue) {
+                        // 找到了新的最小者，更新返回值
+                        secondValue = minValue;
+                        refCustomer2 = refCustomer1;
+                        refStore2 = refStore1;
+                        refCustomer1 = refCustomer;
+                        refStore1 = refStore;
+                        minValue = cost;
+                    }
+                }
+            }
         }
     }
 }
@@ -540,10 +665,10 @@ void Route::refreshArrivedTime(){
     float time = current->arrivedTime + current->serviceTime;
     while(tcurrent != rear){
         // current节点后面的arrivedTime需要重新计算
-        time = time + sqrt(pow(tfront->x - tcurrent->x, 2) + pow(tfront->y - tcurrent->y, 2));
+        time = time + dist(tfront, tcurrent);
         arrivedTime.push_back(time);
         // tcurrent->arrivedTime = time;
-        if(tcurrent->type == "C" && time < tcurrent->startTime){
+        if(tcurrent->type == 'C' && time < tcurrent->startTime){
             // 只有顾客节点有“时间窗”
             time = tcurrent->startTime;
         }
@@ -555,65 +680,61 @@ void Route::refreshArrivedTime(){
 
 
 //=============== 路径的替换和提取 ================//
-Route& Route::capture(){ 
+Route* Route::capture(){ 
     // 抓取current指针后的路径
     // current指针当前节点将作为head节点
     // 将当前路径的capacity和leftQuantity原样复制
-    Route* ptr1 = new Route(*current, *rear, capacity);
+    // 对于已经访问过对应pickup节点的delivery节点，其选择的store暂时为
+    // 抓取路径的head节点
+    Route* newRoute = new Route(*current, *rear, capacity);
     if(current->next == rear) { // current指针后已经没有路径
-        return *ptr1;
+        return *newRoute;
     }
-    Spot *ptr2 = current->next;
-    Spot *ptr3 = NULL;
-    Spot *ptr4 = NULL;
-    ptr4 = ptr1->head;
-    while(ptr2 != rear) {
-        ptr3 = new Spot(*ptr2);
-        ptr4->next = ptr3;
-        ptr3->front = ptr4;
-        ptr4 = ptr3;
-        ptr1->quantity = ptr1->quantity + ptr2->quantity;
-        ptr2 = ptr2->next;
-        ptr1->size++;
+    Spot* newCurrent = newRoute.getHeadNode();
+    for(Spot* ptr=current->next; ptr != rear; ptr = ptr->next) {
+        Spot *temp = new Spot(*ptr);
+        if(temp->type == 'C' && temp->choice->visit == true) {
+            // customer对应的store已经被访问过
+            temp->choice = newRoute->getHeadNode();
+        }
+        try{
+            newRoute->insertAfter(newCurrent, temp);
+        } catch (exception &e) {
+            cout << "While capture part route: " << e.what() << endl;
+        }
+        newCurrent = temp;
     }
-    ptr3->next = ptr1->rear;
-    ptr1->rear->front = ptr3;
-    ptr1->setLeftQuantity(leftQuantity);
-    ptr1->refreshArrivedTime();   // 更新part route的arrivedTime
-    return *ptr1;
+    return newRoute;
 }
 
 void Route::replaceRoute(const Route &route) {  // 以route替换掉current指针后的路径
-    Spot* ptr1;
-    Spot *ptr2, *ptr3;
+    Spot *ptr1, *ptr2, *ptr3;
     if(current->next != rear) { // current后面还有节点，需要先清除原有路径
-        ptr2 = current->next;
         // 清除原路径中current指针后面的元素
         // 不包括对rear节点的清除
-        while(ptr2 != rear) { 
-            quantity = quantity - ptr2->quantity;
-            ptr3 = ptr2->next;
-            delete ptr2;
-            ptr2 = ptr3;
-            size--;
+        ptr1 = current->next;
+        while(ptr1 != rear) {
+            ptr2 = ptr1->next;
+            deleteNode(ptr2);
+            ptr1 = ptr2;
         }
     }
     // 将route中除head和rear外的节点都复制到current指针后
+    
     ptr1 = route.head->next;
-    ptr3 = current;
-    while(ptr1 != route.rear){  
-        quantity = quantity + ptr1->quantity;
-        ptr2 = new Spot();
-        *ptr2 = *ptr1;
-        ptr3->next = ptr2;
-        ptr2->front = ptr3;
-        ptr3 = ptr2;
-        ptr1 = ptr1->next;
-        size++;
+    ptr2 = current;
+    while(ptr1 != route.rear) {
+        ptr3 = new Spot(*ptr1);
+        try {
+            insertNode(ptr2, ptr3);
+        } catch (exception &e) {
+            cout << "While replace route: " << e.what() << endl;
+        }
+        ptr2 = ptr3;
+        ptr1 = ptr1->next; 
     }
-    ptr3->next = rear;
-    rear->front = ptr3;
-    refreshArrivedTime();   // 更新完路径后，refresh一下arrivedTime
+    // 清空route
+    route.clear();
     return;
 }
 

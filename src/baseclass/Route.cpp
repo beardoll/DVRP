@@ -252,9 +252,9 @@ void Route::deleteNode(Spot *store, Spot *customer){
         if(temp1 == customer) {
             count--;
         }
-        if(count == 0) breakl
+        if(count == 0) break;
         temp1 = temp1->next;
-	}
+    }
 	if(count > 0) {  
         // Ã»ÓÐÍêÈ«ÕÒµ½
         throw out_of_range("We want to delete inexistent customer!");
@@ -720,7 +720,6 @@ void Route::replaceRoute(const Route &route) {  // ÒÔrouteÌæ»»µôcurrentÖ¸ÕëºóµÄÂ
         }
     }
     // ½«routeÖÐ³ýheadºÍrearÍâµÄ½Úµã¶¼¸´ÖÆµ½currentÖ¸Õëºó
-    
     ptr1 = route.head->next;
     ptr2 = current;
     while(ptr1 != route.rear) {

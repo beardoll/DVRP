@@ -255,10 +255,10 @@ void Route::deleteNode(Spot *store, Spot *customer){
         if(count == 0) break;
         temp1 = temp1->next;
     }
-	if(count > 0) {  
+    if(count > 0) {  
         // 没有完全找到
         throw out_of_range("We want to delete inexistent customer!");
-	} else {
+    } else {
         store->front->next = store->next;
         store->next->front = store->front;
         customer->front->next = customer->next;

@@ -34,7 +34,7 @@ public:
     void setProperty(bool newProperty) { artificial = newProperty; } // 设置货车的新属性
 
     // 计算insert cost和remove cost
-0    void computeInsertCost(Spot *store, Spot *customer, float &minValue,
+    void computeInsertCost(Spot *store, Spot *customer, float &minValue,
             Spot *refStore1, Spot *refCustomer1, float &secondValue, Spot *refStore2,
             Spot *refCustomer2, float randomNoise=0, bool allowNegativeCost=false)
     vector<float> computeReducedCost(float DTpara[]);  // 计算所有节点的移除代价

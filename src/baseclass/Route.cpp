@@ -217,6 +217,20 @@ void Route::insertAtHead(Spot *store, Spot *customer){
     }
 }
 
+void Route::insertAtRear(Spot *node) {
+    // 在表尾插入node，注意这里不检查插入合法性
+    // 需要由用户自己保证节点是可以凑成(P-D)对
+    Spot *copyNode = new Spot(*node);
+    rear->front->next = copyNode;
+    copyNode->next = rear;
+    if(node->type == 'C') {
+        quantity = quantity + copyNode->quantity;
+        size++;
+        refreshArrivedTime();  // 插入节点后，更新arrivedTime
+    }
+}
+
+
 void Route::deleteNode(Spot *node) {
     // 删除node节点
     bool mark = false;
@@ -233,8 +247,8 @@ void Route::deleteNode(Spot *node) {
     node->next->front = node->front;
     if(node->type == 'C') {
         quantity -= node->quantity;
+        size--;
     }
-    size--;
     refreshArrivedTime();
     delete node;
 }
@@ -304,7 +318,7 @@ int Route::getSize() {
 
 vector<Spot*> Route::getAllCustomer(){  
     // 得到路径中所有的顾客节点
-    // 返回的customer是用new产生的堆对象，需要在外部销毁
+    // 返回的customer是用路径的节点，在外部不能随便操作
     // Returns:
     //   * customerSet: 路径中所有的顾客节点（按顺序）
     vector<Spot*> customerSet(size);
@@ -312,8 +326,7 @@ vector<Spot*> Route::getAllCustomer(){
     Spot* ptr2;
     for(Spot *ptr=head; ptr!=rear; ptr=ptr->next){
         if(ptr->type == 'C') {
-            Spot *customer = new Spot(*ptr);
-            customerSet.push_back(customer);
+            customerSet.push_back(ptr);
         }
     }
     return customerSet;
@@ -770,26 +783,34 @@ bool Route::checkPassRoute(){
 
 vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId, int &retainNum){
     // 仅保留id在validCustomerId中的customer节点对应的服务对
-    // 注意通过customer->choice可以得到顾客选取的餐厅
+    // 注意通过customer->choice可以得到顾客选取的商店
+    // Returns: 
+    //   * retainNum: route所拥有的valid customer数量
+    //   * posVec: 保留下来的顾客节点在validCustomerId中的位置组成的向量
     vector<int> posVec;
     posVec.push_back(0);   // 仓库节点位置
     Spot* ptr1 = head->next;
     while(ptr1 != rear) {
-        int currentId = ptr1->id;
-        vector<int>::iterator intIter = find(validCustomerId.begin(), 
-                validCustomerId.end(), currentId);
-        if(intIter == validCustomerId.end()) {
-            // 如果找不到，说明该节点是invalid，删除之
-            quantity -= ptr1->quantity;
-            size--;
-            ptr1->front->next = ptr1->next;
-            ptr1->next->front = ptr1->front; 
-        } else {
-            retainNum++;
-            int pos = intIter - validCustomerId.begin();
-            posVec.push_back(pos);
-        } 
-        ptr1 = ptr1->next;
+        if(ptr1->type == 'C') {
+            int currentId = ptr1->id;
+            vector<int>::iterator intIter = find(validCustomerId.begin(), 
+                    validCustomerId.end(), currentId);
+            if(intIter == validCustomerId.end()) {
+                // 如果找不到，说明该节点是invalid，删除之
+                quantity -= ptr1->quantity;
+                size--;
+                ptr1->front->next = ptr1->next;
+                ptr1->next->front = ptr1->front;
+                Spot *ptr2 = ptr1->choice;  // 该顾客选择的商店，也要一并删除
+                ptr2->front->next = ptr2->next;
+                ptr2->next->front = ptr2->front;
+            } else {
+                retainNum++;
+                int pos = intIter - validCustomerId.begin();
+                posVec.push_back(pos);
+            } 
+            ptr1 = ptr1->next;
+        }
     }
     posVec.push_back(0);  // 仓库节点位置
     return posVec;

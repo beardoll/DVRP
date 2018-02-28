@@ -21,7 +21,7 @@ public:
     Route getRoute(){ return route;}      // 得到本车路径
     float getCapacity() {return route.getCapacity();}    // 返回车容量
     vector<Spot*> getAllCustomer() { return route.getAllCustomer();}
-    int getCustomerNum(){ return route.getSize();}       // 获取顾客数目
+    int getCustomerNum(){ return route.getSize();}       // 获取(P-D)对的数目
     Car* getNullCar();  // 将所有的顾客删除掉，返回一辆空车
     float getTravelDistance() { return travelDistance; } // 获取货车走过的总路长
     float getAddDistance() {
@@ -34,9 +34,9 @@ public:
     void setProperty(bool newProperty) { artificial = newProperty; } // 设置货车的新属性
 
     // 计算insert cost和remove cost
-    void computeInsertCost(Spot item, float &minValue, Spot &customer1, 
-            float &secondValue, Spot &customer2, float randomNose=0, 
-            bool allowNegativeCost=false);
+0    void computeInsertCost(Spot *store, Spot *customer, float &minValue,
+            Spot *refStore1, Spot *refCustomer1, float &secondValue, Spot *refStore2,
+            Spot *refCustomer2, float randomNoise=0, bool allowNegativeCost=false)
     vector<float> computeReducedCost(float DTpara[]);  // 计算所有节点的移除代价
 
     // getCustomer方法
@@ -45,14 +45,16 @@ public:
     Spot& getCurrentNode() {return route.currentPos();} // 得到current指针指向的节点
 
     // insert 和 delete Customer方法
-    void insertAtRear(Spot &item);   // 在路径的尾部插入节点
-    void insertAtHead(Spot &item);   // 在路径头部插入节点
-    void insertAfter(const Spot &item1, const Spot &item2);     //  在item1后插入item2
-    void deleteCustomer(Spot &item); // 在路径中删除item节点
+    void insertAtRear(Spot *item);   // 在路径的尾部插入节点
+    void insertAtHead(Spot *store, Spot *customer);     // 在路径头部插入节点
+    void insertAfter(Spot *ref, Spot *current);   //  在ref后插入current
+    void insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer);
+    void deleteCustomer(Spot *item); // 删除节点
+    void deleteCustomer(Spot *store, Spot *customer);
 
     // part Route操作
     // 将newCar的路径插入到当前货车路径的current节点之后
-    void replaceRoute(Car &newCar, float currentTime);      	    
+    void replaceRoute(Car *newCar, float currentTime);      	    
     Car capturePartRoute(float time);    // 抓取route的current指针之后的路径，并且返回一辆车
 
     // state相关

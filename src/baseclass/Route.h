@@ -24,6 +24,7 @@ public:
     void insertAfter(Spot *pre, Spot *current);    
     void insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer); 
     void insertAtHead(Spot *store, Spot *customer);
+    void insertAtRear(Spot *node);
     void deleteNode(Spot *node);
     void deleteNode(Spot *store, Spot *customer);
 

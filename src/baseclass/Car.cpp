@@ -53,7 +53,7 @@ Car* Car::getNullCar(){
 
 //================ insert cost和remove cost =================//
 void Car::computeInsertCost(Spot *store, Spot *customer, float &minValue, 
-        Spot *refStore1, Spot refCustomer1, float &secondValue, Spot *refStore2,
+        Spot *refStore1, Spot *refCustomer1, float &secondValue, Spot *refStore2,
         Spot *refCustomer2, float randomNoise, bool allowNegativeCost){
         
     // 计算服务对(stoer, customer)在路径中的最小插入代价和次小插入代价
@@ -77,19 +77,21 @@ vector<float> Car::computeReducedCost(float DTpara[]){
 
 
 //================ insert 和 delete Customer方法 =================//
-void Car::insertAtRear(Spot &item){
+void Car::insertAtRear(Spot *item){
     try {
         route.insertAtRear(item);
     } catch (exception &e) {
         throw out_of_range(e.what());
+        exit(1);
     }
 } 
 
-void Car::insertAtHead(Spot &item){    
+void Car::insertAtHead(Spot *store, Spot *customer){    
     try {
-        route.insertAtHead(item);
+        route.insertAtHead(store, customer);
     } catch (exception &e) {
         throw out_of_range(e.what());
+        exit(1);
     }
 }
 

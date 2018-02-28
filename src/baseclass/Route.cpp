@@ -178,10 +178,18 @@ void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *cu
         tempStore->next = refStore->next;
         refStore->next = tempStore;
         tempstore->front = refStore;
-        refCustomer->next->front = tempCustomer;
-        tempCustomer->next = refCustomer->next;
-        refCustomer->next = refCustomer;
-        tempCustomer->front = refCustomer;
+        // 这里需要考虑如果refStore与refCustomer是同一个节点的问题
+        if(refStore == refCustomer) {
+            tempStore->next->front = tempCustomer;
+            tempCustomer->next = tempStore->next;
+            tempCustomer->front = tempStore;
+            tempStore->next = tempCustomer;
+        } else {
+            refCustomer->next->front = tempCustomer;
+            tempCustomer->next = refCustomer->next;
+            refCustomer->next = refCustomer;
+            tempCustomer->front = refCustomer;
+        }
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
     }
@@ -761,8 +769,8 @@ bool Route::checkPassRoute(){
 }
 
 vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId, int &retainNum){
-    // 仅保留id在validCustomerId中的节点
-    // 返回保留的节点在validCustomerId中的位置
+    // 仅保留id在validCustomerId中的customer节点对应的服务对
+    // 注意通过customer->choice可以得到顾客选取的餐厅
     vector<int> posVec;
     posVec.push_back(0);   // 仓库节点位置
     Spot* ptr1 = head->next;

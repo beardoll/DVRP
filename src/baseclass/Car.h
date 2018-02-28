@@ -22,7 +22,7 @@ public:
     float getCapacity() {return route.getCapacity();}    // 返回车容量
     vector<Spot*> getAllCustomer() { return route.getAllCustomer();}
     int getCustomerNum(){ return route.getSize();}       // 获取顾客数目
-    Car getNullCar();  // 将所有的顾客删除掉，返回一辆空车
+    Car* getNullCar();  // 将所有的顾客删除掉，返回一辆空车
     float getTravelDistance() { return travelDistance; } // 获取货车走过的总路长
     float getAddDistance() {
         // 获取货车为服务动态顾客的附加路长

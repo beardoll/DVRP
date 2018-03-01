@@ -249,20 +249,21 @@ vector<Spot*> mergeCustomer(vector<Spot*> waitCustomer, vector<Spot*> originCust
     vector<Spot*> allCustomer;
     vector<Spot*>::iterator custIter;
     for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
-        allCustomer.push_back(new Customer(**custIter));
+        allCustomer.push_back(*custIter);
     }
     for(custIter = originCustomer.begin(); custIter < originCustomer.end(); custIter++) {
-        allCustomer.push_back(new Customer(**custIter));
+        allCustomer.push_back(*custIter);
     }
     return allCustomer;
 }
 
-vector<int> getID(vector<Spot*> customerSet){
-    // 得到customerSet的所有ID
+vector<int> getCustomerID(vector<Spot*> customerSet){
+    // 得到customerSet的所有顾客ID
     vector<int> ids(0);
     ids.reserve(customerSet.end() - customerSet.begin());
     vector<Spot*>::iterator iter = customerSet.begin();
     for(iter; iter<customerSet.end(); iter++){
+        assert((*iter)->type == 'C');
         ids.push_back((*iter)->id);
     }
     sort(ids.begin(), ids.end());
@@ -276,7 +277,6 @@ vector<int> getID(vector<Car*> carSet) {
         vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         vector<int> currentIDs = getID(tempCust);
         ids.insert(ids.end(), currentIDs.begin(), currentIDs.end());
-        deleteCustomerSet(tempCust);
     }
     sort(ids.begin(), ids.end());
     return ids;

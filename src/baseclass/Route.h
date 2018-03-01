@@ -44,6 +44,7 @@ public:
     int getSize();           // 得到当前链表的大小
     vector<float> getArrivedTime();      // 得到本车所有节点的arrivedTime
     vector<Spot*> getAllCustomer();  // 得到路径中所有的顾客节点
+    vector<int> getAllID();          // 获取所有节点的ID，按顺序
 
     // 修改链表属性
     void decreaseLeftQuantity(float amount) {leftQuantity -= amount;}   

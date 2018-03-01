@@ -16,7 +16,6 @@ vector<Spot*> feedDataForLNSBase(vector<Spot*> waitCustomer, vector<Car*> origin
     vector<Spot*>::iterator custPtr;
     vector<Spot*> lowPriorityCust;
     for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
-        Spot* newCust = new Spot(**custPtr);
         newCust->priority = 2;
         lowPriorityCust.push_back(newCust);
     }
@@ -30,8 +29,6 @@ vector<Spot*> feedDataForLNSBase(vector<Spot*> waitCustomer, vector<Car*> origin
         }
     }
     vector<Spot*> output = mergeCustomer(lowPriorityCust, highPriorityCust);
-    deleteCustomerSet(highPriorityCust);
-    deleteCustomerSet(lowPriorityCust);
     return output;
 }
 
@@ -43,33 +40,18 @@ SSLR::SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, 
     this->maxIter = maxIter;
     this->verbose = verbose;
     vector<Spot*>::iterator custIter;
-    // 对waitCustomer，其优先级为2
-    for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
-        Spot* newCust = new Spot(**custIter);
-        newCust->priority = 2;
-        this->waitCustomer.push_back(newCust);
-    }
+    // 对waitCustomer，其优先级已经在基类的初始化中赋值为2
+    this->waitCustomer = waitCustomer;
     vector<Car*>::iterator carIter;
-    for(carIter = originPlan.begin(); carIter < originPlan.end(); carIter++) {
-        Spot headNode = (*carIter)->getHeadNode();
-        Spot rearNode = (*carIter)->getRearNode();
-        int carIndex = (*carIter)->getCarIndex();
-        float capacity = (*carIter)->getCapacity();
-        Car* newCar = new Car(headNode, rearNode, capacity, carIndex);
-        vector<Spot*> custVec = (*carIter)->getAllCustomer();
-        for(custIter = custVec.begin(); custIter < custVec.end(); custIter++) {
-            (*custIter)->priority = 1;
-            newCar->insertAtRear(**custIter);
-        }
-        deleteCustomerSet(custVec);
-        this->originPlan.push_back(newCar);
-    }
+    // 对于原本就在路径中的节点，其优先级已经在基类的初始化中赋值为1
+    this->originPlan = originPlan;
 }
 
 SSLR::~SSLR() {}
 
 bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleNum) {
 	// 判断carSet是否可行
+    // 主要判断refCarSet中的顾客是否都在carSet的working vehicle中
     infeasibleNum = 0;
     bool mark = true;
     vector<Car*>::iterator carIter;
@@ -102,21 +84,22 @@ float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> waitCustomer, Spot
     //   * maxd: 所有顾客之间的最大距离
     //   * allCustomer: 所有顾客节点（包括所有不同优先级顾客）
     //   * waitCustomer: 低优先级顾客
-    int PR2Num = (int) waitCustomer.size();
-    int PR1Num = (int) allCustomer.size() - PR2Num;
+    int PR2Num = (int)waitCustomer.size();
+    int PR1Num = (int)allCustomer.size() - PR2Num;
     vector<Spot*>::iterator custPtr;
     float DTH1, DTH2, DTL1, DTL2;
     float distToDepot = 0;    // 各个顾客节点到仓库的距离
     for(custPtr = allCustomer.begin(); custPtr < allCustomer.end(); custPtr++) {
-        distToDepot += sqrt(pow((*custPtr)->x - depot.x, 2) + pow((*custPtr)->y - depot.y, 2));
+        distToDepot += dist(*custPtr, &depot);
     }
     DTL2 = 50;
-    DTL1 = 2*maxd + 1;
+    DTL1 = 4*maxd + 1;
     DTH2 = 80;
-    float tempsigma1 = 2*maxd + DTH2;
+    float tempsigma1 = 4*maxd + DTH2;
     //float tempsigma2 = 2*(PR1NUM + PR2NUM + PR3NUM) * maxd + PR2NUM * DT22 + PR3NUM * DT32 - 
     //	(PR1NUM + PR2NUM + PR3NUM) * mind + PR2NUM * DT21 + PR3NUM * DT31 - DT12;
-    float tempsigma2 = 2*distToDepot - DTH2 + PR2Num * (DTL1 + DTL2) - (PR1Num + PR2Num + 1) * mind;
+    float tempsigma2 = 4*distToDepot - DTH2 + PR2Num * (DTL1 + DTL2) - 
+        (PR1Num + PR2Num + 1) * mind * 2;
     DTH1 = max(tempsigma1, tempsigma2) + 1;
     float *DTpara = new float[4];
     DTpara[0] = DTH1;
@@ -153,12 +136,11 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         vector<Car*> tempCarSet1;
         Car *tcar = new Car(depot, depot, capacity, 100, true);
         tempCarSet1.push_back(tcar);
-        greedyInsert(tempCarSet1, waitCustomer, false);
+        vector<Spot*> copyWaitCustomer = copyCustomerSet(waitCustomer);
+        greedyInsert(tempCarSet1, copyWaitCustomer, false);
         for (carIter = tempCarSet1.begin(); carIter < tempCarSet1.end(); carIter++) {
-            Car *tcar = new Car(**carIter);
-            baseCarSet.push_back(tcar);
+            baseCarSet.push_back(*carIter);
         }
-        withdrawPlan(tempCarSet1);
     }
     // 基准代价，如果得到的解优于这个解，则一定可行
     // 一般来说比这个解更差的解时不可行的
@@ -172,7 +154,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         currentCarSet.push_back(newCar);
     }
     // 以当前所拥有的working car为基础，构造初始解（完全重新构造）
-    regretInsert(currentCarSet, allCustomer, false);  
+    vector<Spot*> copyAllCustomer = copyCustomerSet(allCustomer);
+    regretInsert(currentCarSet, copyAllCustomer, false);  
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
     float currentCost = getCost(currentCarSet);
@@ -314,7 +297,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         // 当前需要移除的节点数目
         currentRemoveNum = (int)floor(random(minRemoveNum, maxRemoveNum)); 
 
-        deleteCustomerSet(removedCustomer);  // 清空removedCustomer
+        removedCustomer.clear();
         removedCustomer.resize(0);
 
         // 执行remove heuristic
@@ -474,9 +457,6 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     }
     delete [] DTpara;
     finalCost = globalCost;
-    deleteCustomerSet(waitCustomer);
-    deleteCustomerSet(allCustomer);
-    withdrawPlan(originPlan);
     withdrawPlan(baseCarSet);
     withdrawPlan(tempCarSet);
     withdrawPlan(globalCarSet);

@@ -159,8 +159,8 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
         int minRemoveNum = 4;  
         // 当前要移除的节点数目
         int currentRemoveNum = (int)random(minRemoveNum, maxRemoveNum);
-        
-        deleteCustomerSet(removedCustomer);  // 清空removedCustomer       
+       
+        removedCustomer.clear();
         removedCustomer.resize(0);
 
         // 执行remove heuristic
@@ -170,7 +170,7 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
                 float maxArrivedTime = -MAX_FLOAT;
                 for(i=0; i<(int)tempCarSet.size(); i++){
                     // tempCarSet[i]->getRoute().refreshArrivedTime();	
-                    vector<float> temp = tempCarSet[i]->getRoute().getArrivedTime();
+                    vector<float> temp = tempCarSet[i]->getRoute()->getArrivedTime();
                     sort(temp.begin(), temp.end(), greater<float>());
                     if(temp[0] > maxArrivedTime) {
                         maxArrivedTime = temp[0];
@@ -279,7 +279,6 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
     withdrawPlan(globalCarSet);
     withdrawPlan(tempCarSet);
     withdrawPlan(currentCarSet);
-    deleteCustomerSet(allCustomer);
     hashTable.clear();
     finalCost = globalCost;
 }

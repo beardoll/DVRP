@@ -50,6 +50,11 @@ Car* Car::getNullCar(){
     return newCar;
 }
 
+vector<int> getAllID(){
+    // 获得所有节点的ID，按顺序
+    return route.getAllID();
+}
+
 
 //================ insert cost和remove cost =================//
 void Car::computeInsertCost(Spot *store, Spot *customer, float &minValue, 
@@ -130,7 +135,6 @@ void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *cust
         exit(1);
     }
 }
-
 
 void Car::deleteCustomer(Spot *item) {
     // 删除单节点操作

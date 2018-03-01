@@ -41,20 +41,34 @@ void Route::copy(const Route &L){
     this->leftQuantity = L.leftQuantity;
     this->arrivedTime = L.arrivedTime;
     Spot* originPtr = L.head;
-    Spot* copyPtr = head;
-    Spot* temp = NULL;
+    Spot *copyPtr, *temp;
     while(originPtr!=NULL){
         // 从头节点一直复制到尾节点
-        if(originPtr == L.head){  // 正在复制第一个节点
-            copyPtr = new Spot();
+        if(originPtr == L.head){  
+            // 正在复制head节点
+            copyPtr = new Spot(L.head);
             copyPtr->front = NULL;
             head = copyPtr;
-            *copyPtr = *L.head;
         } else{
             temp = new Spot(*originPtr);
             temp->front = copyPtr;
             copyPtr->next = temp;
             copyPtr = temp;
+            if(originPtr->type == 'C') {
+                // 追溯其指向的商户(P)
+                temp = L.head->next;
+                int i = 0;
+                while(temp != L.rear) {
+                    if(temp == originPtr->choice) break;
+                    temp = temp->next;
+                    i++;
+                }
+                temp = head->next;
+                for(int j=0; j<i; j++) {
+                    temp = temp->next;
+                }
+                copyPtr->choice = temp;     
+            }
 		}
         if(L.current == originPtr){
             // current指针的复制
@@ -62,8 +76,8 @@ void Route::copy(const Route &L){
         }
 		originPtr = originPtr->next;
     }
-    temp->next = NULL;
-    rear = temp;
+    copyPtr->next = NULL;
+    rear = copyPtr;
 }
 
 Spot& Route::operator[] (int k){
@@ -152,8 +166,7 @@ void Route::insertAfter(Spot *ref, Spot *current) {
 void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
     // 在链表中refStore指针指向的节点后面插入store指针指向节点
     // 在链表中refCustomer指针指向的节点后面插入customer指向节点
-    Spot *tempstore = new Spot(store);
-    Spot *tempCustomer = new Spot(customer)
+    assert(store->type == 'S' && customer->type == 'C');
     Spot *ptr = head;
     int count = 2;   // 必须两个ref节点都找到
     while(ptr != rear){
@@ -174,21 +187,21 @@ void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *cu
     } else{
         // 更新quantity的值，并且插入store以及customer
         quantity += customer->quantity;
-        refStore->next->front = tempStore;
-        tempStore->next = refStore->next;
-        refStore->next = tempStore;
-        tempstore->front = refStore;
+        refStore->next->front = store;
+        store->next = refStore->next;
+        refStore->next = store;
+        store->front = refStore;
         // 这里需要考虑如果refStore与refCustomer是同一个节点的问题
         if(refStore == refCustomer) {
-            tempStore->next->front = tempCustomer;
-            tempCustomer->next = tempStore->next;
-            tempCustomer->front = tempStore;
-            tempStore->next = tempCustomer;
+            store->next->front = customer;
+            customer->next = store->next;
+            customer->front = store;
+            store->next = customer;
         } else {
-            refCustomer->next->front = tempCustomer;
-            tempCustomer->next = refCustomer->next;
-            refCustomer->next = refCustomer;
-            tempCustomer->front = refCustomer;
+            refCustomer->next->front = customer;
+            customer->next = refCustomer->next;
+            refCustomer->next = customer;
+            customer->front = refCustomer;
         }
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
@@ -199,16 +212,15 @@ void Route::insertAtHead(Spot *store, Spot *customer){
     // 在表头插入store和customer
     // 注意store须在customer前面（对于pickup-delivery问题，本函数慎用）
     // 只有当current指针为head时返回true
+    assert(store->type == 'S' && customer->type == 'C');
     if(current == head && size == 0) {
         // 要求路径必须为空才可以这种方式插入
-        Spot *tempStore = new Spot(*store);
-        Spot *tempCustomer = new Spot(*customer);
-        head->next = tempStore;
-        tempStore->next = tempCustomer;
-        tempStore->front = head;
-        rear->front = tempCustomer;
-        tempCustomer->next = rear;
-        quantity = quantity + tempCustomer->quantity;
+        head->next = store;
+        store->next = customer;
+        store->front = head;
+        rear->front = customer;
+        customer->next = rear;
+        quantity = quantity + customer->quantity;
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
     }
@@ -220,11 +232,10 @@ void Route::insertAtHead(Spot *store, Spot *customer){
 void Route::insertAtRear(Spot *node) {
     // 在表尾插入node，注意这里不检查插入合法性
     // 需要由用户自己保证节点是可以凑成(P-D)对
-    Spot *copyNode = new Spot(*node);
-    rear->front->next = copyNode;
-    copyNode->next = rear;
+    rear->front->next = node;
+    node->next = rear;
     if(node->type == 'C') {
-        quantity = quantity + copyNode->quantity;
+        quantity = quantity + node->quantity;
         size++;
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
     }
@@ -256,6 +267,7 @@ void Route::deleteNode(Spot *node) {
 void Route::deleteNode(Spot *store, Spot *customer){
     // 删除链表中指针值与store和customer相同的节点
     // 只能删除current指针后面的节点
+    assert(store->type == 'S' && customer->type == 'C');
     if(current == rear) {
         // 已经走完了路径中的所有节点，禁止删除
         throw out_of_range("Forbid deleting for we have finished the route!");
@@ -317,7 +329,7 @@ int Route::getSize() {
 }
 
 vector<Spot*> Route::getAllCustomer(){  
-    // 得到路径中所有的顾客节点
+    // 得到路径中所有的顾客节点(D)
     // 返回的customer是用路径的节点，在外部不能随便操作
     // Returns:
     //   * customerSet: 路径中所有的顾客节点（按顺序）
@@ -426,6 +438,14 @@ vector<float> Route::getArrivedTime(){     // 得到本车所有节点的arrivedTime
     return arrivedTime;
 }
 
+vector<int> getAllID() {
+    // 获取路径中所有的ID，包括P和D
+    vector<int> IDs;
+    for(Spot *temp = head->next; temp != rear; temp = temp->next) {
+        IDs.push_back(temp->id);
+    }
+    return IDs;
+}
 
 //=============== 修改链表属性 ================//
 bool Route::moveForward(){
@@ -510,6 +530,7 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
     // 判断将store插入到refStore后面并且将customer插入到refCustomer后面是否会违反时间窗约束
     // 注意refStore和refCustomer都可能是"store"或者"customer"
     // 但是refStore必定在refCustomer前面
+    assert(store->type == 'S' && customer->type == 'C');
     int pos = 0;
     for(Spot *temp=head; temp!=refStore; temp=temp->next) {
         // 找到refStore在路径中的位置，以提取arrivedTime。
@@ -609,6 +630,7 @@ void Route::computeInsertCost(Spot *store, Spot* customer, float &minValue,
     // Returns:
     //   * refStore1, refCustomer1: 若minValue=MAX_FLOAT，则二者均为NULL
     //   * refStore2, refCustomer2: 若secondVlue=MAX_FLOAT，则二者均为NULL
+    assert(store->type == 'S' && customer->type == 'C');
     refStore1 = NULL;
     refCustomer1 = NULL;
     refStore2 = NULL;

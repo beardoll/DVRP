@@ -80,6 +80,7 @@ inline void deleteCustomerSet(vector<Spot*> &customerSet){   // 删除CustomerSet
     vector<Spot*>::iterator iter;
     for(iter = customerSet.begin(); iter < customerSet.end(); iter++) {
         try {
+            delete((*iter)->choice);
             delete(*iter);
         } catch (exception &e) {
             throw out_of_range(e.what());
@@ -88,11 +89,15 @@ inline void deleteCustomerSet(vector<Spot*> &customerSet){   // 删除CustomerSet
     customerSet.clear();
 }
 
-inline vector<Spot*> copyCustomerSet(vector<Spot*> customerSet){  // 复制customerSet
+inline vector<Spot*> copyCustomerSet(vector<Spot*> customerSet){  
+    // 复制customerSet
+    // 注意要同时复制出商家
     vector<Spot*> outputCust;
     vector<Spot*>::iterator custIter;
     for(custIter = customerSet.begin(); custIter < customerSet.end(); custIter++) {
         Spot *newCust = new Spot(**custIter);
+        Spot *newStore = new Spot((*custIter)->choice);
+        newCust->choice = newStore;
         outputCust.push_back(newCust);
     }
     return outputCust;

@@ -9,9 +9,10 @@
 const float MAX_FLOAT = numeric_limits<float>::max();
 
 Dispatcher::Dispatcher(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet, 
-        Spot depot, float capacity) {
+        vector<Spot*> storeSet, Spot depot, float capacity) {
     this->depot = depot;
     this->capacity = capacity;
+    this->storeSet = storeSet;
     int custNum = staticCustomerSet.end() - staticCustomerSet.begin();
     custNum += dynamicCustomerSet.end() - dynamicCustomerSet.begin(); // 总顾客数
     servedCustomerId.reserve(custNum);     // 已经服务过的顾客id
@@ -128,7 +129,8 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         ostr << "============ Now Initialize the routing plan ===========" << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
-        Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, currentPlan);
+        Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
+                currentPlan, storeSet);
         currentPlan = smu.initialPlan(depot, capacity);
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
             EventElement newEvent = (*carIter)->launchCar(0);  // 将车辆发动
@@ -158,7 +160,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         }
         if (currentPlan.size() != 0) {  // 有货车可派时，才进行replan
             Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
-                    futurePlan);
+                    futurePlan, storeSet);
             vector<int> newservedCustomerId;
             vector<int> newAbandonedCustomerId;
             vector<int> delayCustomerId;

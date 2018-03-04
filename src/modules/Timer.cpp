@@ -36,12 +36,13 @@ EventElement Timer::pop(){
 }
 
 Timer::Timer(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet, 
-        float capacity, Customer depot) {   
+        vector<Spot*> storeSet, float capacity, Customer depot) {   
     // 构造函数，输入参数为所有顾客，以及各时间段开始值
     this->staticCustomerSet = staticCustomerSet;
     this->dynamicCustomerSet = dynamicCustomerSet;
     this->capacity = capacity;
     this->depot = depot;
+    this->storeSet = storeSet;
     EventElement newEvent;
     int i;
     for(i=0; i<TIME_SLOT_NUM; i++) {  
@@ -128,7 +129,7 @@ void Timer::updateEventElement(EventElement &newEvent){
 void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer, 
         float &travelDistance, float &addAveDistance) {
     // 调度中心初始化
-    Dispatcher disp(staticCustomerSet, dynamicCustomerSet, depot, capacity);
+    Dispatcher disp(staticCustomerSet, dynamicCustomerSet, storeSet, depot, capacity);
     int slotIndex = 0;  // 第0个时间段
     while(eventList.size() != 0) {
         EventElement currentEvent = pop();  // 弹出最近事件
@@ -186,6 +187,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
     vector<int> rejectCustomerId = disp.getRejectCustomerId();
     vector<int>::iterator intIter;
     for(intIter = rejectCustomerId.begin(); intIter < rejectCustomerId.end(); intIter++) {
+        // 顾客节点id从1开始
         rejectCustomer.push_back(allCustomer[*intIter-1]);
     }
     finishedPlan = disp.getFinishedPlan();

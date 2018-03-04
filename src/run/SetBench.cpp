@@ -16,10 +16,9 @@ SetBench::SetBench() {
     this->r2 = R2;
     this->r3 = R3;
     this->storeNum = STORE_NUM;
-    this->numSubcircle = SUBCIRCLE_NUM;
+    this->subcircleNum = SUBCIRCLE_NUM;
     this->customerNum = CUSTOMER_NUM;
     this->lambda = LAMBDA;
-    this->currentID;
 } // 构造函数
 
 void SetBench::constructStoreSet() {
@@ -30,8 +29,9 @@ void SetBench::constructStoreSet() {
     for(int i=0; i<storeNum; i++) {
         float r = random(innerR, outerR);
         float theta = random(0, 2*PI);
-        Spot store = new Spot();
-        store->id = currentID++;
+        Spot *store = new Spot();
+        // 商店id从customerNum+1 ~ customerNum+storeNum
+        store->id = customerNum + storeSet.size() + 1;
         store->x = r * sin(theta);
         store->y = r * cos(theta);
         store->type = "P";
@@ -47,31 +47,33 @@ void SetBench::constructCustomerSet() {
     vector<Spot*> customerSet;
     float innerR = r2;
     float outerR = r3;
-    int count = 0;
     float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
     float deltaT = 10; // 采样间隔时间
     float deltaAngle = 2 * PI / subcircleNum;  // 各个区域夹角
     float alpha = ALPHA;  // 时间窗长度与dist(顾客，商家)的比例系数
-    int numSlice = int(timeHorizon/deltaT);
-    while(Spot.size() < customerNum){
-        for(int t=0; t<numSlice; t++) {
-            for(int j=0; j<numSubcircle; j++) {
+    int sliceNum = int(timeHorizon/deltaT);
+    while(customerSet.size() < customerNum){
+        for(int t=0; t<sliceNum; t++) {
+            for(int j=0; j<subcircleNum; j++) {
                 float p = lambda[j] * deltaT * exp(-lambda[j] * deltaT);
                 if(p < random(0,1)) {
                     // 按概率生成顾客
                     float theta = random(deltaAngle*j, deltaAngle*(j+1));
                     float r = random(innerR, outerR);
                     Spot c = new Spot();
-                    c->id = currentID++;
+                    // 顾客的id从1~customerNum
+                    c->id = (int)customerSet.size() + 1;
                     c->x = r * sin(theta);
                     c->y = r * cos(theta);
                     c->serviceTime = random(0, 10);
                     c->prop = 0;
-                    index = int(random(0, storeNum));
+                    // 随机选出商店
+                    int index = int(random(0, storeNum));
                     index = min(storeNum-1, index);
-                    c->choice = storeSet[index];
-                    distFromCustomerToStore = sqrt(pow(c->x - c->choice->x, 2) + 
-                            pow(c->y - c->choice->y, 2));
+                    Spot *store = new Spot(*storeSet[index]);
+                    c->choice = store;
+                    float distFromCustomerToStore = dist(c, c->choice);
+                    // 保证足够长的时间窗
                     c->startTime = random(0, timeHorizon-alpha*distFromCustomerToStore);
                     c->endTime = random(c->startTime, timeHorizon);
                     c->demand = random(0, MAX_DEMAND);
@@ -89,7 +91,8 @@ void SetBench::constructDepot() {
     Spot depot = new Spot();
     depot->x = 0;
     depot->y = 0;
-    depot->id = -1;
+    depot->id = 0;
+    depot->type = 'D';
     this->depot = depot;
 }
 
@@ -111,7 +114,7 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
         // 当前顾客节点于customerSet中的定位
         // 这里默认customerSet是按id升序排列
         int count = iter - customerSet.begin();  
-        // 寻找count是否是dynamicPos中的元素
+        // 判断count是否是dynamicPos中的元素
         vector<int>::iterator iter2 = find(dynamicPos.begin(), dynamicPos.end(), count);
         if(iter2 != dynamicPos.end()) {   
             // 在dynamicPos集合中

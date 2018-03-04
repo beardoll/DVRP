@@ -22,7 +22,6 @@ private:
     vector<Spot*> storeSet;
     vector<Spot*> customerSet;
     Spot depot;
-    int currentID;
 };
 
 #endif

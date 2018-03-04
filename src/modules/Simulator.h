@@ -8,7 +8,7 @@
 class Simulator{  // 仿真器类
 public:
     Simulator(int slotIndex, vector<Spot*> promiseCustomerSet, vector<Spot*> waitCustomerSet,
-            vector<Spot*> dynamicCustomerSet, vector<Car*> currentPlan); // 构造函数
+            vector<Spot*> dynamicCustomerSet, vector<Car*> currentPlan, vector<Spot*> storeSet); // 构造函数
     ~Simulator();  // 析构函数 
     vector<Car*> initialPlan(Spot depot, float capacity);     // 利用采样制定初始计划
     vector<Car*> replan(vector<int> &newServedCustomerId, vector<int> &newAbandonedCustomerId, 
@@ -26,6 +26,7 @@ private:
     // 当前计划
     // 在初始化的时候，并没有当前计划，这时currentPlan可以是一辆空车，我们在其中提取capacity, depot信息
     vector<Car*> currentPlan;  
+    vector<Spot*> storeSet;
 };
 
 #endif

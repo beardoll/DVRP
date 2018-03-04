@@ -417,17 +417,15 @@ float Route::getOriginLen() {
     Spot* front = head;         // 搜索的起始节点
     Spot* back = front->next;   // 下一个节点
     float originLen = 0;
-    for(Spot* ptr=head; ptr != rear; ptr = ptr->next) {
-        if(ptr->type == 'C' && ptr->prop == 1) {
-            Spot *customer = ptr;
-            Spot *store = ptr->choice;
-            Spot *customerPre = customer->front;
-            Spot *customerNext = customer->next;
-            Spot *storePre = store->front;
-            Spot *storeNext = store->next;
-            originLen = originLen + dist(storePre, store) + 
-                dist(store, storeNext) + dist(CustomerPre, customer) + 
-                dist(customer, customerNext);
+    while(back != NULL) {
+        // 只计算静态节点的运输代价
+        if(back->prop != 0) {
+            back = back->next;
+        }
+        else {
+            origenLen = originLen + dist(front, back);
+            front = back;
+            back = back -> next;
         }
     }
     return originLen;

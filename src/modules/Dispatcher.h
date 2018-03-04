@@ -8,7 +8,7 @@
 class Dispatcher{   // 调度中心类
 public:
     Dispatcher(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet, 
-            Spot depot, float capacity);
+            vector<Spot*> storeSet, Spot depot, float capacity);
     ~Dispatcher(){}; // 析构函数
     void destroy();  // 销毁Dispatcher
     EventElement handleNewCustomer(int slotIndex, Spot* newCustomer);  // 处理新顾客到达
@@ -21,6 +21,7 @@ public:
     vector<Car*> getFinishedPlan() {return finishedPlan; }
 private:
     vector<Spot*> allCustomer;    // 所有的顾客
+    vector<Spot*> storeSet;
     vector<int> dynamicCustomerId;    // 动态到达的顾客的id
     vector<int> servedCustomerId;     // 已经服务过的顾客id
     vector<int> promisedCustomerId;   // (未服务过的)已经得到'OK' promise的顾客id

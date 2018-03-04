@@ -13,13 +13,14 @@ using namespace std;
 
 Simulator::Simulator(int slotIndex, vector<Spot*> promiseCustomerSet, 
         vector<Spot*> waitCustomerSet, vector<Spot*> dynamicCustomerSet, 
-        vector<Car*> currentPlan) { 
+        vector<Car*> currentPlan, vector<Spot*> storeSet) { 
     // 构造函数
     this->slotIndex = slotIndex;
     this->promiseCustomerSet = promiseCustomerSet;
     this->waitCustomerSet = waitCustomerSet;
     this->dynamicCustomerSet = dynamicCustomerSet;
     this->currentPlan = currentPlan;
+    this->storeSet = storeSet;
 }
 
 Simulator::~Simulator(){  
@@ -41,40 +42,61 @@ vector<Spot*> Simulator::generateScenario(){
     // 产生情景
     // 根据动态顾客的随机信息产生其时间窗
     // 注意动态顾客只可能出现在slotIndex之后
-    int leftBound = 0;
-    int rightBound = 0;
+    float alpha = ALPHA;   // 时间窗长度与dist(顾客，商家)的比例系数
+    float leftBound, rightBound;  // 时间窗长度浮动因子(>=1)
     switch(STRATEGY) {
         case Negative: {
-            leftBound = 1;
-            rightBound = 4;
+            leftBound = max(0.5*alpha, 1.0);
+            rightBound = alpha;
             break;
         }
         case Positive: {
-            leftBound = 5;
-            rightBound = 15;
+            leftBound = alpha;
+            rightBound = 2*alpha;
             break;
         }
     }
-    vector<Spot*> tempCustomer = copyCustomerSet(dynamicCustomerSet);
-    vector<Spot*>::iterator iter = tempCustomer.begin();
-    for(iter; iter<tempCustomer.end(); iter++){
-        // 产生随机数选择顾客可能提出需求的时间
-        float randFloat = random(0,1);
-        float sumation = 0;
-        // 时间段计数
-        int count = roulette((*iter)->timeProb + slotIndex, TIME_SLOT_NUM - slotIndex);
-        float t1 = (count+slotIndex) * TIME_SLOT_LEN;
-        float t2 = (count+slotIndex+1) * TIME_SLOT_LEN;
-        float tempt = random(t1, t2);
-        // 时间轴长度
-        float maxTime = TIME_SLOT_NUM * TIME_SLOT_LEN;
-        (*iter)->startTime = min(tempt, maxTime - 5*(*iter)->serviceTime);
-        float t3 = leftBound*(*iter)->serviceTime;
-        float t4 = rightBound*(*iter)->serviceTime;  
-        float timeWindowLen = random(t3, t4);       
-        (*iter)->endTime = min((*iter)->startTime + timeWindowLen, maxTime);
+    // 随机产生顾客节点
+    float innerR = R2;   // 内圈
+    float outerR = R3;   // 外圈
+    float deltaT = 10;   // 采样间隔时间
+
+    float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
+    int sliceNum = int(timeHorizon/deltaT);
+    float *lambda = LAMBDA0;
+    int subcircleNum = SUBCIRCLE_NUM;  // 扇形数量
+    float deltaAngle = 2 * PI / subcircleNum;  // 各个区域夹角
+    int storeNum = (int)storeSet.size();
+    vector<Spot*> dynamicCustomer;
+    for(int t=0; t<numSlice; t++) {
+        for(int j=0; j<numSubcircle; j++) {
+            float p = lambda[j] * deltaT * exp(-lambda[j] * deltaT);
+            if(p < random(0,1)) {
+                // 按概率生成顾客
+                float theta = random(deltaAngle*j, deltaAngle*(j+1));
+                float r = random(innerR, outerR);
+                Spot c = new Spot();
+                c->id = CUSTOMER_NUM + STORE_NUM + dynamicCustomer.size() + 1;
+                c->x = r * sin(theta);
+                c->y = r * cos(theta);
+                c->serviceTime = random(0, 10);
+                c->prop = 1;
+                // 随机选出商店
+                int index = int(random(0, storeNum));
+                index = min(storeNum-1, index);
+                Spot *store = new Spot(*storeSet[index]);
+                store->prop = 1;
+                c->choice = store;
+                c->prop = 1;
+                float distFromCustomerToStore = dist(c, c->choice);
+                float timeWindowLen = random(leftBound, rightBound) * distFromCustomerToStore;
+                c->startTime = random(slotIndex * TIME_SLOT_LEN, timeHorizon-timeWindowLen);
+                c->endTime = min(c->startTime, timeHorizon);
+                dynamicCustomer.push_back(c);
+            }
+        }
     }
-    return tempCustomer;
+    return dynamicCustomer;
 }
 
 bool Simulator::checkFeasible(vector<Car*> carSet) {

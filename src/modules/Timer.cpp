@@ -81,14 +81,14 @@ void Timer::deleteEventElement(int carIndex){
     }
 }
 
-void searchCustomer(int customerId, vector<Spot*> customerSet, Spot &customer) {
+void searchCustomer(int customerId, vector<Spot*> customerSet, Spot* customer) {
     // 根据customerId在customerSet中寻找顾客
     bool mark = false;
     vector<Spot*>::iterator custIter;
     for(custIter = customerSet.begin(); custIter < customerSet.end(); custIter++) {
         if((*custIter)->id == customerId) {
             mark = true;
-            customer = **custIter;
+            customer = *custIter;
             break;
         }
     }
@@ -134,7 +134,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
         EventElement currentEvent = pop();  // 弹出最近事件
         switch(currentEvent.eventType) {
             case newCustomer: {   // 新顾客到达
-                Spot cust;
+                Spot* cust;
                 try {
                     searchCustomer(currentEvent.customerId, dynamicCustomerSet, cust);
                 }
@@ -186,7 +186,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
     vector<int> rejectCustomerId = disp.getRejectCustomerId();
     vector<int>::iterator intIter;
     for(intIter = rejectCustomerId.begin(); intIter < rejectCustomerId.end(); intIter++) {
-        rejectCustomer.push_back(allCustomer[*intIter]);
+        rejectCustomer.push_back(allCustomer[*intIter-1]);
     }
     finishedPlan = disp.getFinishedPlan();
     vector<Car*>::iterator carIter;

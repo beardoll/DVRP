@@ -12,6 +12,15 @@ Car::Car(Spot &headNode, Spot &rearNode, float capacity, int index, bool artific
     travelDistance = 0;
 }
 
+Car::Car(route &route, int index, bool artificial): carIndex(index), 
+    artificial(artificial), route(route)
+{
+    state = wait;
+    nearestDepatureTime = 0;
+    nextArriveTime = 0;
+    travelDistance = 0;
+}
+
 Car::~Car(){  
     // 内嵌对象的析构函数会被调用，不用在此处delete route
 }
@@ -42,17 +51,12 @@ Car& Car::operator= (Car &item){
 
 
 //================ 得到货车属性 =================//
-Car* Car::getNullCar(){
+Car* Car::getNullCar(vector<Spot*> &removedCustomer){
     // 复制货车的首节点和尾节点以及剩余容量
     // 需要保留choice指向depot的customer，他们不可以被转移到别的车上
     // 返回的Car需要从外部进行delete
-
-    float leftCapacity = route.getLeftQuantity();
-    Car* newCar = new Car(getHeadNode(), getRearNode(), leftCapacity, carIndex);
-    Spot *temp = route.current->next;
-    for(; temp<route.rear; temp=temp->next) {
-        
-    }
+    route *emptyRoute = route.getEmptyRoute(removedCustomer);
+    Car* newCar = new Car(*emptyRoute, carIndex);
     return newCar;
 }
 
@@ -256,7 +260,6 @@ Car* Car::capturePartRoute(float time){
             exit(1);
         }
     }
-    deleteCustomerSet(tempCust);
     return newCar;
 }
 

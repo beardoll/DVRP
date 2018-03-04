@@ -239,7 +239,6 @@ void validPromise(vector<Car*>Plan, vector<Spot*> hurryCustomer,
                 hurryCustomerId.erase(tempIter);
             }
         }
-        deleteCustomerSet(tempCust);
     }
     // 得到放弃的顾客id
     vector<int>::iterator intIter;
@@ -287,7 +286,8 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
     record_lck.unlock();
 }
 
-vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &newAbandonedCustomerId, vector<int> &delayCustomerId, float capacity) {
+vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &newAbandonedCustomerId, 
+        vector<int> &delayCustomerId, float capacity) {
     // 重新计划，用于vehicle出发之后
     // 首先需要筛选出着急回复以及不着急回复的顾客
     // Returns:
@@ -306,11 +306,9 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     for(custIter = waitCustomerSet.begin(); custIter < waitCustomerSet.end(); custIter++) {
         if((*custIter)->tolerantTime <= nextMoment) {  
             // 该顾客着急于下时间段前得到回复
-            Spot *tempCust = new Spot(**custIter);
             hurryCustomer.push_back(tempCust);
         } else {
             // 否则，该顾客属于“有耐心的顾客”
-            Spot *tempCust = new Customer(**custIter);
             patientCustomer.push_back(tempCust);
         }
     }
@@ -450,8 +448,9 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         int coreId = SAMPLE_RATE - restSampleNum + 1;
         for (int i = 0; i < min(CORE_NUM, restSampleNum); i++) {
             vector<Spot*> sampleCustomer = generateScenario(); // 产生动态顾客到达的情景
+            vector<Car*> temp = copyPlan(newPlan);
             thread_pool.push_back(thread(threadForReplan, capacity, coreId + i, 
-                        ref(planSet), sampleCustomer, ref(newPlan), allServedCustomerId, 
+                        ref(planSet), sampleCustomer, temp, allServedCustomerId, 
                         ref(transformMatrix), ref(record_lck)));
         }
         for (auto& thread : thread_pool) {

@@ -739,7 +739,7 @@ Route* Route::getEmptyRoute(vector<Spot*> &removedCustomer) {
             else {
                 Spot *customer = newSpot(*temp);
                 customer->choice = newRoute->head;
-                newRoute->insertAfter(newRoute->head, customer);
+                newRoute->insertAtRear(customer);
             }
         }
         temp = temp->next;
@@ -757,19 +757,13 @@ Route* Route::capture(){
     if(current->next == rear) { // current指针后已经没有路径
         return *newRoute;
     }
-    Spot* newCurrent = newRoute.getHeadNode();
     for(Spot* ptr=current->next; ptr != rear; ptr = ptr->next) {
         Spot *temp = new Spot(*ptr);
         if(temp->type == 'C' && temp->choice->visit == true) {
             // customer对应的store已经被访问过
             temp->choice = newRoute->getHeadNode();
+            newRoute->insertAtRear(temp);
         }
-        try{
-            newRoute->insertAfter(newCurrent, temp);
-        } catch (exception &e) {
-            cout << "While capture part route: " << e.what() << endl;
-        }
-        newCurrent = temp;
     }
     return newRoute;
 }
@@ -779,7 +773,7 @@ void Route::replaceRoute(Route &route) {
     // 对于route中choice为depot的customer，需要找回其原本指向的商店
     vector<Spot*> customerPool(NUM_OF_CUSTOMER);
     Spot *ptr1, *ptr2, *ptr3;
-        // 清空本路径中current指针后面的节点 
+    // 清空本路径中current指针后面的节点 
     if(current->next != rear) { // current后面还有节点
         // 清除原路径中current指针后面的元素
         // 不包括对rear节点的清除
@@ -788,7 +782,6 @@ void Route::replaceRoute(Route &route) {
             if(ptr1->type == 'C') {
                 customerPool[ptr1->id] = ptr1->choice;
             }
-
             ptr2 = ptr1->next;
             deleteNode(ptr2);
             ptr1 = ptr2;
@@ -805,14 +798,12 @@ void Route::replaceRoute(Route &route) {
 
     // 将route中除head和rear外的节点都复制到current指针后
     ptr1 = route.head->next;
-    ptr2 = current;
     while(ptr1 != route.rear) {
         try {
-            insertNode(ptr2, ptr1);
+            insertAtRear(ptr1);
         } catch (exception &e) {
             cout << "While replace route: " << e.what() << endl;
         }
-        ptr2 = ptr1;
         ptr1 = ptr1->next; 
     }
     // 清空变量

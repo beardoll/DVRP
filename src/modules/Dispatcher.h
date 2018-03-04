@@ -11,7 +11,7 @@ public:
             Spot depot, float capacity);
     ~Dispatcher(){}; // 析构函数
     void destroy();  // 销毁Dispatcher
-    EventElement handleNewCustomer(int slotIndex, const Spot& newCustomer);  // 处理新顾客到达
+    EventElement handleNewCustomer(int slotIndex, Spot* newCustomer);  // 处理新顾客到达
     EventElement handleCarArrived(float time, int carIndex);            // 处理货车到达事件
     EventElement handleFinishedService(float time, int carIndex);       // 处理货车完成服务事件
     // EventElement handleDepature(float time, int carIndex);              // 处理货车出发事件

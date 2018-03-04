@@ -21,14 +21,12 @@ Dispatcher::Dispatcher(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCus
     vector<Spot*>::iterator custIter = staticCustomerSet.begin();
     for(custIter; custIter < staticCustomerSet.end(); custIter++) {
         // 在计划开始前已经提出需求的顾客都属于promiseCustomer
-        Spot* newCust = new Spot(**custIter);
-        allCustomer.push_back(newCust);
-        promisedCustomerId.push_back(newCust->id);
+        allCustomer.push_back(*custIter);
+        promisedCustomerId.push_back((*custIter)->id);
     }
     for(custIter = dynamicCustomerSet.begin(); custIter < dynamicCustomerSet.end(); custIter++) {
-        Spot* newCust = new Spot(**custIter);
-        allCustomer.push_back(newCust);	
-        dynamicCustomerId.push_back(newCust->id);
+        allCustomer.push_back(*custIter);	
+        dynamicCustomerId.push_back((*custIter)->id);
     }
     sort(allCustomer.begin(), allCustomer.end(), ascendSortForCustId);  // 按id进行递增排序
     sort(promisedCustomerId.begin(), promisedCustomerId.end());
@@ -102,7 +100,6 @@ void checkFeasible(vector<Car*> carSet, vector<int> promisedCustomerId){
                 tempId.erase(intIter);
             }
         }
-        deleteCustomerSet(tempCust);
     }
     if(tempId.size() != 0) {   // if there are promiseCustomers excluded
         throw out_of_range("Not all promise customers are in the car set!");
@@ -132,10 +129,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
         Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, currentPlan);
-        updatedPlan = smu.initialPlan(depot, capacity);
-        currentPlan = copyPlan(updatedPlan);
-        withdrawPlan(updatedPlan);
-        vector<Car*>::iterator carIter;
+        currentPlan = smu.initialPlan(depot, capacity);
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
             EventElement newEvent = (*carIter)->launchCar(0);  // 将车辆发动
             newEventList.push_back(newEvent);
@@ -153,14 +147,13 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         cout << ostr.str();
         float currentTime = slotIndex * TIME_SLOT_LEN;
         for(custIdIter = waitCustomerId.begin(); custIdIter < waitCustomerId.end(); custIdIter++) {
-            Spot *temp = new Spot();
-            *temp = *allCustomer[*custIdIter - 1];
+            Spot *temp = *allCustomer[*custIter-1];
             waitCustomerSet.push_back(temp);
         }
         vector<Car*> futurePlan;
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
             // 抓取车子还没有走过的计划
-            Car *tempCar = new Car((*carIter)->capturePartRoute(currentTime));
+            Car *tempCar = (*carIter)->capturePartRoute(currentTime);
             futurePlan.push_back(tempCar);
         }
         if (currentPlan.size() != 0) {  // 有货车可派时，才进行replan
@@ -227,7 +220,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             // 将变更后的future plan安插到currentPlan对应位置之后
             int count = 0;
             for (carIter = updatedPlan.begin(); carIter < updatedPlan.end(); carIter++) {
-                currentPlan[count]->replaceRoute(**carIter, currentTime);
+                currentPlan[count]->replaceRoute(*carIter, currentTime);
                 EventElement newEvent;
                 if (currentPlan[count]->getState() == wait) {
                     // 如果货车原来处于wait状态，则需要将其发动
@@ -239,8 +232,6 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                 newEventList.push_back(newEvent);
                 count++;
             }
-            withdrawPlan(updatedPlan);
-            deleteCustomerSet(waitCustomerSet);
             ostr.str("");
             ostr << "----Replan Finished! Now there are " << currentPlan.size() 
                 << " cars working!" << endl << endl;
@@ -257,7 +248,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
     return newEventList;
 } 
 
-EventElement Dispatcher::handleNewCustomer(int slotIndex, const Spot& newCustomer){  
+EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){  
     // 处理新顾客到达
     ostringstream ostr;
     ostr.str("");
@@ -268,20 +259,22 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Spot& newCustome
             newCustomer.id);
     dynamicCustomerId.erase(intIter);
     float minInsertCost = MAX_FLOAT;
-    // 第一个int是货车编号（于currentPlan中的位置），第二个Customer是插入点前面的顾客
-    pair<int, Spot> insertPos;   
+    // 第一个int是货车编号（于currentPlan中的位置）
+    // 第二个pair组合分别是refStore, refCustomer
+    pair<int, pair<Spot*, Spot*> > insertPos;   
     vector<Car*>::iterator carIter;
     float currentTime = newCustomer.startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
     for (carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
         // 求newCustomer在每条route的最小插入代价
-        Car tempCar = (*carIter)->capturePartRoute(currentTime);
-        Spot customer1, customer2;
+        Car *tempCar = (*carIter)->capturePartRoute(currentTime);
+        Spot *refStore1, refCustomer1, refStore1, refCustomer2;
         float minValue, secondValue;
-        tempCar.computeInsertCost(newCustomer, minValue, customer1, secondValue, customer2);
+        tempCar.computeInsertCost(newCustomer->choice, newCustomer, minValue, refStore1,
+                refCustomer1, secondValue, refStore2, refCustomer2);
         if(minValue < minInsertCost) {
             int pos = carIter - currentPlan.begin();  
             minInsertCost = minValue;
-            insertPos = make_pair(pos, customer1);
+            insertPos = make_pair(pos, make_pair(refStore1, refCustomer1));
         }
     }
     EventElement newEvent;
@@ -308,9 +301,11 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Spot& newCustome
         promisedCustomerId.push_back(newCustomer.id);  // 这些顾客一定会得到服务
         sort(promisedCustomerId.begin(), promisedCustomerId.end());
         int selectedCarPos = insertPos.first;
-        Spot selectedCustomer = insertPos.second;
+        Spot* refStore = insertPos.second.first;
+        Spot* refCustomer = insertPos.second.second;
         try {
-            currentPlan[selectedCarPos]->insertAfter(selectedCustomer, newCustomer);
+            currentPlan[selectedCarPos]->insertAfter(refStore, refCustomer, 
+                    newCustomer->choice, newCustomer);
         } catch (exception &e) {
             cerr << e.what() << endl;
             exit(1);

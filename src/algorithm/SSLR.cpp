@@ -148,14 +148,18 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
 	
     // 构造初始全局最优解
     vector<Car*> currentCarSet(0);
+    vector<Spot*> currentCustomer(0);
     for(carIter = originPlan.begin(); carIter < originPlan.end(); carIter++) {
         // 保留原有的车辆，记录其起点以及终点以及剩余容量、基准时间
-        Car *newCar = new Car((*carIter)->getNullCar());
+        vector<Spot*> temp;
+        Car *newCar = new Car((*carIter)->getNullCar(temp));
+        currentCustomerSet.insert(currentCustomer.end(), temp.begin(), temp.end());
         currentCarSet.push_back(newCar);
     }
+    vector<Spot*> copyWaitCustomer = copyCustomerSet(waitCustomer);
+    currentCustomer.insert(currentCustomer.end(), copyWaitCustomer.begin(), copyWaitCustomer.end());
     // 以当前所拥有的working car为基础，构造初始解（完全重新构造）
-    vector<Spot*> copyAllCustomer = copyCustomerSet(allCustomer);
-    regretInsert(currentCarSet, copyAllCustomer, false);  
+    regretInsert(currentCarSet, currrentCustomer, false);  
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
     float currentCost = getCost(currentCarSet);

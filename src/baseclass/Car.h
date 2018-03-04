@@ -11,6 +11,7 @@ class Car{
 public:
     Car(Spot &headNode, Spot &rearNode, float capacity, int index, 
             bool artificial = false);  // 构造函数
+    Car(Route &route, int index, bool artificial=false);  // 构造函数
     ~Car();          // 析构函数
     Car(const Car& item);  //复制构造函数
     Car& operator= (Car &item);       // 重载赋值操作
@@ -22,7 +23,7 @@ public:
     float getCapacity() {return route.getCapacity();}    // 返回车容量
     vector<Spot*> getAllCustomer() { return route.getAllCustomer();}
     int getCustomerNum(){ return route.getSize();}       // 获取(P-D)对的数目
-    Car* getNullCar();  // 将所有的顾客删除掉，返回一辆空车
+    Car* getNullCar(vector<Spot*> &removedCustomer);  // 将所有的顾客删除掉，返回一辆空车
     float getTravelDistance() { return travelDistance; } // 获取货车走过的总路长
     float getAddDistance() {
         // 获取货车为服务动态顾客的附加路长

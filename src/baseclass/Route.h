@@ -59,7 +59,7 @@ public:
     vector<float> computeReducedCost(float DTpara[], bool artificial = false);
     // 计算item节点在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点前面的顾客节点
-	// penaltyPara为惩罚系数，若不需要惩罚则penaltyPara = 0
+    // penaltyPara为惩罚系数，若不需要惩罚则penaltyPara = 0
     void computeInsertCost(Spot item, float &minValue, Spot &customer1, 
             float &secondValue, Spot &customer2, float pertubation = 0.0f, 
             bool regularization = true);  
@@ -72,7 +72,8 @@ public:
 
     // 路径的替换和提取
     // 以route替换掉current指针后的路径
-    void replaceRoute(const Route &route);  
+    Route* getEmptyRoute(vector<Spot*> &removedCustomer);
+    void replaceRoute(Route &route);  
     // 抓取current指针后的路径
     Route& capture();  
 

@@ -44,9 +44,15 @@ Car& Car::operator= (Car &item){
 //================ 得到货车属性 =================//
 Car* Car::getNullCar(){
     // 复制货车的首节点和尾节点以及剩余容量
-    // 需要从外部进行delet
+    // 需要保留choice指向depot的customer，他们不可以被转移到别的车上
+    // 返回的Car需要从外部进行delete
+
     float leftCapacity = route.getLeftQuantity();
     Car* newCar = new Car(getHeadNode(), getRearNode(), leftCapacity, carIndex);
+    Spot *temp = route.current->next;
+    for(; temp<route.rear; temp=temp->next) {
+        
+    }
     return newCar;
 }
 
@@ -283,9 +289,11 @@ void Car::updateState(float time){
                         state = depature;
                         nextArriveTime = nearestDepatureTime + dist(currentPos, nextPos);
                     } else {
-                        // 货车的剩余载货量减少
-                        route.decreaseLeftQuantity(currentPos->quantity);
-                        state = serving;
+                        if(currentPos->type == 'C') {
+                            // 货车的剩余载货量减少
+                            route.decreaseLeftQuantity(currentPos->quantity);
+                            state = serving;
+                        }
                     }
                 }
             }

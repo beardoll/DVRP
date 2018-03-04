@@ -429,8 +429,21 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCust
         int indexsetInRouteLen = indexsetInRoute.end() - indexsetInRoute.begin();  
         // 本次移除的节点数目 
         int removeNum = max((int)floor(pow(y,pshaw)*indexsetInRouteLen), 1);
-        for(i=0; i<removeNum ; i++){
-            removedIndexset.push_back(currentR[i].second);
+        i = 0;
+        int count = 0;
+        while(i<(int)indexsetInRoute.size() && count<removeNum) {
+            int index = currentR[i++].second;
+            if(allCustomerInOrder[index]->choice->type == 'D') {
+                // 如果customer指向的商店是仓库，说明这是一个虚拟的商店
+                // 当计划开始后，在replan阶段，往往会出现store访问了但是customer尚未访问的
+                // 情况，这时customer指向的store会临时安排为depot。为了避免将该customer转
+                // 移到其他的车辆中（不允许store和customer在不同的车辆上），我们禁止对这一
+                // 类顾客节点执行"remove"操作
+                continue;
+            } else {
+                removedIndexset.push_back(index);
+                count++;
+            }
         }
         // 截至目前为止被移除的节点数目
         int indexRemovedLen = removedIndexset.end() - removedIndexset.begin();  
@@ -490,17 +503,31 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCu
     }                                                         
 
     indexsetInRoute = allIndex;
-    for(i=0; i<q; i++){
+    int count = 0;
+    int maxTrial = (int)indexsetInRoute.size(); // 最大尝试次数
+    i = 0;
+    while(i<maxTrial && count<q) {
         // 尚在路径中的节点个数
+        i++;
         int indexInRouteLen = indexsetInRoute.end() - indexsetInRoute.begin();  
         int selectedIndex = int(random(0, indexInRouteLen));     // 在indexsetInRoute中的索引
         selectedIndex = min(selectedIndex, indexInRouteLen-1);   // avoid reaching the right side
-        removedIndexset.push_back(indexsetInRoute[selectedIndex]);
-        sort(removedIndexset.begin(), removedIndexset.end());
-        vector<int>::iterator iterINT;
-        iterINT = set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), 
-                removedIndexset.end(), indexsetInRoute.begin());
-        indexsetInRoute.resize(iterINT - indexsetInRoute.begin());
+        if(allCustomerInOrder[selectedIndex]->choice->type == 'D') {
+            // 如果customer指向的商店是仓库，说明这是一个虚拟的商店
+            // 当计划开始后，在replan阶段，往往会出现store访问了但是customer尚未访问的
+            // 情况，这时customer指向的store会临时安排为depot。为了避免将该customer转
+            // 移到其他的车辆中（不允许store和customer在不同的车辆上），我们禁止对这一
+            // 类顾客节点执行"remove"操作
+            continue;
+        } else {
+            removedIndexset.push_back(indexsetInRoute[selectedIndex]);
+            sort(removedIndexset.begin(), removedIndexset.end());
+            vector<int>::iterator iterINT;
+            iterINT = set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), 
+                    removedIndexset.end(), indexsetInRoute.begin());
+            indexsetInRoute.resize(iterINT - indexsetInRoute.begin());
+            count++;
+        }
     }
 
     // 检查在removedIndexset中是否有重复元素elements
@@ -559,8 +586,20 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         int indexInRouteLen = indexsetInRoute.end() - indexsetInRoute.begin();
         int removedNum = static_cast<int>(max((float)floor(pow(y,pworst)*indexInRouteLen), 1.0f));
         assert(removedNum <= indexInRouteLen);
-        for(i=0; i<removedNum; i++) {
-            removedIndexset.push_back(reducedCost[i].second);
+        int count = 0;
+        while(i<(int)indexsetInRoute.size() && count<removeNum) {
+            int index = currentR[i++].second;
+            if(allCustomerInOrder[index]->choice->type == 'D') {
+                // 如果customer指向的商店是仓库，说明这是一个虚拟的商店
+                // 当计划开始后，在replan阶段，往往会出现store访问了但是customer尚未访问的
+                // 情况，这时customer指向的store会临时安排为depot。为了避免将该customer转
+                // 移到其他的车辆中（不允许store和customer在不同的车辆上），我们禁止对这一
+                // 类顾客节点执行"remove"操作
+                continue;
+            } else {
+                removedIndexset.push_back(index);
+                count++;
+            }
         }
         sort(removedIndexset.begin(), removedIndexset.end());
         vector<int>::iterator iterINT;   // 整数向量迭代器

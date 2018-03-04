@@ -270,12 +270,12 @@ vector<int> getCustomerID(vector<Spot*> customerSet){
     return ids;
 }
 
-vector<int> getID(vector<Car*> carSet) {
+vector<int> getCustomerID(vector<Car*> carSet) {
     vector<int> ids(0);
     vector<Car*>::iterator carIter;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
         vector<Spot*> tempCust = (*carIter)->getAllCustomer();
-        vector<int> currentIDs = getID(tempCust);
+        vector<int> currentIDs = getCustomerID(tempCust);
         ids.insert(ids.end(), currentIDs.begin(), currentIDs.end());
     }
     sort(ids.begin(), ids.end());

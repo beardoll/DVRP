@@ -31,6 +31,7 @@ public:
     void printMatrixAtCol(int col);
 
     // 矩阵操作
+    void setAll(T value);  // 将矩阵的所有元素设置为value
     void setMatrix(const T* values);  // 设置矩阵元素
     T getMaxValue(int &i, int &j); // 得到当前矩阵的最大元素及其位置（其中一个）
     T getMinValue(int &i, int &j); // 得到当前矩阵的最小元素及其位置（其中一个）
@@ -227,7 +228,15 @@ void Matrix<T>::printMatrixAtCol(int col){
 
 //=================== 矩阵操作 ===================//
 template <class T>
-void Matrix<T>:: setMatrix(const T* values){
+void Matrix<T>::setAll(T value) {
+    for(int i=0; i<rows*cols; i++) {
+        elements[i] = value;
+    }
+}
+
+
+template <class T>
+void Matrix<T>::setMatrix(const T* values){
     for(int i=0; i<rows*cols; i++){
         elements[i] = values[i];
     }

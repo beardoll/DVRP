@@ -16,18 +16,10 @@ Simulator::Simulator(int slotIndex, vector<Spot*> promiseCustomerSet,
         vector<Car*> currentPlan) { 
     // 构造函数
     this->slotIndex = slotIndex;
-    vector<Spot*>::iterator custIter;
-    this->promiseCustomerSet.reserve(promiseCustomerSet.end() - promiseCustomerSet.begin());
-    this->promiseCustomerSet = copyCustomerSet(promiseCustomerSet);
-	
-    this->waitCustomerSet.reserve(waitCustomerSet.end() - waitCustomerSet.begin());
-    this->waitCustomerSet = copyCustomerSet(waitCustomerSet);
-
-    this->dynamicCustomerSet.reserve(dynamicCustomerSet.end() - dynamicCustomerSet.begin());
-    this->dynamicCustomerSet = copyCustomerSet(dynamicCustomerSet);
-	
-    this->currentPlan.reserve(currentPlan.size());
-    this->currentPlan = copyPlan(currentPlan);
+    this->promiseCustomerSet = promiseCustomerSet;
+    this->waitCustomerSet = waitCustomerSet;
+    this->dynamicCustomerSet = dynamicCustomerSet;
+    this->currentPlan = currentPlan;
 }
 
 Simulator::~Simulator(){  
@@ -116,7 +108,7 @@ void threadForInitial(Spot depot, float capacity, int coreId, vector<vector<Car*
     //   * depot: 仓库节点
     //   * capacity: 车容量
     //   * coreId: 本线程的id
-    //   * allCustomer: 初始的所有顾客节点
+    //   * allCustomer: 初始的所有顾客节点(D)
     //   * validId: 得到了service promise的顾客id
     //   * record_lck: 锁住planSet变量，以向其写入数据
     // Returns:
@@ -127,7 +119,7 @@ void threadForInitial(Spot depot, float capacity, int coreId, vector<vector<Car*
     float cost = 0;
     alg.run(solution, cost);
     vector<Car*>::iterator carIter;
-    int totalRetainNum = 0;   // 看看就听过removeInvalidCustomer后还有多少剩余节点
+    int totalRetainNum = 0;   // 看看经过removeInvalidCustomer后还有多少剩余节点
     for(carIter = solution.begin(); carIter < solution.end(); carIter++) {
         (*carIter)->removeInvalidCustomer(validId, totalRetainNum);
         (*carIter)->updateTransformMatrix(transformMatrix);
@@ -161,17 +153,11 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
     vector<int> validId;
     validId.push_back(0);   // 第一个节点时仓库节点
     // 所有在计划开始前已知的顾客id（属于必须服务的顾客）
-    vector<int> tempId = getID(promiseCustomerSet);
-    for(intIter = tempId.begin(); intIter < tempId.end(); intIter++) {
-        validId.push_back(*intIter);
-    }
+    vector<int> tempId = getCustomerID(promiseCustomerSet);
+    validId.insert(validId.end(), tempId.begin(), tempId.end());
     // 初始化transformMatrix
     Matrix<int> transformMatrix(validId.size(), validId.size());
-    for(i=0; i<validId.size(); i++) {
-        for(j=0; j<validId.size(); j++) {
-            transformMatrix.setValue(i,j,0);
-        }       
-    }
+    transformMatrix.setAll(0);
     // 所有采样得到的计划
     vector<vector<Car*> > planSet;
     planSet.reserve(SAMPLE_RATE);
@@ -183,7 +169,6 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
     ostr << "----Sampling begins!" << endl;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
-
     int restSampleNum = SAMPLE_RATE;       // 尚未跑完的样本
     while(restSampleNum > 0) {
         // coreId: 线程id，从0开始
@@ -192,10 +177,7 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
             // 所有顾客信息
             vector<Spot*> allCustomer = copyCustomerSet(promiseCustomerSet);
             vector<Spot*> currentDynamicCust = generateScenario();  // 采样
-            iter = currentDynamicCust.begin();
-            for(iter; iter<currentDynamicCust.end(); iter++){
-                allCustomer.push_back(*iter);
-            }
+            allCustomer.insert(allCustomer.end(), currentDynamicCust.begin(), currentDynamicCust.end());
             thread_pool.push_back(thread(threadForInitial, depot, capacity, coreId + i, 
                         ref(planSet), allCustomer, validId, ref(transformMatrix), ref(record_lck)));
         }
@@ -232,9 +214,6 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
     vector<Car*> outputPlan = copyPlan(planSet[scoreForPlan[0].second]);
     cout << "Refreshed the outputPlan!" << endl;
     clearPlanSet(planSet);
-    deleteCustomerSet(waitCustomerSet);
-    deleteCustomerSet(promiseCustomerSet);
-    withdrawPlan(currentPlan);
     return outputPlan;
 }
 

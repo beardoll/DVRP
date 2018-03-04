@@ -723,6 +723,30 @@ void Route::refreshArrivedTime(){
 
 
 //=============== 路径的替换和提取 ================//
+Route* Route::getEmptyRoute(vector<Spot*> &removedCustomer) {
+    // 获取空的路径，但是需要保留路径中choice为depot的customer
+    // removedCustomer: current指针之后的顾客节点 - 保留的顾客节点
+    Route *newRoute = new Route(head, rear, leftQuantity);
+    Spot *temp = current->next;
+    while(temp != NULL) {
+        if(temp->type == 'C') {
+            if(temp->choice->type != 'D') {
+                Spot *customer = new Spot(*temp);
+                Spot *store = new Spot(*(customer->choice));
+                customer->choice = store;
+                removedCustomer.push_back(customer);
+            }
+            else {
+                Spot *customer = newSpot(*temp);
+                customer->choice = newRoute->head;
+                newRoute->insertAfter(newRoute->head, customer);
+            }
+        }
+        temp = temp->next;
+    }
+    return newRoute;
+}
+
 Route* Route::capture(){ 
     // 抓取current指针后的路径
     // current指针当前节点将作为head节点
@@ -750,32 +774,49 @@ Route* Route::capture(){
     return newRoute;
 }
 
-void Route::replaceRoute(const Route &route) {  // 以route替换掉current指针后的路径
+void Route::replaceRoute(Route &route) {  
+    // 以route替换掉current指针后的路径
+    // 对于route中choice为depot的customer，需要找回其原本指向的商店
+    vector<Spot*> customerPool(NUM_OF_CUSTOMER);
     Spot *ptr1, *ptr2, *ptr3;
-    if(current->next != rear) { // current后面还有节点，需要先清除原有路径
+        // 清空本路径中current指针后面的节点 
+    if(current->next != rear) { // current后面还有节点
         // 清除原路径中current指针后面的元素
         // 不包括对rear节点的清除
         ptr1 = current->next;
         while(ptr1 != rear) {
+            if(ptr1->type == 'C') {
+                customerPool[ptr1->id] = ptr1->choice;
+            }
+
             ptr2 = ptr1->next;
             deleteNode(ptr2);
             ptr1 = ptr2;
         }
     }
+    // 修改route中choice为depot的customer其选择的商店
+    ptr1 = route.current->next;
+    while(ptr1 != NULL) {
+        if(ptr1->type == 'C' && ptr1->choice->type == 'D') {
+            Spot *store = customerPool[ptr1->id];
+            ptr1->choice = store;
+        }
+    }
+
     // 将route中除head和rear外的节点都复制到current指针后
     ptr1 = route.head->next;
     ptr2 = current;
     while(ptr1 != route.rear) {
-        ptr3 = new Spot(*ptr1);
         try {
-            insertNode(ptr2, ptr3);
+            insertNode(ptr2, ptr1);
         } catch (exception &e) {
             cout << "While replace route: " << e.what() << endl;
         }
-        ptr2 = ptr3;
+        ptr2 = ptr1;
         ptr1 = ptr1->next; 
     }
-    // 清空route
+    // 清空变量
+    customerPool.clear();
     route.clear();
     return;
 }

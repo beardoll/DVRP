@@ -13,7 +13,7 @@ extern float DYNAMICISM;
 extern Strategy STRATEGY;
 extern float ITER_PERCENTAGE;
 extern int SAMPLE_RATE;
-extern int NUM_OF_CUSTOMER;
+extern int CUSTOMER_NUM;
 extern int TIME_SLOT_LEN;
 extern int TIME_SLOT_NUM;
 extern float R1;
@@ -22,8 +22,10 @@ extern float R3;
 extern int CORE_NUM;
 extern int STORE_NUM;
 extern int SUBCIRCLE_NUM;
-extern vector<float> LAMBDA;
+extern float LAMBDA[6];
 extern float ALPHA;
+extern float PI;
+extern int MAX_DEMAND;
 
 // ******** Noise param for Algorithm ******** //
 extern float* RANDOM_RANGE_ALNS;

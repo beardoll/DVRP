@@ -28,7 +28,7 @@ vector<int> getRandom(int lb, int ub, int m, vector<int> &restData);
 // 内嵌将probability进行归一化的函数
 int roulette(vector<float> probability);
 
-float dist(Spot* pre, Spot *current, Spot *next);
+float dist(Spot* node1, Spot *node2);
 
 // 根据probability，应用轮盘算法得到这次随机仿真出现的离散值
 // 传入的是概率数组的头指针以及总共的概率分布数量
@@ -97,7 +97,7 @@ inline vector<Spot*> copyCustomerSet(vector<Spot*> customerSet){
     vector<Spot*>::iterator custIter;
     for(custIter = customerSet.begin(); custIter < customerSet.end(); custIter++) {
         Spot *newCust = new Spot(**custIter);
-        Spot *newStore = new Spot((*custIter)->choice);
+        Spot *newStore = new Spot(*((*custIter)->choice));
         newCust->choice = newStore;
         newStore->choice = newCust;
         outputCust.push_back(newCust);

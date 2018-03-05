@@ -7,6 +7,8 @@
 #include<cstdlib>
 #include<algorithm>
 #include<stdexcept>
+#include "../public/PublicFunction.h"
+#include "../run/Config.h"
 
 const float MAX_FLOAT = numeric_limits<float>::max();
 
@@ -46,7 +48,7 @@ void Route::copy(const Route &L){
         // 从头节点一直复制到尾节点
         if(originPtr == L.head){  
             // 正在复制head节点
-            copyPtr = new Spot(L.head);
+            copyPtr = new Spot(*L.head);
             copyPtr->front = NULL;
             head = copyPtr;
         } else{
@@ -55,7 +57,7 @@ void Route::copy(const Route &L){
             copyPtr->next = temp;
             copyPtr = temp;
             if(originPtr->type == 'C') {
-                // 追溯其指向的商户(P)
+                // 追溯其指向的商户(D)
                 temp = L.head->next;
                 int i = 0;
                 while(temp != L.rear) {
@@ -162,7 +164,7 @@ void Route::insertAfter(Spot *ref, Spot *current) {
         quantity += current->quantity;
     }
     size++;
-    refreshArrivedTime()
+    refreshArrivedTime();
 }
 
 void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
@@ -302,7 +304,7 @@ void Route::deleteNode(Spot *store, Spot *customer){
         delete store;
         delete customer;
         size--;
-        quantity = quantity - customer.quantity;
+        quantity = quantity - customer->quantity;
         refreshArrivedTime();  // 删除节点后，更新arrivedTime
     }
 }
@@ -425,7 +427,7 @@ float Route::getOriginLen() {
             back = back->next;
         }
         else {
-            origenLen = originLen + dist(front, back);
+            originLen = originLen + dist(front, back);
             front = back;
             back = back -> next;
         }
@@ -505,7 +507,7 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
                     }
                 }
             } else {
-                switch(ptr1->priority){
+                switch(ptr->priority){
                     case 0: {
                         cost += 0;
                         break;
@@ -617,7 +619,7 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
 }
 
 void Route::computeInsertCost(Spot *store, Spot* customer, float &minValue, 
-        Spot *refStore1, Spot refCustomer1, float &secondValue, Spot *refStore2,
+        Spot *refStore1, Spot *refCustomer1, float &secondValue, Spot *refStore2,
         Spot *refCustomer2, float randomNoise, bool allowNegativeCost){
     // 计算服务对(store, customer)在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点(refStore, refCustomer)
@@ -637,7 +639,7 @@ void Route::computeInsertCost(Spot *store, Spot* customer, float &minValue,
     refCustomer2 = NULL;
     minValue = MAX_FLOAT;
     secondValue = MAX_FLOAT;
-    if(quantity + refCustomer->quantity > capacity) {
+    if(quantity + customer->quantity > capacity) {
         // 超出车容量约束，则无需计算
         return;
     }
@@ -726,7 +728,7 @@ void Route::refreshArrivedTime(){
 Route* Route::getEmptyRoute(vector<Spot*> &removedCustomer) {
     // 获取空的路径，但是需要保留路径中choice为depot的customer
     // removedCustomer: current指针之后的顾客节点 - 保留的顾客节点
-    Route *newRoute = new Route(head, rear, leftQuantity);
+    Route *newRoute = new Route(*head, *rear, leftQuantity);
     Spot *temp = current->next;
     while(temp != NULL) {
         if(temp->type == 'C') {
@@ -738,7 +740,7 @@ Route* Route::getEmptyRoute(vector<Spot*> &removedCustomer) {
                 removedCustomer.push_back(customer);
             }
             else {
-                Spot *customer = newSpot(*temp);
+                Spot *customer = new Spot(*temp);
                 customer->choice = newRoute->head;
                 newRoute->insertAtRear(customer);
             }
@@ -756,7 +758,7 @@ Route* Route::capture(){
     // 抓取路径的head节点
     Route* newRoute = new Route(*current, *rear, capacity);
     if(current->next == rear) { // current指针后已经没有路径
-        return *newRoute;
+        return newRoute;
     }
     for(Spot* ptr=current->next; ptr != rear; ptr = ptr->next) {
         Spot *temp = new Spot(*ptr);
@@ -769,10 +771,10 @@ Route* Route::capture(){
     return newRoute;
 }
 
-void Route::replaceRoute(Route &route) {  
+void Route::replaceRoute(Route *route) {  
     // 以route替换掉current指针后的路径
     // 对于route中choice为depot的customer，需要找回其原本指向的商店
-    vector<Spot*> customerPool(NUM_OF_CUSTOMER);
+    vector<Spot*> customerPool(CUSTOMER_NUM);
     Spot *ptr1, *ptr2, *ptr3;
     // 清空本路径中current指针后面的节点 
     if(current->next != rear) { // current后面还有节点
@@ -789,7 +791,7 @@ void Route::replaceRoute(Route &route) {
         }
     }
     // 修改route中choice为depot的customer其选择的商店
-    ptr1 = route.current->next;
+    ptr1 = route->current->next;
     while(ptr1 != NULL) {
         if(ptr1->type == 'C' && ptr1->choice->type == 'D') {
             Spot *store = customerPool[ptr1->id];
@@ -799,8 +801,8 @@ void Route::replaceRoute(Route &route) {
     }
 
     // 将route中除head和rear外的节点都复制到current指针后
-    ptr1 = route.head->next;
-    while(ptr1 != route.rear) {
+    ptr1 = route->head->next;
+    while(ptr1 != route->rear) {
         try {
             insertAtRear(ptr1);
         } catch (exception &e) {
@@ -810,7 +812,6 @@ void Route::replaceRoute(Route &route) {
     }
     // 清空变量
     customerPool.clear();
-    route.clear();
     return;
 }
 

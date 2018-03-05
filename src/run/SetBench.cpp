@@ -34,7 +34,7 @@ void SetBench::constructStoreSet() {
         store->id = customerNum + storeSet.size() + 1;
         store->x = r * sin(theta);
         store->y = r * cos(theta);
-        store->type = "P";
+        store->type = 'P';
         store->startTime = 0;
         store->serviceTime = random(0, 10);
         store->prop = 0;
@@ -60,7 +60,7 @@ void SetBench::constructCustomerSet() {
                     // 按概率生成顾客
                     float theta = random(deltaAngle*j, deltaAngle*(j+1));
                     float r = random(innerR, outerR);
-                    Spot c = new Spot();
+                    Spot *c = new Spot();
                     // 顾客的id从1~customerNum
                     c->id = (int)customerSet.size() + 1;
                     c->x = r * sin(theta);
@@ -72,12 +72,12 @@ void SetBench::constructCustomerSet() {
                     index = min(storeNum-1, index);
                     Spot *store = new Spot(*storeSet[index]);
                     c->choice = store;
-                    store->choice = customer;
+                    store->choice = c;
                     float distFromCustomerToStore = dist(c, c->choice);
                     // 保证足够长的时间窗
                     c->startTime = random(0, timeHorizon-alpha*distFromCustomerToStore);
                     c->endTime = random(c->startTime, timeHorizon);
-                    c->demand = random(0, MAX_DEMAND);
+                    c->quantity = random(0, MAX_DEMAND);
                     customerSet.push_back(c);
                     if(customerSet.size() == customerNum) break;
                 }
@@ -89,7 +89,7 @@ void SetBench::constructCustomerSet() {
 
 void SetBench::constructDepot() {
     // 仓库节点
-    Spot depot = new Spot();
+    Spot *depot = new Spot();
     depot->x = 0;
     depot->y = 0;
     depot->id = 0;
@@ -102,7 +102,7 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
     // 根据概率情况构造样本
     constructStoreSet();
     constructCustomerSet();
-    constructSpot();
+    constructDepot();
     int i;
     int dynamicNum = (int)floor(customerNum*DYNAMICISM);  // 动态到达的顾客数量
     vector<int> staticPos;           // 静态到达的顾客节点在customerSet中的定位
@@ -123,10 +123,10 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
         } else {  
             staticCustomerSet.push_back(*iter);
         }
-        timeWindowLen = (*iter)->endTime - (*iter)->startTime;
+        float timeWindowLen = (*iter)->endTime - (*iter)->startTime;
         // 可容忍的最晚得到答复的时间，为0.6-0.8倍的时间窗长度 + startTime
         (*iter)->tolerantTime = (*iter)->startTime + random(0.6, 0.8) * timeWindowLen;
     }
     storeSet = this->storeSet;
-    depot = this->depot;
+    depot = *this->depot;
 }

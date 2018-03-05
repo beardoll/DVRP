@@ -165,7 +165,7 @@ void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
     // Returns:
     //   * bestRoute: 最佳服务路线，由ALNS求得
     //   * bestCost: 最小代价
-    Spot depot = carSet[0]->getRearNode();
+    Spot *depot = carSet[0]->getRearNode();
     float capacity = carSet[0]->getCapacity();
     vector<Spot*> allCustomer;
     vector<Car*>::iterator carIter;
@@ -179,12 +179,12 @@ void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
             }
         }
     }
-    depot.priority = 0;
-    depot.startTime = 0;
-    depot.serviceTime = 0;
-    depot.arrivedTime = 0;
-    depot.prop = 0;
-    ALNS alg(allCustomer, depot, capacity, 25000);
+    depot->priority = 0;
+    depot->startTime = 0;
+    depot->serviceTime = 0;
+    depot->arrivedTime = 0;
+    depot->prop = 0;
+    ALNS alg(allCustomer, *depot, capacity, 25000);
     alg.run(bestRoute, bestCost);
 }
 
@@ -193,7 +193,7 @@ int getCustomerNum(vector<Car*> originCarSet) {
     // 获得路径集中顾客节点的数目
     int customerNum = 0;
     for (int i = 0; i<(int)originCarSet.size(); i++) {
-        customerNum += originCarSet[i]->getRoute().getSize();
+        customerNum += originCarSet[i]->getRoute()->getSize();
     }
     return customerNum;
 }
@@ -203,8 +203,8 @@ bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2){
     if(carSet1.size() != carSet2.size()) {return false;}
     bool mark = true;
     for(int i=0; i<(int)carSet1.size(); i++){
-        vector<Spot*> cust1 = carSet1[i]->getRoute().getAllCustomer();
-        vector<Spot*> cust2 = carSet2[i]->getRoute().getAllCustomer();
+        vector<Spot*> cust1 = carSet1[i]->getRoute()->getAllCustomer();
+        vector<Spot*> cust2 = carSet2[i]->getRoute()->getAllCustomer();
         if(cust1.size() != cust2.size()) {mark = false; break;}
         for(int j=0; j<(int)cust1.size(); j++) {
             if(cust1[j]->id != cust2[j]->id) {
@@ -321,9 +321,10 @@ void showAllID(vector<Car*> carSet) {
     // 按顺序展示所有id(customer+store)
     vector<Car*>::iterator carIter;
     vector<int>::iterator intIter;
-    for(carIter = carSet.begin(); carIter < CarSet.end(); carIter++) {
+    int CUSTOMER_NUM = 150;
+    for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
         vector<int>IDs = (*carIter)->getAllID();
-        int carIndex = (*carIter)->carIndex;
+        int carIndex = (*carIter)->getCarIndex();
         cout << "=====Car #" << carIndex << " :=====" << endl;
         int count = 1;
         for(intIter = IDs.begin(); intIter < IDs.end(); intIter++) {

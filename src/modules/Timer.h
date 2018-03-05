@@ -9,7 +9,7 @@
 class Timer{  // 事件触发器
 public:
     Timer(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet, 
-            float capacity, Spot depot);
+            vector<Spot*> storeSet, float capacity, Spot depot);
     ~Timer(){};  // 析构函数
     EventElement pop();    // 把事件表的第一个元素弹出来
     void addEventElement(EventElement &newEvent);     // 往事件表中增加事件
@@ -22,6 +22,7 @@ private:
     vector<EventElement> eventList;        // 事件队列
     vector<Spot*> staticCustomerSet;   // 提前已知的顾客（静态顾客）
     vector<Spot*> dynamicCustomerSet;  // 动态到达的顾客
+    vector<Spot*> storeSet;
     float capacity;
     Spot depot;
     int sampleRate;

@@ -149,7 +149,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         cout << ostr.str();
         float currentTime = slotIndex * TIME_SLOT_LEN;
         for(custIdIter = waitCustomerId.begin(); custIdIter < waitCustomerId.end(); custIdIter++) {
-            Spot *temp = *allCustomer[*custIter-1];
+            Spot *temp = allCustomer[*custIdIter-1];
             waitCustomerSet.push_back(temp);
         }
         vector<Car*> futurePlan;
@@ -254,24 +254,24 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
     // 处理新顾客到达
     ostringstream ostr;
     ostr.str("");
-    ostr<< "----Customer with id #" << newCustomer.id << " is arriving..." << endl;
+    ostr<< "----Customer with id #" << newCustomer->id << " is arriving..." << endl;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
     vector<int>::iterator intIter = find(dynamicCustomerId.begin(), dynamicCustomerId.end(), 
-            newCustomer.id);
+            newCustomer->id);
     dynamicCustomerId.erase(intIter);
     float minInsertCost = MAX_FLOAT;
     // 第一个int是货车编号（于currentPlan中的位置）
     // 第二个pair组合分别是refStore, refCustomer
     pair<int, pair<Spot*, Spot*> > insertPos;   
     vector<Car*>::iterator carIter;
-    float currentTime = newCustomer.startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
+    float currentTime = newCustomer->startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
     for (carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
         // 求newCustomer在每条route的最小插入代价
         Car *tempCar = (*carIter)->capturePartRoute(currentTime);
-        Spot *refStore1, refCustomer1, refStore1, refCustomer2;
+        Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
         float minValue, secondValue;
-        tempCar.computeInsertCost(newCustomer->choice, newCustomer, minValue, refStore1,
+        tempCar->computeInsertCost(newCustomer->choice, newCustomer, minValue, refStore1,
                 refCustomer1, secondValue, refStore2, refCustomer2);
         if(minValue < minInsertCost) {
             int pos = carIter - currentPlan.begin();  
@@ -282,25 +282,25 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
     EventElement newEvent;
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
-        if(newCustomer.tolerantTime < slotIndex * TIME_SLOT_LEN) { 
+        if(newCustomer->tolerantTime < slotIndex * TIME_SLOT_LEN) { 
             // 等不到replan，则reject
             ostr.str("");
             ostr << "He is rejected!" << endl;
-            ostr << "His tolerance time is " << newCustomer.tolerantTime << endl;
+            ostr << "His tolerance time is " << newCustomer->tolerantTime << endl;
             ostr << endl;
             TxtRecorder::addLine(ostr.str());
             cout << ostr.str();
-            rejectCustomerId.push_back(newCustomer.id);
+            rejectCustomerId.push_back(newCustomer->id);
         } else {  // 否则，进入等待的顾客序列
             ostr.str("");
             ostr << "He will wait for replan!" << endl << endl;
             TxtRecorder::addLine(ostr.str());
             cout << ostr.str();
-            waitCustomerId.push_back(newCustomer.id);  
+            waitCustomerId.push_back(newCustomer->id);  
             sort(waitCustomerId.begin(), waitCustomerId.end());
         }
     } else {
-        promisedCustomerId.push_back(newCustomer.id);  // 这些顾客一定会得到服务
+        promisedCustomerId.push_back(newCustomer->id);  // 这些顾客一定会得到服务
         sort(promisedCustomerId.begin(), promisedCustomerId.end());
         int selectedCarPos = insertPos.first;
         Spot* refStore = insertPos.second.first;
@@ -349,7 +349,7 @@ EventElement Dispatcher::handleCarArrived(float time, int carIndex){
         carFinishTask(tempEvent.carIndex);
     } else {
         // 更新newservedCustomerId以及promisedCustomerId
-        int currentId = currentPlan[pos]->getCurrentNode().id;
+        int currentId = currentPlan[pos]->getCurrentNode()->id;
         vector<int>::iterator intIter = find(promisedCustomerId.begin(), 
                 promisedCustomerId.end(), currentId);
         promisedCustomerId.erase(intIter);
@@ -377,11 +377,11 @@ EventElement Dispatcher::handleFinishedService(float time, int carIndex){
         }
     }
     newEvent = currentPlan[pos]->getCurrentAction(time);
-    int currentId = currentPlan[pos]->getCurrentNode().id;
+    int currentId = currentPlan[pos]->getCurrentNode()->id;
     ostr.str("");
     ostr << "----Time " << time << ", car #" << carIndex << 
         " finished service in customer #" << currentId << endl;
-    ostr << "Its end time for servce is " << currentPlan[pos]->getCurrentNode().endTime 
+    ostr << "Its end time for servce is " << currentPlan[pos]->getCurrentNode()->endTime 
         << endl << endl;;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();

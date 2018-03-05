@@ -18,10 +18,10 @@ public:
 private:
     float r1, r2, r3;
     int storeNum, subcircleNum, customerNum;
-    vector<float> lambda;
+    float *lambda;
     vector<Spot*> storeSet;
     vector<Spot*> customerSet;
-    Spot depot;
+    Spot *depot;
 };
 
 #endif

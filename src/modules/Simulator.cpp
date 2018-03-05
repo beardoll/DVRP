@@ -63,19 +63,19 @@ vector<Spot*> Simulator::generateScenario(){
 
     float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
     int sliceNum = int(timeHorizon/deltaT);
-    float *lambda = LAMBDA0;
+    float *lambda = LAMBDA;
     int subcircleNum = SUBCIRCLE_NUM;  // 扇形数量
     float deltaAngle = 2 * PI / subcircleNum;  // 各个区域夹角
     int storeNum = (int)storeSet.size();
     vector<Spot*> dynamicCustomer;
-    for(int t=0; t<numSlice; t++) {
-        for(int j=0; j<numSubcircle; j++) {
+    for(int t=0; t<sliceNum; t++) {
+        for(int j=0; j<subcircleNum; j++) {
             float p = lambda[j] * deltaT * exp(-lambda[j] * deltaT);
             if(p < random(0,1)) {
                 // 按概率生成顾客
                 float theta = random(deltaAngle*j, deltaAngle*(j+1));
                 float r = random(innerR, outerR);
-                Spot c = new Spot();
+                Spot *c = new Spot();
                 c->id = CUSTOMER_NUM + STORE_NUM + dynamicCustomer.size() + 1;
                 c->x = r * sin(theta);
                 c->y = r * cos(theta);
@@ -102,11 +102,11 @@ vector<Spot*> Simulator::generateScenario(){
 
 bool Simulator::checkFeasible(vector<Car*> carSet) {
     // 检查carSet中是否包括了所有的promiseCustomer
-    vector<int> tempId = getID(promiseCustomerSet); // promise Customer的id
+    vector<int> tempId = getCustomerID(promiseCustomerSet); // promise Customer的id
     sort(tempId.begin(), tempId.end());
     vector<Car*>::iterator carIter;
     for(carIter=carSet.begin(); carIter<carSet.end(); carIter++) {
-        vector<Spot*> tempCust = (*carIter)->getRoute().getAllCustomer();
+        vector<Spot*> tempCust = (*carIter)->getRoute()->getAllCustomer();
         vector<Spot*>::iterator custIter;
         for(custIter=tempCust.begin(); custIter<tempCust.end(); custIter++) {
             vector<int>::iterator intIter = find(tempId.begin(), tempId.end(), (*custIter)->id);
@@ -247,7 +247,7 @@ void validPromise(vector<Car*>Plan, vector<Spot*> hurryCustomer,
     vector<Car*>::iterator carIter;
     vector<Spot*>::iterator custIter;
     // hurry customer的id
-    vector<int> hurryCustomerId = getID(hurryCustomer);
+    vector<int> hurryCustomerId = getCustomerID(hurryCustomer);
     sort(hurryCustomerId.begin(), hurryCustomerId.end());
     int i;
     for(carIter = Plan.begin(); carIter < Plan.end(); carIter++){
@@ -329,10 +329,10 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     for(custIter = waitCustomerSet.begin(); custIter < waitCustomerSet.end(); custIter++) {
         if((*custIter)->tolerantTime <= nextMoment) {  
             // 该顾客着急于下时间段前得到回复
-            hurryCustomer.push_back(tempCust);
+            hurryCustomer.push_back(*custIter);
         } else {
             // 否则，该顾客属于“有耐心的顾客”
-            patientCustomer.push_back(tempCust);
+            patientCustomer.push_back(*custIter);
         }
     }
     vector<Car*> newPlan;
@@ -436,7 +436,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     vector<int> allServedCustomerId;    // 所有得到了service promise的顾客id
     allServedCustomerId.push_back(0);   // 仓库节点是评分矩阵中的第一个节点
     vector<int>::iterator intIter;
-    vector<int> promiseCustomerId = getID(promiseCustomerSet);
+    vector<int> promiseCustomerId = getCustomerID(promiseCustomerSet);
     for(intIter = promiseCustomerId.begin(); intIter < promiseCustomerId.end(); intIter++) {
         allServedCustomerId.push_back(*intIter);
     }

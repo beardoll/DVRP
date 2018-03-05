@@ -30,8 +30,8 @@ public:
 
     // 获得单节点操作
     Spot* currentPos();   // 返回当前位置
-    Spot* nextPos() {return *(current->next);}      // 下一个节点的位置
-    Spot* pastPos() {return *(current->front);}     // 前一个节点的位置
+    Spot* nextPos() {return current->next;}      // 下一个节点的位置
+    Spot* pastPos() {return current->front;}     // 前一个节点的位置
     Spot* getHeadNode();    // 得到头结点
     Spot* getRearNode();    // 得到尾节点
 
@@ -60,12 +60,12 @@ public:
     // 计算item节点在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点前面的顾客节点
     // penaltyPara为惩罚系数，若不需要惩罚则penaltyPara = 0
-    void computeInsertCost(Spot item, float &minValue, Spot &customer1, 
-            float &secondValue, Spot &customer2, float pertubation = 0.0f, 
-            bool regularization = true);  
+    void computeInsertCost(Spot *store, Spot *customer, float &minValue, Spot *refStore1,
+            Spot *refCustomer1, float &secondValue, Spot *refStore2, Spot *refCustomer2,
+            float randomNoise = 0.0f, bool allowNegativeCost = true);  
 
     // 计算把item插入到pre后面是否会违反时间窗约束
-    bool timeWindowJudge(Spot *pre, int pos, Spot item);
+    bool timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer);
     
     // 更新一下各个节点的到达时刻
     void refreshArrivedTime();   
@@ -73,9 +73,9 @@ public:
     // 路径的替换和提取
     // 以route替换掉current指针后的路径
     Route* getEmptyRoute(vector<Spot*> &removedCustomer);
-    void replaceRoute(Route &route);  
+    void replaceRoute(Route *route);  
     // 抓取current指针后的路径
-    Route& capture();  
+    Route* capture();  
 
     // 其余辅助性质的函数
     vector<int> removeInvalidCustomer(vector<int> validCustomerId, int &retainNum);

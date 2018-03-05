@@ -16,8 +16,8 @@ vector<Spot*> feedDataForLNSBase(vector<Spot*> waitCustomer, vector<Car*> origin
     vector<Spot*>::iterator custPtr;
     vector<Spot*> lowPriorityCust;
     for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
-        newCust->priority = 2;
-        lowPriorityCust.push_back(newCust);
+        (*custPtr)->priority = 2;
+        lowPriorityCust.push_back(*custPtr);
     }
     vector<Car*>::iterator carPtr;
     vector<Spot*> highPriorityCust;
@@ -35,7 +35,7 @@ vector<Spot*> feedDataForLNSBase(vector<Spot*> waitCustomer, vector<Car*> origin
 SSLR::SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter,
         bool verbose, int pshaw, int pworst, float eta): LNSBase(pshaw, 
         pworst, eta, capacity, RANDOM_RANGE_SSLR, feedDataForLNSBase(waitCustomer, 
-        originPlan), originPlan[0]->getRearNode(), true, true) 
+        originPlan), *originPlan[0]->getRearNode(), true, true) 
 {
     this->maxIter = maxIter;
     this->verbose = verbose;
@@ -55,7 +55,7 @@ bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleN
     infeasibleNum = 0;
     bool mark = true;
     vector<Car*>::iterator carIter;
-    vector<int> refIDs = getID(refCarSet);
+    vector<int> refIDs = getCustomerID(refCarSet);
     vector<int>::iterator iter, iter1;
     sort(refIDs.begin(), refIDs.end());
     vector<Car*> workingCarSet;
@@ -64,7 +64,7 @@ bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleN
             workingCarSet.push_back(*carIter);
         }
     }
-    vector<int> currentIDs = getID(workingCarSet);
+    vector<int> currentIDs = getCustomerID(workingCarSet);
     for(iter = currentIDs.begin(); iter < currentIDs.end(); iter++) {
         iter1 = find(refIDs.begin(), refIDs.end(), *iter);
         if(iter1 < refIDs.end()) {
@@ -152,14 +152,14 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     for(carIter = originPlan.begin(); carIter < originPlan.end(); carIter++) {
         // 保留原有的车辆，记录其起点以及终点以及剩余容量、基准时间
         vector<Spot*> temp;
-        Car *newCar = new Car((*carIter)->getNullCar(temp));
-        currentCustomerSet.insert(currentCustomer.end(), temp.begin(), temp.end());
+        Car *newCar = new Car(*((*carIter)->getNullCar(temp)));
+        currentCustomer.insert(currentCustomer.end(), temp.begin(), temp.end());
         currentCarSet.push_back(newCar);
     }
     vector<Spot*> copyWaitCustomer = copyCustomerSet(waitCustomer);
     currentCustomer.insert(currentCustomer.end(), copyWaitCustomer.begin(), copyWaitCustomer.end());
     // 以当前所拥有的working car为基础，构造初始解（完全重新构造）
-    regretInsert(currentCarSet, currrentCustomer, false);  
+    regretInsert(currentCarSet, currentCustomer, false);  
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
     float currentCost = getCost(currentCarSet);
@@ -311,7 +311,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
                 float maxArrivedTime = -MAX_FLOAT;
                 for(i=0; i<(int)tempCarSet.size(); i++){
                     // tempCarSet[i]->getRoute().refreshArrivedTime;
-                    vector<float> temp = tempCarSet[i]->getRoute().getArrivedTime();
+                    vector<float> temp = tempCarSet[i]->getRoute()->getArrivedTime();
                     sort(temp.begin(), temp.end(), greater<float>());
                     if(temp[0] > maxArrivedTime) {
                         maxArrivedTime = temp[0];

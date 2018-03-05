@@ -67,7 +67,9 @@ void Route::copy(const Route &L){
                 for(int j=0; j<i; j++) {
                     temp = temp->next;
                 }
-                copyPtr->choice = temp;     
+                // 双向索引
+                copyPtr->choice = temp;
+                temp->choice = copyPtr;
             }
 		}
         if(L.current == originPtr){
@@ -436,7 +438,7 @@ vector<float> Route::getArrivedTime(){     // 得到本车所有节点的arrivedTime
     return arrivedTime;
 }
 
-vector<int> getAllID() {
+vector<int> Route::getAllID() {
     // 获取路径中所有的ID，包括P和D
     vector<int> IDs;
     for(Spot *temp = head->next; temp != rear; temp = temp->next) {
@@ -658,7 +660,6 @@ void Route::computeInsertCost(Spot *store, Spot* customer, float &minValue,
                     refStore1 = NULL;
                     minValue = cost;
                 }
-
             }
         }
     } else {
@@ -708,6 +709,7 @@ void Route::refreshArrivedTime(){
         // current节点后面的arrivedTime需要重新计算
         time = time + dist(tfront, tcurrent);
         arrivedTime.push_back(time);
+        tcurrent->arrivedTime = time;
         // tcurrent->arrivedTime = time;
         if(tcurrent->type == 'C' && time < tcurrent->startTime){
             // 只有顾客节点有“时间窗”
@@ -732,6 +734,7 @@ Route* Route::getEmptyRoute(vector<Spot*> &removedCustomer) {
                 Spot *customer = new Spot(*temp);
                 Spot *store = new Spot(*(customer->choice));
                 customer->choice = store;
+                store->choice = customer;
                 removedCustomer.push_back(customer);
             }
             else {
@@ -779,10 +782,10 @@ void Route::replaceRoute(Route &route) {
         while(ptr1 != rear) {
             if(ptr1->type == 'C') {
                 customerPool[ptr1->id] = ptr1->choice;
+                ptr2 = ptr1->next;
+                deleteNode(ptr1);
+                ptr1 = ptr2;
             }
-            ptr2 = ptr1->next;
-            deleteNode(ptr2);
-            ptr1 = ptr2;
         }
     }
     // 修改route中choice为depot的customer其选择的商店
@@ -790,6 +793,7 @@ void Route::replaceRoute(Route &route) {
     while(ptr1 != NULL) {
         if(ptr1->type == 'C' && ptr1->choice->type == 'D') {
             Spot *store = customerPool[ptr1->id];
+            store->choice = ptr1;
             ptr1->choice = store;
         }
     }

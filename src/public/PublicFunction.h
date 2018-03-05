@@ -53,6 +53,7 @@ vector<int> getCustomerID(vector<Spot*> customerSet);
 vector<int> getCustomerID(vector<Car*> carSet);
 void showAllCustomerID(vector<Car*> carSet);
 void showAllCustomerID(vector<Spot*> customerSet);
+void showAllID(vector<Car*> carSet);
 void showDetailForPlan(vector<Car*> carSet);
 
 // 模板函数和内联函数的实现
@@ -98,6 +99,7 @@ inline vector<Spot*> copyCustomerSet(vector<Spot*> customerSet){
         Spot *newCust = new Spot(**custIter);
         Spot *newStore = new Spot((*custIter)->choice);
         newCust->choice = newStore;
+        newStore->choice = newCust;
         outputCust.push_back(newCust);
     }
     return outputCust;

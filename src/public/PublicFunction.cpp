@@ -174,7 +174,9 @@ void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
         vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         cout << "Loading the " << carIter - carSet.begin() << "car data!" << endl;
         for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
-            allCustomer.push_back(*custIter);
+            if((*custIter)->type == 'C') {
+                allCustomer.push_back(*custIter);
+            }
         }
     }
     depot.priority = 0;
@@ -210,8 +212,6 @@ bool carSetEqual(vector<Car*> carSet1, vector<Car*> carSet2){
                 break;
             }
         }
-        deleteCustomerSet(cust1);
-        deleteCustomerSet(cust2);
     }
     return mark;
 }
@@ -238,7 +238,9 @@ vector<Spot*> extractCustomer(vector<Car*> plan) {
     for (carIter=plan.begin(); carIter<plan.end(); carIter++) {
         vector<Spot*> temp = (*carIter)->getAllCustomer();
         for (custIter=temp.begin(); custIter<temp.end(); custIter++) {
-            allCustomer.push_back(*custIter);
+            if((*custIter)->type == 'C') {
+                allCustomer.push_back(*custIter);
+            }
         }
     }
     return allCustomer;
@@ -249,9 +251,11 @@ vector<Spot*> mergeCustomer(vector<Spot*> waitCustomer, vector<Spot*> originCust
     vector<Spot*> allCustomer;
     vector<Spot*>::iterator custIter;
     for(custIter = waitCustomer.begin(); custIter < waitCustomer.end(); custIter++) {
+        assert((*custIter)->type == 'C');
         allCustomer.push_back(*custIter);
     }
     for(custIter = originCustomer.begin(); custIter < originCustomer.end(); custIter++) {
+        assert((*custIter)->type == 'C');
         allCustomer.push_back(*custIter);
     }
     return allCustomer;
@@ -284,7 +288,7 @@ vector<int> getCustomerID(vector<Car*> carSet) {
 
 void showAllCustomerID(vector<Car*> carSet) {
     // 显示carSet中所有顾客的id信息
-    vector<int> allCustomerId = getID(carSet);
+    vector<int> allCustomerId = getCustomerID(carSet);
     sort(allCustomerId.begin(), allCustomerId.end());
     vector<int>::iterator intIter;
     int count = 0;
@@ -299,7 +303,7 @@ void showAllCustomerID(vector<Car*> carSet) {
 }
 
 void showAllCustomerID(vector<Spot*> customerSet) {
-    vector<int> allCustomerId = getID(customerSet);
+    vector<int> allCustomerId = getCustomerID(customerSet);
     sort(allCustomerId.begin(), allCustomerId.end());
     vector<int>::iterator intIter;
     int count = 0;
@@ -313,6 +317,26 @@ void showAllCustomerID(vector<Spot*> customerSet) {
     cout << endl;
 }
 
+void showAllID(vector<Car*> carSet) {
+    // 按顺序展示所有id(customer+store)
+    vector<Car*>::iterator carIter;
+    vector<int>::iterator intIter;
+    for(carIter = carSet.begin(); carIter < CarSet.end(); carIter++) {
+        vector<int>IDs = (*carIter)->getAllID();
+        int carIndex = (*carIter)->carIndex;
+        cout << "=====Car #" << carIndex << " :=====" << endl;
+        int count = 1;
+        for(intIter = IDs.begin(); intIter < IDs.end(); intIter++) {
+            if (count % 8 == 0) {
+                cout << endl;
+            }
+            cout << (*intIter) << '\t';
+            count++;
+        }
+        cout << endl;
+    }
+}
+
 void showDetailForPlan(vector<Car*> carSet) {
     // 展示carSet中每一条路径的具体信息
     // 包括顾客顺序，以及每个顾客的位置，时间窗，到达时间等
@@ -322,13 +346,14 @@ void showDetailForPlan(vector<Car*> carSet) {
         int index = carIter - carSet.begin();
         cout << "----------------------" << endl;
         cout << "Route " << index << ":" << endl;
-        cout << "Depot: x-" << 40 << "\t" << " y-" << 50 << endl;
+        cout << "Depot: x-" << 0 << "\t" << " y-" << 0 << endl;
         vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
-            cout << "Customer #" << custIter-tempCust.begin() << ": x-" << (*custIter)->x << "\t" <<
-                "y-" << (*custIter)->y << "\t" << "AT-" << (*custIter)->arrivedTime << "\t" << "ST-" <<
-                (*custIter)->startTime << "\t" << "ET-" << (*custIter)->endTime << endl;
+            cout << "Spot index: #" << custIter-tempCust.begin() << "Spot type: " << (*custIter)->type
+                << "Choice: " << (*custIter)->choice->id << ": x-" << (*custIter)->x << "\t" <<
+                "y-" << (*custIter)->y << "\t" << "AT-" << (*custIter)->arrivedTime << "\t" << "ST-" 
+                << (*custIter)->startTime << "\t" << "ET-" << (*custIter)->endTime << endl;
         }
-        cout << "Depot: x-" << 40 << "\t" <<  "y-" << 50 << endl;
+        cout << "Depot: x-" << 0 << "\t" <<  "y-" << 0 << endl;
     }
 }

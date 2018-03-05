@@ -87,6 +87,7 @@ vector<Spot*> Simulator::generateScenario(){
                 Spot *store = new Spot(*storeSet[index]);
                 store->prop = 1;
                 c->choice = store;
+                store->choice = c;
                 c->prop = 1;
                 float distFromCustomerToStore = dist(c, c->choice);
                 float timeWindowLen = random(leftBound, rightBound) * distFromCustomerToStore;

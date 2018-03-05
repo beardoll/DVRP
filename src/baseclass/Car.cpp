@@ -60,7 +60,7 @@ Car* Car::getNullCar(vector<Spot*> &removedCustomer){
     return newCar;
 }
 
-vector<int> getAllID(){
+vector<int> Car::getAllID(){
     // 获得所有节点的ID，按顺序
     return route.getAllID();
 }

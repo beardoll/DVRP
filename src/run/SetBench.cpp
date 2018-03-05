@@ -72,6 +72,7 @@ void SetBench::constructCustomerSet() {
                     index = min(storeNum-1, index);
                     Spot *store = new Spot(*storeSet[index]);
                     c->choice = store;
+                    store->choice = customer;
                     float distFromCustomerToStore = dist(c, c->choice);
                     // 保证足够长的时间窗
                     c->startTime = random(0, timeHorizon-alpha*distFromCustomerToStore);

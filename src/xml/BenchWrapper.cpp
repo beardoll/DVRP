@@ -44,6 +44,10 @@ void BenchWrapper::saveSpotInfo(vector<Spot*> customers, TiXmlElement *root) {
                 elem->SetAttribute("type", "S");
                 TiXmlElement* serviceTimeElem = createNode("serviceTime", (*custIter)->serviceTime);
                 elem->LinkEndChild(serviceTimeElem);
+                if(elem->choice != NULL) {
+                    TiXmlElement* choiceElem = createNode("choice", (*custIter)->choice->id);
+                    elem->LinkEndChild(choiceElem);
+                }
                 break;
             case 'C':
                 elem->SetAttribute("type", "C");
@@ -195,16 +199,43 @@ void BenchWrapper::getFloatArrayFromChildNode(TiXmlHandle parent, string childNa
     }
 }
 
-void BenchWrapper::loadCustomerInfo(vector<Spot*> &customers, TiXmlElement *nodeElem) {
+void BenchWrapper::loadStoreInfo(vector<Spot*> &stores, TiXmlElement *nodeElem) {
+    // nodeElem指向第一个存放store信息的XML节点
+    for(nodeElem; nodeElem; nodeElem=nodeElem->NextSiblingElement()) {
+        Spot *store = new Spot();
+        // 读取属性值
+        nodeElem->QueryIntAttribute("id", &store->id);
+        nodeElem->QueryIntAttribute("property", &store->prop);
+        store->type = 'S';
+        store->priority = 0;
+        // 读取nodeElem下的各个节点值
+        TiXmlHandle node(nodeElem);
+        getFloatFromChildNode(node, "cx", store->x);
+        getFloatFromChildNode(node, "cy", store->y);
+        getFloatFromChildNode(node, "quantity", store->quantity);
+        getFloatFromChildNode(node, "startTime", store->startTime);
+        getFloatFromChildNode(node, "endTime", store->endTime);
+        getFloatFromChildNode(node, "arrivedTime", store->arrivedTime);
+        getFloatFromChildNode(node, "tolerantTime", store->tolerantTime);
+        getFloatFromChildNode(node, "serviceTime", store->serviceTime);
+        stores.push_back(store);
+    }
+}
+
+void BenchWrapper::loadCustomerInfo(vector<Spot*> &customers, vector<Spot*> stores,
+        TiXmlElement *nodeElem) {
     // 读取XML中的customer信息
     // nodeElem指向第一个存放顾客信息的XML节点
+    // 先对stores进行排序(按id)
+    sort(stores.begin(), stores.end());
+    int beginID = stores[0]->id;  // stores ID的最小值
     for(nodeElem; nodeElem; nodeElem=nodeElem->NextSiblingElement()) {
         // 挨个读取节点信息，并且存入到Customer结构体中
         Spot *customer = new Spot();
         // 读取nodeElem属性值
         nodeElem->QueryIntAttribute("id", &customer->id);
         nodeElem->QueryIntAttribute("property", &customer->prop);
-        customer->type = 'P';
+        customer->type = 'C';
         customer->priority = 0;
         // 读取nodeElem下辖的各个节点值
         TiXmlHandle node(nodeElem); // nodeElem所指向的节点
@@ -216,17 +247,18 @@ void BenchWrapper::loadCustomerInfo(vector<Spot*> &customers, TiXmlElement *node
         getFloatFromChildNode(node, "arrivedTime", customer->arrivedTime);
         getFloatFromChildNode(node, "tolerantTime", customer->tolerantTime);
         getFloatFromChildNode(node, "serviceTime", customer->serviceTime);
-        // 顾客的概率信息存放于更低一层级中
-        TiXmlElement *probInfoNode = node.FirstChild("probInfo").Element();
-        TiXmlHandle subNode(probInfoNode);
-        getFloatArrayFromChildNode(subNode, "timeProb", customer->timeProb);
-
+        float temp;
+        getFloatFromChildNode(node, "choice", temp);
+        int choice = (int)temp;
+        Spot *store = new Spot(**stores[choice-beginID]);
+        customer->choice = store;
+        store->choice = customer;
         customers.push_back(customer);
     }
 }
 
 void BenchWrapper::loadBench(string fileName, vector<Spot*> &staticCustomers, vector<Spot*> &dynamicCustomers,
-        Spot &depot, float &capacity) {
+        vector<Spot*> stores, Spot &depot, float &capacity) {
     // 读取数据集中的数据到相应的实体中
     // 首先，加载XML文件
     TiXmlDocument doc(fileName.c_str());
@@ -239,12 +271,16 @@ void BenchWrapper::loadBench(string fileName, vector<Spot*> &staticCustomers, ve
     pElem = hDoc.FirstChildElement().Element();
     TiXmlHandle hRoot(pElem);    // hRoot是根节点
     
+    // 获取商店信息
+    TiXmlElement* storeElem = hRoot.FirstChild("store").FirstChild("Node").Element();
+    loadStoreInfo(stores, storeElem);
+
     // 获取存放顾客信息的第一个XML节点（一般是"cx"）
     TiXmlElement* staticCustomerElem = hRoot.FirstChild("staticCustomer").FirstChild("Node").Element();
-    loadCustomerInfo(staticCustomers, staticCustomerElem);
+    loadCustomerInfo(staticCustomers, stores, staticCustomerElem);
 
     TiXmlElement* dynamicCustomerElem = hRoot.FirstChild("dynamicCustomer").FirstChild("Node").Element();
-    loadCustomerInfo(dynamicCustomers, dynamicCustomerElem);
+    loadCustomerInfo(dynamicCustomers, stores, dynamicCustomerElem);
 
     // 仓库信息
     TiXmlElement* depotElem = hRoot.FirstChild("depot").Element();

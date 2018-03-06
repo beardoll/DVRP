@@ -2,6 +2,7 @@
 #include "../run/Config.h"
 #include<sstream>
 #include<stdexcept>
+#include<algorithm>
 
 void BenchWrapper::insertFloatToNode(TiXmlElement *element, float data) {
     // 将浮点型数据装入xml节点"element"中
@@ -41,15 +42,18 @@ void BenchWrapper::saveSpotInfo(vector<Spot*> customers, TiXmlElement *root) {
                 elem->SetAttribute("type", "D");
                 break;
             case 'S':
+            {
                 elem->SetAttribute("type", "S");
                 TiXmlElement* serviceTimeElem = createNode("serviceTime", (*custIter)->serviceTime);
                 elem->LinkEndChild(serviceTimeElem);
-                if(elem->choice != NULL) {
+                if((*custIter)->choice != NULL) {
                     TiXmlElement* choiceElem = createNode("choice", (*custIter)->choice->id);
                     elem->LinkEndChild(choiceElem);
                 }
                 break;
+            }
             case 'C':
+            {
                 elem->SetAttribute("type", "C");
                 TiXmlElement* quantityElem = createNode("quantity", (*custIter)->quantity);
                 TiXmlElement* startTimeElem = createNode("startTime", (*custIter)->startTime);
@@ -67,6 +71,7 @@ void BenchWrapper::saveSpotInfo(vector<Spot*> customers, TiXmlElement *root) {
                 elem->LinkEndChild(serviceTimeElem);
                 elem->LinkEndChild(choiceElem);
                 break;
+            }
         }
         // 将elem节点挂在到root节点上
         root->LinkEndChild(elem);
@@ -149,12 +154,12 @@ void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Spot*
         // 写入Route节点，为RouteSetElem的子节点
         routeElem = new TiXmlElement("Route");
         routeElem->SetAttribute("index", (*carIter)->getCarIndex());
-        vector<Spot*> tempCust = (*carIter)->getRoute().getAllCustomer();
+        vector<Spot*> tempCust = (*carIter)->getRoute()->getAllCustomer();
         // tempCust首尾均不含depot节点，因此在下面添加depot节点
         // 这里考虑到销毁tempCust时会对里面所有指针的实例进行销毁，因此
         // 添加两个depot节点的复制品，他们拥有不同的地址
-        Spot* newdepot1 = new Customer(depot);
-        Spot* newdepot2 = new Customer(depot);
+        Spot* newdepot1 = new Spot(depot);
+        Spot* newdepot2 = new Spot(depot);
         vector<Spot*>::iterator custIter = tempCust.begin();
         tempCust.insert(custIter, newdepot1);
         tempCust.push_back(newdepot2);
@@ -212,11 +217,6 @@ void BenchWrapper::loadStoreInfo(vector<Spot*> &stores, TiXmlElement *nodeElem) 
         TiXmlHandle node(nodeElem);
         getFloatFromChildNode(node, "cx", store->x);
         getFloatFromChildNode(node, "cy", store->y);
-        getFloatFromChildNode(node, "quantity", store->quantity);
-        getFloatFromChildNode(node, "startTime", store->startTime);
-        getFloatFromChildNode(node, "endTime", store->endTime);
-        getFloatFromChildNode(node, "arrivedTime", store->arrivedTime);
-        getFloatFromChildNode(node, "tolerantTime", store->tolerantTime);
         getFloatFromChildNode(node, "serviceTime", store->serviceTime);
         stores.push_back(store);
     }
@@ -241,16 +241,17 @@ void BenchWrapper::loadCustomerInfo(vector<Spot*> &customers, vector<Spot*> stor
         TiXmlHandle node(nodeElem); // nodeElem所指向的节点
         getFloatFromChildNode(node, "cx", customer->x);
         getFloatFromChildNode(node, "cy", customer->y);
-        getFloatFromChildNode(node, "quantity", customer->quantity);
+        float temp;
+        getFloatFromChildNode(node, "quantity", temp);
+        customer->quantity = (int)temp;
         getFloatFromChildNode(node, "startTime", customer->startTime);
         getFloatFromChildNode(node, "endTime", customer->endTime);
         getFloatFromChildNode(node, "arrivedTime", customer->arrivedTime);
         getFloatFromChildNode(node, "tolerantTime", customer->tolerantTime);
         getFloatFromChildNode(node, "serviceTime", customer->serviceTime);
-        float temp;
         getFloatFromChildNode(node, "choice", temp);
         int choice = (int)temp;
-        Spot *store = new Spot(**stores[choice-beginID]);
+        Spot *store = new Spot(*stores[choice-beginID]);
         customer->choice = store;
         store->choice = customer;
         customers.push_back(customer);

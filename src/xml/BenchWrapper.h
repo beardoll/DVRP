@@ -17,7 +17,7 @@ class BenchWrapper{
         ~BenchWrapper(){};
         void insertFloatToNode(TiXmlElement *element, float data);
         TiXmlElement* createNode(string name, float data);
-        void saveCustomerInfo(vector<Spot*> customers, TiXmlElement *root);
+        void saveSpotInfo(vector<Spot*> customers, TiXmlElement *root);
         void saveBench(string path, vector<Spot*> staticCustomer, vector<Spot*>dynamicCustomer,
                 vector<Spot*> store, Spot depot, float capacity);
         void saveResult(string filename, vector<Car*> carSet, vector<Spot*> rejectCustomers, 
@@ -27,7 +27,7 @@ class BenchWrapper{
         void loadStoreInfo(vector<Spot*> &stores, TiXmlElement *nodeElem);
         void loadCustomerInfo(vector<Spot*> &customers, vector<Spot*> stores, TiXmlElement *nodeElem);
         void loadBench(string fileName, vector<Spot*> &staticCustomers, 
-                vector<Spot*> &dynamicCustomers, Spot &depot, float &capacity);
+                vector<Spot*> &dynamicCustomers, vector<Spot*> stores, Spot &depot, float &capacity);
 
 };
 #endif

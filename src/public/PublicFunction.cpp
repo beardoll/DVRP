@@ -59,10 +59,24 @@ vector<int> getRandom(int lb, int ub, int m, vector<int> &restData){
         iter += num;
         int temp = *(iter);
         outputData.push_back(temp);
-        restData.erase(iter);
+
         total--;
     }
     return outputData;
+}
+
+int poissonSampling(float lambda, float duration) {
+    // 产生均值为lambda * duration的变量X
+    int x = 0;
+    long double p = 1.0;
+    long double param = (long double)(-lambda * duration);
+    while(p >= exp(param)) {
+        float u = random(0, 1);
+        p = u * p;
+        x++;
+    }
+    x = x - 1;
+    return x;
 }
 
 int roulette(vector<float> probability) {

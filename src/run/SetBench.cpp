@@ -17,7 +17,6 @@ SetBench::SetBench() {
     this->r3 = R3;
     this->storeNum = STORE_NUM;
     this->subcircleNum = SUBCIRCLE_NUM;
-    this->customerNum = CUSTOMER_NUM;
     this->lambda = LAMBDA;
 } // 构造函数
 
@@ -30,11 +29,11 @@ void SetBench::constructStoreSet() {
         float r = random(innerR, outerR);
         float theta = random(0, 2*PI);
         Spot *store = new Spot();
-        // 商店id从customerNum+1 ~ customerNum+storeNum
-        store->id = customerNum + storeSet.size() + 1;
+        // 商店id从1000开始
+        store->id = 1000 + storeSet.size() + 1;
         store->x = r * sin(theta);
         store->y = r * cos(theta);
-        store->type = 'P';
+        store->type = 'S';
         store->startTime = 0;
         store->serviceTime = random(0, 10);
         store->prop = 0;
@@ -44,47 +43,46 @@ void SetBench::constructStoreSet() {
 }
 
 void SetBench::constructCustomerSet() {
-    vector<Spot*> customerSet;
+    vector<Spot*> customerSet(0);
     float innerR = r2;
     float outerR = r3;
-    float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
-    float deltaT = 10; // 采样间隔时间
+    float timeHorizon = (float)TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
+    float deltaT = 1; // 采样间隔时间
     float deltaAngle = 2 * PI / subcircleNum;  // 各个区域夹角
     float alpha = ALPHA;  // 时间窗长度与dist(顾客，商家)的比例系数
-    int sliceNum = int(timeHorizon/deltaT);
-    while(customerSet.size() < customerNum){
-        for(int t=0; t<sliceNum; t++) {
-            for(int j=0; j<subcircleNum; j++) {
-                float p = lambda[j] * deltaT * exp(-lambda[j] * deltaT);
-                if(p < random(0,1)) {
-                    // 按概率生成顾客
-                    float theta = random(deltaAngle*j, deltaAngle*(j+1));
-                    float r = random(innerR, outerR);
-                    Spot *c = new Spot();
-                    // 顾客的id从1~customerNum
-                    c->id = (int)customerSet.size() + 1;
-                    c->x = r * sin(theta);
-                    c->y = r * cos(theta);
-                    c->serviceTime = random(0, 10);
-                    c->prop = 0;
-                    // 随机选出商店
-                    int index = int(random(0, storeNum));
-                    index = min(storeNum-1, index);
-                    Spot *store = new Spot(*storeSet[index]);
-                    c->choice = store;
-                    store->choice = c;
-                    float distFromCustomerToStore = dist(c, c->choice);
-                    // 保证足够长的时间窗
-                    c->startTime = random(0, timeHorizon-alpha*distFromCustomerToStore);
-                    c->endTime = random(c->startTime, timeHorizon);
-                    c->quantity = random(0, MAX_DEMAND);
-                    customerSet.push_back(c);
-                    if(customerSet.size() == customerNum) break;
-                }
-            }
+    bool mark = true;
+    int count = 0; 
+    for(int j=0; j<subcircleNum; j++) {
+        int customerNum = poissonSampling(lambda[j], timeHorizon);
+        for(int x=0; x<customerNum; x++) {
+            // 按概率生成顾客
+            float theta = random(deltaAngle*j, deltaAngle*(j+1));
+            float r = random(innerR, outerR);
+            Spot *c = new Spot();
+            // 顾客的id从1开始
+            c->id =  ++count;
+            c->x = r * sin(theta);
+            c->y = r * cos(theta);
+            c->serviceTime = random(0, 10);
+            c->prop = 0;
+            c->type = 'C';
+            // 随机选出商店
+            int index = int(random(0, storeNum));
+            index = min(storeNum-1, index);
+            Spot *store = new Spot(*storeSet[index]);
+            store->type = 'S';
+            c->choice = store;
+            store->choice = c;
+            float distFromCustomerToStore = dist(c, c->choice);
+            // 保证足够长的时间窗
+            c->startTime = random(0, timeHorizon-alpha*distFromCustomerToStore);
+            c->endTime = random(c->startTime, timeHorizon);
+            c->quantity = random(0, MAX_DEMAND);
+            customerSet.push_back(c);
         }
     }
     this->customerSet = customerSet;
+    cout << "The size of customerSet: " << this->customerSet.size() << endl;
 }
 
 void SetBench::constructDepot() {
@@ -104,6 +102,7 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
     constructCustomerSet();
     constructDepot();
     int i;
+    int customerNum = (int)customerSet.size();
     int dynamicNum = (int)floor(customerNum*DYNAMICISM);  // 动态到达的顾客数量
     vector<int> staticPos;           // 静态到达的顾客节点在customerSet中的定位
     // 动态到达的BHs在BHs集合下的坐标
@@ -114,7 +113,7 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
     for(iter; iter<customerSet.end(); iter++) {
         // 当前顾客节点于customerSet中的定位
         // 这里默认customerSet是按id升序排列
-        int count = iter - customerSet.begin();  
+        int count = iter - customerSet.begin(); 
         // 判断count是否是dynamicPos中的元素
         vector<int>::iterator iter2 = find(dynamicPos.begin(), dynamicPos.end(), count);
         if(iter2 != dynamicPos.end()) {   
@@ -127,6 +126,8 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
         // 可容忍的最晚得到答复的时间，为0.6-0.8倍的时间窗长度 + startTime
         (*iter)->tolerantTime = (*iter)->startTime + random(0.6, 0.8) * timeWindowLen;
     }
+    cout << "static customer number: " << staticCustomerSet.size() << endl;
+    cout << "dynamic customer number: " << dynamicCustomerSet.size() << endl;
     storeSet = this->storeSet;
     depot = *this->depot;
 }

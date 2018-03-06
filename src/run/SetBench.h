@@ -17,7 +17,7 @@ public:
             vector<Spot*> &storeSet, Spot &depot);   // 创造顾客样本
 private:
     float r1, r2, r3;
-    int storeNum, subcircleNum, customerNum;
+    int storeNum, subcircleNum;
     float *lambda;
     vector<Spot*> storeSet;
     vector<Spot*> customerSet;

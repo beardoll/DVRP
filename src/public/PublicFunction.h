@@ -27,6 +27,7 @@ vector<int> getRandom(int lb, int ub, int m, vector<int> &restData);
 // 根据probability，应用轮盘算法得到这次随机仿真出现的离散值
 // 内嵌将probability进行归一化的函数
 int roulette(vector<float> probability);
+int poissonSampling(float lambda, float duration);
 
 float dist(Spot* node1, Spot *node2);
 

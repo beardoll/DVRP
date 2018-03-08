@@ -14,11 +14,8 @@ public:
     void constructCustomerSet();
     void constructDepot();
     void construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynamicCustomerSet,
-            vector<Spot*> &storeSet, Spot &depot);   // 创造顾客样本
+            vector<Spot*> &storeSet, Spot &depot, float currentTime);   // 创造顾客样本
 private:
-    float r1, r2, r3;
-    int storeNum, subcircleNum;
-    float *lambda;
     vector<Spot*> storeSet;
     vector<Spot*> customerSet;
     Spot *depot;

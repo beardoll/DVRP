@@ -7,25 +7,19 @@
 SetBench::SetBench() {
     // 将整个地图分成三圈，depot为中心，商家处于最内环，而顾客处于最外环
     // Args(来自于Config.h):
-    //   * R1, R2, R3: 各环与depot的距离
+    //   * R1, R2: 商家所在区域
+    //   * R3, R4: 顾客所在区域
     //   * NUM_STORE: 商家数目
-    //   * NUM_CUSTOMER: 顾客数目
     //   * NUM_SUBCIRCLE: 顾客区域划分数目
     //   * LAMBDA: Poisson到达过程参数，vector类型，长度等于NUM_SUBCIRCLE
-    this->r1 = R1;
-    this->r2 = R2;
-    this->r3 = R3;
-    this->storeNum = STORE_NUM;
-    this->subcircleNum = SUBCIRCLE_NUM;
-    this->lambda = LAMBDA;
 } // 构造函数
 
 void SetBench::constructStoreSet() {
     // 构造商家集合
-    float innerR = r1;
-    float outerR = r2;
+    float innerR = R1;
+    float outerR = R2;
     vector<Spot*> storeSet;
-    for(int i=0; i<storeNum; i++) {
+    for(int i=0; i<STORE_NUM; i++) {
         float r = random(innerR, outerR);
         float theta = random(0, 2*PI);
         Spot *store = new Spot();
@@ -44,16 +38,16 @@ void SetBench::constructStoreSet() {
 
 void SetBench::constructCustomerSet() {
     vector<Spot*> customerSet(0);
-    float innerR = r2;
-    float outerR = r3;
+    float innerR = R3;
+    float outerR = R4;
     float timeHorizon = (float)TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
     float deltaT = 1; // 采样间隔时间
-    float deltaAngle = 2 * PI / subcircleNum;  // 各个区域夹角
+    float deltaAngle = 2 * PI / SUBCIRCLE_NUM;  // 各个区域夹角
     float alpha = ALPHA;  // 时间窗长度与dist(顾客，商家)的比例系数
     bool mark = true;
     int count = 0; 
-    for(int j=0; j<subcircleNum; j++) {
-        int customerNum = poissonSampling(lambda[j], timeHorizon);
+    for(int j=0; j<SUBCIRCLE_NUM; j++) {
+        int customerNum = poissonSampling(LAMBDA[j], timeHorizon);
         for(int x=0; x<customerNum; x++) {
             // 按概率生成顾客
             float theta = random(deltaAngle*j, deltaAngle*(j+1));
@@ -67,8 +61,8 @@ void SetBench::constructCustomerSet() {
             c->prop = 0;
             c->type = 'C';
             // 随机选出商店
-            int index = int(random(0, storeNum));
-            index = min(storeNum-1, index);
+            int index = int(random(0, STORE_NUM));
+            index = min(STORE_NUM-1, index);
             Spot *store = new Spot(*storeSet[index]);
             store->type = 'S';
             c->choice = store;
@@ -96,8 +90,10 @@ void SetBench::constructDepot() {
 }
 
 void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynamicCustomerSet,
-        vector<Spot*> &storeSet, Spot &depot){
-    // 根据概率情况构造样本
+        vector<Spot*> &storeSet, Spot &depot, float currentTime){
+    // 构造样本
+    // currentTime: startTime < currentTime的为static, 否则为dynamic
+    // 需要重写这里的逻辑
     constructStoreSet();
     constructCustomerSet();
     constructDepot();

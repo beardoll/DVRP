@@ -9,6 +9,7 @@ int CUSTOMER_NUM = 200;
 int TIME_SLOT_LEN = 40;
 int TIME_SLOT_NUM = 6;
 int CORE_NUM = 10;
+int OFF_WORK_TIME = 280;
 int STORE_NUM = 20;
 int SUBCIRCLE_NUM = 6;
 float R1 = 30;

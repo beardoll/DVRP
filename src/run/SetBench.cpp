@@ -97,33 +97,17 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
     constructStoreSet();
     constructCustomerSet();
     constructDepot();
-    int i;
-    int customerNum = (int)customerSet.size();
-    int dynamicNum = (int)floor(customerNum*DYNAMICISM);  // 动态到达的顾客数量
-    vector<int> staticPos;           // 静态到达的顾客节点在customerSet中的定位
-    // 动态到达的BHs在BHs集合下的坐标
-    vector<int> dynamicPos = getRandom(0, customerNum, dynamicNum, staticPos);   	
     vector<Spot*>::iterator iter = customerSet.begin();
-    staticCustomerSet.resize(0);
-    dynamicCustomerSet.resize(0);
-    for(iter; iter<customerSet.end(); iter++) {
-        // 当前顾客节点于customerSet中的定位
-        // 这里默认customerSet是按id升序排列
-        int count = iter - customerSet.begin(); 
-        // 判断count是否是dynamicPos中的元素
-        vector<int>::iterator iter2 = find(dynamicPos.begin(), dynamicPos.end(), count);
-        if(iter2 != dynamicPos.end()) {   
-            // 在dynamicPos集合中
-            dynamicCustomerSet.push_back(*iter);
-        } else {  
+    for(iter = customerSet.begin(); iter < customerSet.end(); iter++) {
+        if((*iter)->startTime <= currentTime) {
             staticCustomerSet.push_back(*iter);
+        } else {
+            dynamicCustomerSet.push_back(*iter);
         }
-        float timeWindowLen = (*iter)->endTime - (*iter)->startTime;
-        // 可容忍的最晚得到答复的时间，为0.6-0.8倍的时间窗长度 + startTime
-        (*iter)->tolerantTime = (*iter)->startTime + random(0.6, 0.8) * timeWindowLen;
     }
+    depot = *this->depot;
+    storeSet = this->storeSet;
     cout << "static customer number: " << staticCustomerSet.size() << endl;
     cout << "dynamic customer number: " << dynamicCustomerSet.size() << endl;
-    storeSet = this->storeSet;
-    depot = *this->depot;
 }
+

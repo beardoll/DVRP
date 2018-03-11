@@ -60,8 +60,8 @@ public:
     // 计算item节点在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点前面的顾客节点
     // penaltyPara为惩罚系数，若不需要惩罚则penaltyPara = 0
-    void computeInsertCost(Spot *store, Spot *customer, float &minValue, Spot *refStore1,
-            Spot *refCustomer1, float &secondValue, Spot *refStore2, Spot *refCustomer2,
+    void computeInsertCost(Spot *store, Spot *customer, float &minValue, Spot *&refStore1,
+            Spot *&refCustomer1, float &secondValue, Spot *&refStore2, Spot *&refCustomer2,
             float randomNoise = 0.0f, bool allowNegativeCost = true);  
 
     // 计算把item插入到pre后面是否会违反时间窗约束

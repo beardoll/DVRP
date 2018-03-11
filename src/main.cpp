@@ -13,7 +13,7 @@
 //#include "modules/Timer.h"
 #include "run/TxtRecorder.h"
 //#include "baseclass/Car.h"
-//#include "algorithm/ALNS.h"
+#include "algorithm/ALNS.h"
 #include "public/PublicFunction.h"
 //#include "xml/LoadSolomon.h"
 #include "xml/BenchWrapper.h"
@@ -34,14 +34,14 @@ int main(int argc, char *argv[]){
         // 获取benchmark中的数据
         vector<Spot*> allCustomer;
         Spot depot;
-        float capacity;
+        float capacity = 40.0f;
 
         // 建立新的benchmark（修改服务时间以及时间窗 + 分static和dynamic）
         vector<Spot*> staticCustomer, dynamicCustomer;
         vector<Spot*> store;
 
         SetBench sb;
-        sb.construct(staticCustomer, dynamicCustomer, store, depot);
+        sb.construct(staticCustomer, dynamicCustomer, store, depot, capacity);
         string savePath = BENCH_FILE_PATH + "bench_exp.xml";
         BenchWrapper bw;
         bw.saveBench(savePath, staticCustomer, dynamicCustomer, store, depot, capacity);
@@ -49,10 +49,11 @@ int main(int argc, char *argv[]){
     } else if(condition == 1) {
         // 调试ALNS
         string savePath = BENCH_FILE_PATH + "bench_exp.xml";
-        vector<Spot*> staticCustomer, dynamicCustomer, stores;
+        vector<Spot*> staticCustomer, dynamicCustomer, store;
         Spot depot;
         float capacity;
-        loadBench(savePath, staticCustomer, dynamicCustomer, store, depot, capacity);
+        BenchWrapper bw;
+        bw.loadBench(savePath, staticCustomer, dynamicCustomer, store, depot, capacity);
         vector<Spot*> allCustomer = mergeCustomer(staticCustomer, dynamicCustomer);
         ALNS alg(allCustomer, depot, capacity, 15000, true);
         vector<Car*> finalCarSet;

@@ -1,5 +1,6 @@
 #include "BenchWrapper.h"
 #include "../run/Config.h"
+#include "../public/PublicFunction.h"
 #include<sstream>
 #include<stdexcept>
 #include<algorithm>
@@ -227,7 +228,7 @@ void BenchWrapper::loadCustomerInfo(vector<Spot*> &customers, vector<Spot*> stor
     // 读取XML中的customer信息
     // nodeElem指向第一个存放顾客信息的XML节点
     // 先对stores进行排序(按id)
-    sort(stores.begin(), stores.end());
+    sort(stores.begin(), stores.end(), ascendSortForCustId);
     int beginID = stores[0]->id;  // stores ID的最小值
     for(nodeElem; nodeElem; nodeElem=nodeElem->NextSiblingElement()) {
         // 挨个读取节点信息，并且存入到Customer结构体中

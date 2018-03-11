@@ -294,10 +294,10 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
             // 等不到replan，则优先安排新的骑手为其服务
             Spot *newDepot = new Spot(depot);
             newDepot->arrivedTime = newCustomer->startTime;
-            Car* *newCar = new Car(newDepot, newDepot, capacity, globalCarIndex);
+            Car *newCar = new Car(*newDepot, *newDepot, capacity, globalCarIndex);
             Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
             float minValue, secondValue;
-            newCar->computeInsertCost(newCustomer->store, newCustomer, minValue, refStore1,
+            newCar->computeInsertCost(newCustomer->choice, newCustomer, minValue, refStore1,
                     refCustomer1, secondValue, refStore2, refCustomer2);
             if(minValue == MAX_FLOAT) {
                 // 如果已经来不及派送，则拒绝为其服务
@@ -313,7 +313,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
             } else {
                 // 否则，将其安排给新的骑手
                 globalCarIndex++;
-                newCar->insertAtHead(newCustomer->store, newCustomer);
+                newCar->insertAtHead(newCustomer->choice, newCustomer);
                 newEvent = newCar->launchCar(newCustomer->startTime);
                 currentPlan.push_back(newCar);
             }

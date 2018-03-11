@@ -362,11 +362,9 @@ float Route::getLen(float DTpara[], bool artificial){
     DTL1 = *(DTIter++);
     DTL2 = *(DTIter++);
 
-    Spot *ptr1 = head;
-    Spot *ptr2 = head->next;
     float len = 0;
     if(artificial == false) { // real vehicle routing scheme
-        for(Spot *ptr = head->next; ptr != rear; ptr = ptr->next) {
+        for(Spot *ptr = head->next; ptr->next != rear; ptr = ptr->next) {
             Spot *pre = ptr->front;
             Spot *next = ptr->next;
             float cost = dist(pre, ptr) + dist(ptr, next);
@@ -389,7 +387,7 @@ float Route::getLen(float DTpara[], bool artificial){
             len += cost;
         }
     } else {
-        for(Spot *ptr = head->next; ptr != rear; ptr = ptr->next) {
+        for(Spot *ptr = head->next; ptr->next != rear; ptr = ptr->next) {
             Spot *pre = ptr->front;
             Spot *next = ptr->next;
             float cost = dist(pre, ptr) + dist(ptr, next);
@@ -619,8 +617,8 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
 }
 
 void Route::computeInsertCost(Spot *store, Spot* customer, float &minValue, 
-        Spot *refStore1, Spot *refCustomer1, float &secondValue, Spot *refStore2,
-        Spot *refCustomer2, float randomNoise, bool allowNegativeCost){
+        Spot *&refStore1, Spot *&refCustomer1, float &secondValue, Spot *&refStore2,
+        Spot *&refCustomer2, float randomNoise, bool allowNegativeCost){
     // 计算服务对(store, customer)在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点(refStore, refCustomer)
     // 如果store == head，则refStore没有意义（这种情况出现在当货车已经经过顾客

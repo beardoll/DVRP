@@ -70,7 +70,7 @@ void SetBench::constructCustomerSet() {
             float distFromCustomerToStore = dist(c, c->choice);
             // 保证足够长的时间窗
             c->startTime = random(0, timeHorizon-alpha*distFromCustomerToStore);
-            c->endTime = random(c->startTime, timeHorizon);
+            c->endTime = random(c->startTime+alpha*distFromCustomerToStore, timeHorizon);
             c->quantity = random(0, MAX_DEMAND);
             customerSet.push_back(c);
         }

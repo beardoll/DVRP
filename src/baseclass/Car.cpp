@@ -1,5 +1,6 @@
 #include "Car.h"
 #include "../public/PublicFunction.h"
+#include "../run/Config.h"
 #include<cmath>
 #include <stdexcept>
 
@@ -68,8 +69,8 @@ vector<int> Car::getAllID(){
 
 //================ insert cost和remove cost =================//
 void Car::computeInsertCost(Spot *store, Spot *customer, float &minValue, 
-        Spot *refStore1, Spot *refCustomer1, float &secondValue, Spot *refStore2,
-        Spot *refCustomer2, float randomNoise, bool allowNegativeCost){
+        Spot *&refStore1, Spot *&refCustomer1, float &secondValue, Spot *&refStore2,
+        Spot *&refCustomer2, float randomNoise, bool allowNegativeCost){
         
     // 计算服务对(stoer, customer)在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点(refStore, refCustomer)

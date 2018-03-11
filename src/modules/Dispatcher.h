@@ -11,7 +11,7 @@ public:
             vector<Spot*> storeSet, Spot depot, float capacity);
     ~Dispatcher(){}; // 析构函数
     void destroy();  // 销毁Dispatcher
-    EventElement handleNewCustomer(int slotIndex, Spot* newCustomer);  // 处理新顾客到达
+    EventElement handleNewCustomer(int slotIndex, Spot* newCustomer);    // 处理新顾客(dynamic)到达
     EventElement handleCarArrived(float time, int carIndex);            // 处理货车到达事件
     EventElement handleFinishedService(float time, int carIndex);       // 处理货车完成服务事件
     // EventElement handleDepature(float time, int carIndex);              // 处理货车出发事件
@@ -33,6 +33,7 @@ private:
     float capacity;
     int timeSlotLen;   // 时间段的长度
     int timeSlotNum;   // 时间段的个数
+    int globalCarIndex;
     int samplingRate;  // 采样率
     float iter_percentage;
     int predictMethod;

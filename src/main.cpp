@@ -46,6 +46,18 @@ int main(int argc, char *argv[]){
         BenchWrapper bw;
         bw.saveBench(savePath, staticCustomer, dynamicCustomer, store, depot, capacity);
         cout << "OK, new version of bench has been established!" << endl;
+    } else if(condition == 1) {
+        // 调试ALNS
+        string savePath = BENCH_FILE_PATH + "bench_exp.xml";
+        vector<Spot*> staticCustomer, dynamicCustomer, stores;
+        Spot depot;
+        float capacity;
+        loadBench(savePath, staticCustomer, dynamicCustomer, store, depot, capacity);
+        vector<Spot*> allCustomer = mergeCustomer(staticCustomer, dynamicCustomer);
+        ALNS alg(allCustomer, depot, capacity, 15000, true);
+        vector<Car*> finalCarSet;
+        float finalCost;
+        alg.run(finalCarSet, finalCost);
     }
     /*
     else if(condition == 1) {

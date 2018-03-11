@@ -307,9 +307,14 @@ void Car::updateState(float time){
             Spot* currentPos = route.currentPos();
             Spot* nextPos = route.nextPos();
             if(time == nearestDepatureTime) {
-                // 可以进行状态转换
-                state = depature;
-                nextArriveTime = nearestDepatureTime + dist(currentPos, nextPos);
+                if(nextPos->type == 'D' && time < OFF_WORK_TIME)  {
+                    // 如果下一站是回到仓库而且未到下班时间，则等待
+                    state = wait;            
+                } else {
+                    // 继续出发
+                    state = depature;
+                    nextArriveTime = nearestDepatureTime + dist(currentPos, nextPos);
+                }
             }
             break;
         }

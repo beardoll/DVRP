@@ -13,6 +13,7 @@ Dispatcher::Dispatcher(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCus
     this->depot = depot;
     this->capacity = capacity;
     this->storeSet = storeSet;
+    this->globalCarIndex = 0;
     int custNum = staticCustomerSet.end() - staticCustomerSet.begin();
     custNum += dynamicCustomerSet.end() - dynamicCustomerSet.begin(); // 总顾客数
     servedCustomerId.reserve(custNum);     // 已经服务过的顾客id
@@ -132,6 +133,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
                 currentPlan, storeSet);
         currentPlan = smu.initialPlan(depot, capacity);
+        globalCarIndex = currentPlan.size();
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
             EventElement newEvent = (*carIter)->launchCar(0);  // 将车辆发动
             newEventList.push_back(newEvent);
@@ -250,8 +252,14 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
     return newEventList;
 } 
 
-EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){  
-    // 处理新顾客到达
+EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
+    // 处理新顾客(dynamic)到达
+    // Args:
+    //    * slotIndex: 用以判断顾客是否有耐心等到下一个slotIndex
+    //    * newCustomer: 新顾客节点
+    // Returns: (存放于成员变量中)
+    //    * newCar: 为了服务newCustomer，可能需要派遣新的骑手
+    //    * globalCarIndex: 新车的id，如果派遣了新车，则自加1         
     ostringstream ostr;
     ostr.str("");
     ostr<< "----Customer with id #" << newCustomer->id << " is arriving..." << endl;
@@ -283,15 +291,34 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
         if(newCustomer->tolerantTime < slotIndex * TIME_SLOT_LEN) { 
-            // 等不到replan，则reject
-            ostr.str("");
-            ostr << "He is rejected!" << endl;
-            ostr << "His tolerance time is " << newCustomer->tolerantTime << endl;
-            ostr << endl;
-            TxtRecorder::addLine(ostr.str());
-            cout << ostr.str();
-            rejectCustomerId.push_back(newCustomer->id);
-        } else {  // 否则，进入等待的顾客序列
+            // 等不到replan，则优先安排新的骑手为其服务
+            Spot *newDepot = new Spot(depot);
+            newDepot->arrivedTime = newCustomer->startTime;
+            Car* *newCar = new Car(newDepot, newDepot, capacity, globalCarIndex);
+            Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
+            float minValue, secondValue;
+            newCar->computeInsertCost(newCustomer->store, newCustomer, minValue, refStore1,
+                    refCustomer1, secondValue, refStore2, refCustomer2);
+            if(minValue == MAX_FLOAT) {
+                // 如果已经来不及派送，则拒绝为其服务
+                // 最好尽量避免tolerantTime-endTime为不可达时间
+                ostr.str("");
+                ostr << "He is rejected!" << endl;
+                ostr << "His tolerance time is " << newCustomer->tolerantTime << endl;
+                ostr << endl;
+                TxtRecorder::addLine(ostr.str());
+                cout << ostr.str();
+                rejectCustomerId.push_back(newCustomer->id);
+                delete newCar;
+            } else {
+                // 否则，将其安排给新的骑手
+                globalCarIndex++;
+                newCar->insertAtHead(newCustomer->store, newCustomer);
+                newEvent = newCar->launchCar(newCustomer->startTime);
+                currentPlan.push_back(newCar);
+            }
+        } else {  
+            // 否则，进入等待的顾客序列
             ostr.str("");
             ostr << "He will wait for replan!" << endl << endl;
             TxtRecorder::addLine(ostr.str());

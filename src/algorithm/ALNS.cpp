@@ -148,7 +148,13 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
         if(noiseProb[0] > noiseSelection) {
             noiseAdd = true;
         }
-        
+
+        // ********* dangerous ********* //
+        // insertIndex = 0;
+        // noiseAdd = 0;
+        // removeIndex = 2;
+        ///////////////////////////////////
+
         // 相应算子使用次数加一
         removeFreq[removeIndex]++;
         insertFreq[insertIndex]++;

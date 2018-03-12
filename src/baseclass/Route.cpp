@@ -164,7 +164,12 @@ void Route::insertAfter(Spot *ref, Spot *current) {
         quantity += current->quantity;
     }
     size++;
-    refreshArrivedTime();
+    try{
+        refreshArrivedTime();
+    } catch (exception &e) {
+        cout << "In insertAfter: " << e.what() << endl;
+        exit(1);
+    }
 }
 
 void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer){
@@ -208,7 +213,15 @@ void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *cu
             customer->front = refCustomer;
         }
         size++;
-        refreshArrivedTime();  // 插入节点后，更新arrivedTime
+        try {
+            refreshArrivedTime();  // 插入节点后，更新arrivedTime
+        } catch (exception &e) {
+            cout << "refStore: " << refStore->type << " refCustomer: " << refCustomer->type << endl;
+            cout << "While inserting: store: " << store->id << " customer: " 
+                << customer->id << endl;
+            cout << "In insertAfter: " << e.what() << endl;
+            exit(1);
+        }
     }
 }
 
@@ -219,14 +232,25 @@ void Route::insertAtHead(Spot *store, Spot *customer){
     assert(store->type == 'S' && customer->type == 'C');
     if(current == head && size == 0) {
         // 要求路径必须为空才可以这种方式插入
+        if(timeWindowJudge(head, head, store, customer) == false) {
+            throw out_of_range("Invalid inserting!");
+        }
         head->next = store;
         store->next = customer;
         store->front = head;
         rear->front = customer;
         customer->next = rear;
+        customer->front = store;
         quantity = quantity + customer->quantity;
         size++;
-        refreshArrivedTime();  // 插入节点后，更新arrivedTime
+        try {
+            refreshArrivedTime();  // 插入节点后，更新arrivedTime
+        } catch (exception &e) {
+            cout << "store id: " << store->id << " customer id: "
+                << customer->id << endl;
+            cout << "In insertAtHead: " << e.what() << endl;
+            exit(1);
+        }
     }
     else{
         throw out_of_range("Cannot insert node after head!");
@@ -241,7 +265,12 @@ void Route::insertAtRear(Spot *node) {
     if(node->type == 'C') {
         quantity = quantity + node->quantity;
         size++;
+    }
+    try{
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
+    } catch (exception &e) {
+        cout << "In insertAtRear: " << e.what() << endl;
+        exit(1);
     }
 }
 
@@ -264,7 +293,12 @@ void Route::deleteNode(Spot *node) {
         quantity -= node->quantity;
         size--;
     }
-    refreshArrivedTime();
+    try{
+        refreshArrivedTime();
+    } catch (exception &e) {
+        cout << "In deleteNode: " << e.what() << endl;
+        exit(1);
+    }
     delete node;
 }
 
@@ -305,7 +339,12 @@ void Route::deleteNode(Spot *store, Spot *customer){
         delete customer;
         size--;
         quantity = quantity - customer->quantity;
-        refreshArrivedTime();  // 删除节点后，更新arrivedTime
+        try{
+            refreshArrivedTime();  // 删除节点后，更新arrivedTime
+        } catch (exception &e) {
+            cout << "In deleteNode: " << e.what() << endl;
+            exit(1);
+        }
     }
 }
 
@@ -337,9 +376,7 @@ vector<Spot*> Route::getAllCustomer(){
     // 返回的customer是用路径的节点，在外部不能随便操作
     // Returns:
     //   * customerSet: 路径中所有的顾客节点（按顺序）
-    vector<Spot*> customerSet(size);
-    Spot* ptr = head->next;
-    Spot* ptr2;
+    vector<Spot*> customerSet;
     for(Spot *ptr=head; ptr!=rear; ptr=ptr->next){
         if(ptr->type == 'C') {
             customerSet.push_back(ptr);
@@ -363,11 +400,21 @@ float Route::getLen(float DTpara[], bool artificial){
     DTL2 = *(DTIter++);
 
     float len = 0;
+    if(size == 0) {
+        // 无顾客节点
+        return len;
+    }
     if(artificial == false) { // real vehicle routing scheme
-        for(Spot *ptr = head->next; ptr->next != rear; ptr = ptr->next) {
+        for(Spot *ptr = head->next; ptr->next != NULL; ptr = ptr->next) {
             Spot *pre = ptr->front;
             Spot *next = ptr->next;
-            float cost = dist(pre, ptr) + dist(ptr, next);
+            float cost = 0.0f;
+            try{
+                cost = dist(pre, ptr) + dist(ptr, next);
+            } catch (exception &e) {
+                cerr << "In getLen, Route.cpp: " << e.what() << endl;
+                exit(1);
+            }
             if(ptr->type == 'C') {
                 switch(ptr->priority){
                     case 0: {
@@ -387,10 +434,16 @@ float Route::getLen(float DTpara[], bool artificial){
             len += cost;
         }
     } else {
-        for(Spot *ptr = head->next; ptr->next != rear; ptr = ptr->next) {
+        for(Spot *ptr = head->next; ptr->next != NULL; ptr = ptr->next) {
             Spot *pre = ptr->front;
             Spot *next = ptr->next;
-            float cost = dist(pre, ptr) + dist(ptr, next);
+            float cost = 0.0f;
+            try {
+                cost = dist(pre, ptr) + dist(ptr, next);
+            } catch (exception &e) {
+                cerr << "In getLen, Route.cpp: " << e.what() << endl;
+                exit(1);
+            }
             if(ptr->type == 'C') {
                 switch(ptr->priority){
                     case 0: {
@@ -538,6 +591,7 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
     }
     float time = arrivedTime[pos];
     Spot *ptr1, *ptr2;
+    
 
     // 接下来是判断插入store以及customer会否违反时间窗约束
     if(refStore->type == 'C' && time < refStore->startTime){   
@@ -545,10 +599,12 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
         // 只考虑customer节点的时间窗
         time = refStore->startTime;
     }
+    time += refStore->serviceTime;
     // 判断是否违反store后面的时间窗约束
     // 注意store本身没有时间窗约束
+    time += dist(refStore, store);
     time += store->serviceTime;
-    Spot *pre, *current;
+    Spot *pre, *cur;
     // 有可能refStore和refCustomer是同一个节点，对此作特殊处理
     if(refStore == refCustomer) {
         // store -> customer
@@ -579,38 +635,37 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
             time += refStore->next->serviceTime;
         }
         pre = refStore->next;
-        current = pre->next;
+        cur = pre->next;
     } else {
         pre = store;
-        current = refStore->next;
+        cur = refStore->next;
     }
     bool mark = true; 
     while(true) {
-        if(current == rear) break;
         if(pre == refCustomer) {
             // 前一节点是refCustomer，那么下一节点应该是customer
-            current = customer;
+            cur = customer;
         }
-        float travelLen = dist(pre, current);
+        if(cur == rear) break;
+        float travelLen = dist(pre, cur);
         time += travelLen;
-        if(current->type == 'C') {
-            if(time > current->endTime) {
-                mark = false;
-                break;
+        if(cur->type == 'C') {
+            if(time > cur->endTime) {
+                return false;
             }
-            if(time < current->startTime) {
-                time = current->startTime;
+            if(time < cur->startTime) {
+                time = cur->startTime;
             }
         }
-        time += current->serviceTime;
-        if(pre == refCustomer) {
+        time += cur->serviceTime;
+        if(cur == customer) {
             // pre由customer暂时代替，但是不真正地将customer插入
             // 此时current指针指向的是路径中实际存在的节点（customer之后）
-            current = pre->next;
+            cur = pre->next;
             pre = customer;
         } else {
-            pre = current;
-            current = current->next;
+            pre = cur;
+            cur = cur->next;
         }
     }
     return mark;
@@ -630,7 +685,6 @@ void Route::computeInsertCost(Spot *store, Spot* customer, float &minValue,
     // Returns:
     //   * refStore1, refCustomer1: 若minValue=MAX_FLOAT，则二者均为NULL
     //   * refStore2, refCustomer2: 若secondVlue=MAX_FLOAT，则二者均为NULL
-    assert(store->type == 'S' && customer->type == 'C');
     refStore1 = NULL;
     refCustomer1 = NULL;
     refStore2 = NULL;
@@ -704,16 +758,35 @@ void Route::refreshArrivedTime(){
     }
     tfront = current;
     Spot* tcurrent = current->next;
-    float time = current->arrivedTime + current->serviceTime;
+    float time = current->arrivedTime;
+    if(current->type == 'C' && time < current->startTime) {
+        time = current->startTime;
+    }
+    time += current->serviceTime;
     while(tcurrent != rear){
         // current节点后面的arrivedTime需要重新计算
         time = time + dist(tfront, tcurrent);
         arrivedTime.push_back(time);
         tcurrent->arrivedTime = time;
-        // tcurrent->arrivedTime = time;
         if(tcurrent->type == 'C' && time < tcurrent->startTime){
             // 只有顾客节点有“时间窗”
             time = tcurrent->startTime;
+        }
+        if(tcurrent->type == 'C' && time > tcurrent->endTime) {
+            cout << "problem in: " << tcurrent->id << endl;
+            Spot *temp = head->next;
+            cout << "Now ids are: " << endl;
+            for(temp; temp != rear; temp = temp->next) {
+                cout << temp->id << "\t" << endl;
+            }
+            cout << endl;
+            cout << "corresponding arrivedTimes: " << endl;
+            for(temp=head->next; temp != rear; temp = temp->next) {
+                cout << temp->arrivedTime << "\t" << endl;
+            }
+            cout << endl;
+            throw out_of_range("Violating time constraints");
+            exit(1);
         }
         time = time + tcurrent->serviceTime;
         tfront = tfront->next;

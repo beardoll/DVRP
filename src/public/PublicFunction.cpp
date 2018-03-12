@@ -364,10 +364,11 @@ void showDetailForPlan(vector<Car*> carSet) {
         cout << "Depot: x-" << 0 << "\t" << " y-" << 0 << endl;
         vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
-            cout << "Spot index: #" << custIter-tempCust.begin() << "Spot type: " << (*custIter)->type
-                << "Choice: " << (*custIter)->choice->id << ": x-" << (*custIter)->x << "\t" <<
-                "y-" << (*custIter)->y << "\t" << "AT-" << (*custIter)->arrivedTime << "\t" << "ST-" 
-                << (*custIter)->startTime << "\t" << "ET-" << (*custIter)->endTime << endl;
+            cout << "Spot index: #" << (int)(custIter-tempCust.begin()) << "\t"<< "Spot type: " 
+                << (*custIter)->type << "\t" << "Choice: " << (*custIter)->choice->id 
+                << ": x-" << (*custIter)->x << "\t" << "y-" << (*custIter)->y << "\t" 
+                << "AT-" << (*custIter)->arrivedTime << "\t" << "ST-" << (*custIter)->startTime 
+                << "\t" << "ET-" << (*custIter)->endTime << endl;
         }
         cout << "Depot: x-" << 0 << "\t" <<  "y-" << 0 << endl;
     }

@@ -558,7 +558,6 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
     // Returns:    
     //   * originCarSet: 未执行remove操作前的货车集合
     //   * removedCustomer: 被移除的顾客节点
-
     int i;
     vector<int> customerNumInCar(0);       // 各辆货车顾客节点数目 
     vector<Spot*> allCustomerInOrder(0);  // 所有顾客节点
@@ -571,12 +570,10 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
     for(i=0; i<customerTotalNum; i++){
         allIndex.push_back(i);
     }
-
     // 如果当前plan中没有顾客节点，抛出WARNING
     if(customerTotalNum <= 0) {                                 
         cout << "Warning: Currently no customers in plan (worstRemoval)" << endl;     
     }                                                         
-
     indexsetInRoute = allIndex;
     while((int)removedIndexset.size() < q){
         vector<pair<float, int> > reducedCost(customerTotalNum);  // 各节点的移除代价	
@@ -587,6 +584,7 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         int removedNum = static_cast<int>(max((float)floor(pow(y,pworst)*indexInRouteLen), 1.0f));
         assert(removedNum <= indexInRouteLen);
         int count = 0;
+        i = 0;
         while(i<(int)indexsetInRoute.size() && count<removedNum) {
             int index = reducedCost[i++].second;
             if(allCustomerInOrder[index]->choice->type == 'D') {
@@ -607,7 +605,6 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
                 removedIndexset.end(), indexsetInRoute.begin());
         indexsetInRoute.resize(iterINT - indexsetInRoute.begin());
     }
-
     sort(removedIndexset.begin(), removedIndexset.end());                   
     try {
         checkRepeatID(removedIndexset);
@@ -616,7 +613,6 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         cerr << "In worst removal: " << e.what() << endl;
         exit(1);
     }
-
     try {
         removeCustomerFromCar(removedIndexset, customerNumInCar, allCustomerInOrder, 
                             originCarSet, removedCustomer); 
@@ -704,6 +700,10 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             Spot* refStore = ref.first;
             Spot* refCustomer = ref.second;
             Spot* selectedCustomer = removedCustomer[selectedCustIndex];
+            if(removedCarSet[selectedCarPos]->timeWindowJudge(refStore, refCustomer, 
+                        selectedCustomer->choice, selectedCustomer) == false) {
+                cout << "Stop here!!" << endl;            
+            }
             try {
                 removedCarSet[selectedCarPos]->insertAfter(refStore, refCustomer, 
                         selectedCustomer->choice, selectedCustomer);

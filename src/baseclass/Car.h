@@ -16,6 +16,11 @@ public:
     Car(const Car& item);  //复制构造函数
     Car& operator= (Car &item);       // 重载赋值操作
 
+    bool timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store,
+            Spot *customer) {
+        return route.timeWindowJudge(refStore, refCustomer, store, customer);
+    }
+
     // 获取货车属性
     int getCarIndex() {return carIndex;}  // 得到车辆编号
     bool judgeArtificial() {return artificial;} // 返回车辆性质

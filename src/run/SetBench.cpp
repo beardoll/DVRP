@@ -68,11 +68,17 @@ void SetBench::constructCustomerSet() {
             c->choice = store;
             store->choice = c;
             float distFromCustomerToStore = dist(c, c->choice);
-            // 保证足够长的时间窗
-            c->startTime = random(0, timeHorizon-alpha*distFromCustomerToStore);
-            c->endTime = random(c->startTime+alpha*distFromCustomerToStore, timeHorizon);
-            c->quantity = random(0, MAX_DEMAND);
-            customerSet.push_back(c);
+            float distFromDepotToStore = dist(depot, c->choice);
+            float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
+            if(minTimeLen > timeHorizon) {
+                continue;
+            } else {
+                // 保证足够长的时间窗
+                c->startTime = random(0, timeHorizon-alpha*minTimeLen);
+                c->endTime = random(c->startTime+alpha*minTimeLen, timeHorizon);
+                c->quantity = random(0, MAX_DEMAND);
+                customerSet.push_back(c);
+            }
         }
     }
     this->customerSet = customerSet;
@@ -94,9 +100,9 @@ void SetBench::construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynami
     // 构造样本
     // currentTime: startTime < currentTime的为static, 否则为dynamic
     // 需要重写这里的逻辑
+    constructDepot();
     constructStoreSet();
     constructCustomerSet();
-    constructDepot();
     vector<Spot*>::iterator iter = customerSet.begin();
     for(iter = customerSet.begin(); iter < customerSet.end(); iter++) {
         if((*iter)->startTime <= currentTime) {

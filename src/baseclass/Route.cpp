@@ -192,6 +192,8 @@ void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *cu
     }
     if(count > 0) {
         // 没有完全找到，返回false
+        cout << "refStore: " << refStore->type << " refCustomer: " << refCustomer->type
+            << endl;
         throw out_of_range("Cannot find the position to insert!");
     } else{
         // 更新quantity的值，并且插入store以及customer
@@ -365,6 +367,13 @@ Spot* Route::getRearNode() {
     return rear; 
 }
 
+Spot* Route::findCustomer(int id) {
+    for(Spot *node=head->next; node<rear; node=node->next) {
+        if(node->id == id) {
+            return node;
+        }
+    }
+}
 
 //=============== 获取链表属性 ================//
 int Route::getSize() {
@@ -383,6 +392,16 @@ vector<Spot*> Route::getAllCustomer(){
         }
     }
     return customerSet;
+}
+
+vector<Spot*> Route::getAllSpot() {
+    // 得到head到rear(不包括二者)的所有节点
+    vector<Spot*> spotSet;
+    for(Spot *ptr=head->next; ptr!=rear; ptr=ptr->next) {
+        spotSet.push_back(ptr);
+    }
+    return spotSet;
+
 }
 
 float Route::getLen(float DTpara[], bool artificial){   
@@ -822,11 +841,12 @@ Route* Route::getEmptyRoute(vector<Spot*> &removedCustomer) {
 }
 
 Route* Route::capture(){ 
-    // 抓取current指针后的路径
-    // current指针当前节点将作为head节点
-    // 将当前路径的capacity和leftQuantity原样复制
-    // 对于已经访问过对应pickup节点的delivery节点，其选择的store暂时为
-    // 抓取路径的head节点
+    // Intro:
+    //   * 抓取current指针后的路径
+    //   * current指针当前节点将作为head节点
+    //   * 将当前路径的capacity和leftQuantity原样复制
+    //   * 对于已经访问过对应pickup节点的delivery节点，其选择的store暂时为
+    //   * 抓取路径的head节点
     Route* newRoute = new Route(*current, *rear, capacity);
     if(current->next == rear) { // current指针后已经没有路径
         return newRoute;
@@ -965,6 +985,8 @@ vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId, int &retai
                 posVec.push_back(pos);
                 ptr1 = ptr1->next;
             } 
+        } else {
+            ptr1 = ptr1->next;
         }
     }
     posVec.push_back(0);  // 仓库节点位置

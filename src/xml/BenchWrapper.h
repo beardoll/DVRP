@@ -27,7 +27,7 @@ class BenchWrapper{
         void loadStoreInfo(vector<Spot*> &stores, TiXmlElement *nodeElem);
         void loadCustomerInfo(vector<Spot*> &customers, vector<Spot*> stores, TiXmlElement *nodeElem);
         void loadBench(string fileName, vector<Spot*> &staticCustomers, 
-                vector<Spot*> &dynamicCustomers, vector<Spot*> stores, Spot &depot, float &capacity);
+                vector<Spot*> &dynamicCustomers, vector<Spot*> &stores, Spot &depot, float &capacity);
 
 };
 #endif

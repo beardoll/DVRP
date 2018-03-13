@@ -36,6 +36,7 @@ public:
     }
     vector<int> getAllID();   // 获取货车内所有节点的ID，按顺序
     bool checkTimeConstraint() {return route.checkTimeConstraint(); }
+    Spot* findCustomer(int id) { return route.findCustomer(id); }
 
     // 更改货车属性
     void changeCarIndex(int newIndex) {carIndex = newIndex;}    // 更改车辆编号

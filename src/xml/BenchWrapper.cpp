@@ -260,7 +260,7 @@ void BenchWrapper::loadCustomerInfo(vector<Spot*> &customers, vector<Spot*> stor
 }
 
 void BenchWrapper::loadBench(string fileName, vector<Spot*> &staticCustomers, vector<Spot*> &dynamicCustomers,
-        vector<Spot*> stores, Spot &depot, float &capacity) {
+        vector<Spot*> &stores, Spot &depot, float &capacity) {
     // 读取数据集中的数据到相应的实体中
     // 首先，加载XML文件
     TiXmlDocument doc(fileName.c_str());

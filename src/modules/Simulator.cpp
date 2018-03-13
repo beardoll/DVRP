@@ -62,7 +62,8 @@ vector<Spot*> Simulator::generateScenario(Spot depot){
     float innerR = R3;   // 内圈
     float outerR = R4;   // 外圈
 
-    float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
+    //float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
+    float timeHorizon = OFF_WORK_TIME;
     // 当前timeSlot的起始时间点，动态顾客必须在此之后提出需求
     float currentTime = TIME_SLOT_LEN * slotIndex;
     int subcircleNum = SUBCIRCLE_NUM;  // 扇形数量
@@ -70,41 +71,44 @@ vector<Spot*> Simulator::generateScenario(Spot depot){
     int storeNum = (int)storeSet.size();
     vector<Spot*> dynamicCustomer;
     for(int j=0; j<SUBCIRCLE_NUM; j++) {
-        int customerNum = poissonSampling(LAMBDA[j], timeHorizon);
-        for(int x=0; x<customerNum; x++) {
-            // 按概率生成顾客
-            float currentAlpha = random(leftBound, rightBound);
-            float theta = random(deltaAngle*j, deltaAngle*(j+1));
-            float r = random(innerR, outerR);
-            Spot *c = new Spot();
-            c->id = beginIdx++;
-            c->x = r*sin(theta);
-            c->y = r*cos(theta);
-            c->serviceTime = random(0, 10);
-            c->prop = 1;
-            c->type = 'C';
-            // 随机选出商店
-            int index = int(random(0, storeNum));
-            index = min(storeNum-1, index);
-            Spot *store = new Spot(*storeSet[index]);
-            store->type = 'S';
-            c->choice = store;
-            store->choice = c;
-            float distFromCustomerToStore = dist(c, c->choice);
-            float distFromDepotToStore = dist(&depot, c->choice);
-            // 最短时间窗
-            float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
-            if(currentTime + currentAlpha * minTimeLen > timeHorizon) {
-                // 产生了不合法样本，删除之
-                delete c, store;
-                continue;
-            } 
-            else {
-                // 保证足够长的时间窗
-                c->startTime = random(0, timeHorizon-currentAlpha*minTimeLen);
-                c->endTime = random(c->startTime+currentAlpha*minTimeLen, timeHorizon);
-                c->quantity = random(0, MAX_DEMAND);
-                dynamicCustomer.push_back(c);
+        int customerNum;
+        for(int i=slotIndex; i<TIME_SLOT_NUM-1; i++) {
+            customerNum = poissonSampling(LAMBDA[j], TIME_SLOT_LEN);
+            for(int x=0; x<customerNum; x++) {
+                // 按概率生成顾客
+                float currentAlpha = random(leftBound, rightBound);
+                float theta = random(deltaAngle*j, deltaAngle*(j+1));
+                float r = random(innerR, outerR);
+                Spot *c = new Spot();
+                c->id = beginIdx++;
+                c->x = r*sin(theta);
+                c->y = r*cos(theta);
+                c->serviceTime = random(0, 5);
+                c->prop = 1;
+                c->type = 'C';
+                // 随机选出商店
+                int index = int(random(0, storeNum));
+                index = min(storeNum-1, index);
+                Spot *store = new Spot(*storeSet[index]);
+                store->type = 'S';
+                c->choice = store;
+                store->choice = c;
+                float distFromCustomerToStore = dist(c, c->choice);
+                float distFromDepotToStore = dist(&depot, c->choice);
+                // 最短时间窗
+                float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
+                if(currentTime + currentAlpha * minTimeLen > timeHorizon) {
+                    // 产生了不合法样本，删除之
+                    delete c, store;
+                    continue;
+                } 
+                else {
+                    // 保证足够长的时间窗
+                    c->startTime = random(currentTime, timeHorizon-currentAlpha*minTimeLen);
+                    c->endTime = random(c->startTime+currentAlpha*minTimeLen, timeHorizon);
+                    c->quantity = random(currentTime, MAX_DEMAND);
+                    dynamicCustomer.push_back(c);
+                }
             }
         }
     }
@@ -148,7 +152,10 @@ void threadForInitial(Spot depot, float capacity, int coreId, vector<vector<Car*
     // Returns:
     //   * planSet: 新增当前情景解到其中
     //   * transformMatrix: 获得service promise的顾客间的转移频率
-    ALNS alg(allCustomer, depot, capacity, 10000*ITER_PERCENTAGE);
+    record_lck.lock();
+    cout << "There are totally " << allCustomer.size() << " customers" << endl;
+    record_lck.unlock();
+    ALNS alg(allCustomer, depot, capacity, 10000*ITER_PERCENTAGE, true);
     vector<Car*> solution(0);
     float cost = 0;
     alg.run(solution, cost);

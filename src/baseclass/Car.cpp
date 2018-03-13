@@ -251,9 +251,9 @@ Car* Car::capturePartRoute(float time){
     Spot *depot = route.getRearNode();          // 任何一辆车，终点都是depot
     Car *newCar = new Car(*startNode, *depot, leftQuantity, carIndex, false);
     Route* tempRoute = route.capture();                       // 抓取current指针后的路径
-    vector<Spot*> tempCust = tempRoute->getAllCustomer();     // 获得current指针后的所有顾客
+    vector<Spot*> tempSpot = tempRoute->getAllSpot();         // 获得current指针后的所有节点
     vector<Spot*>::iterator custIter;
-    for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
+    for(custIter = tempSpot.begin(); custIter < tempSpot.end(); custIter++) {
         try {
             newCar->insertAtRear(*custIter);
         } catch (exception &e) {

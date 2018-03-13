@@ -16,7 +16,7 @@ extern int SAMPLE_RATE;
 extern int CUSTOMER_NUM;
 extern int TIME_SLOT_LEN;
 extern int TIME_SLOT_NUM;
-extern int OFF_WORK_TIME; // 骑手收工时间
+extern float OFF_WORK_TIME; // 骑手收工时间
 // R1-R2是store区
 // R3-R4是customer区
 extern float R1;

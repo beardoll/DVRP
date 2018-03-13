@@ -45,7 +45,7 @@ Timer::Timer(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet,
     this->storeSet = storeSet;
     EventElement newEvent;
     int i;
-    for(i=0; i<TIME_SLOT_NUM; i++) {  
+    for(i=1; i<TIME_SLOT_NUM-1; i++) {  
         // 增加“时间段到达”事件
         newEvent = EventElement(i*TIME_SLOT_LEN, newTimeSlot, -1, -1);
         eventList.push_back(newEvent);
@@ -82,7 +82,7 @@ void Timer::deleteEventElement(int carIndex){
     }
 }
 
-void searchCustomer(int customerId, vector<Spot*> customerSet, Spot* customer) {
+void searchCustomer(int customerId, vector<Spot*> customerSet, Spot *&customer) {
     // 根据customerId在customerSet中寻找顾客
     bool mark = false;
     vector<Spot*>::iterator custIter;
@@ -130,7 +130,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
         float &travelDistance, float &addAveDistance) {
     // 调度中心初始化
     Dispatcher disp(staticCustomerSet, dynamicCustomerSet, storeSet, depot, capacity);
-    int slotIndex = 0;  // 第0个时间段
+    int slotIndex = 1;  // 第0个时间段
     while(eventList.size() != 0) {
         EventElement currentEvent = pop();  // 弹出最近事件
         switch(currentEvent.eventType) {

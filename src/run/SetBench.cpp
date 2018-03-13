@@ -29,7 +29,7 @@ void SetBench::constructStoreSet() {
         store->y = r * cos(theta);
         store->type = 'S';
         store->startTime = 0;
-        store->serviceTime = random(0, 10);
+        store->serviceTime = random(0, 5);
         store->prop = 0;
         storeSet.push_back(store);
     }
@@ -40,44 +40,46 @@ void SetBench::constructCustomerSet() {
     vector<Spot*> customerSet(0);
     float innerR = R3;
     float outerR = R4;
-    float timeHorizon = (float)TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
+    //float timeHorizon = (float)TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
+    float timeHorizon = OFF_WORK_TIME;
     float deltaT = 1; // 采样间隔时间
     float deltaAngle = 2 * PI / SUBCIRCLE_NUM;  // 各个区域夹角
-    float alpha = ALPHA;  // 时间窗长度与dist(顾客，商家)的比例系数
     bool mark = true;
     int count = 0; 
     for(int j=0; j<SUBCIRCLE_NUM; j++) {
-        int customerNum = poissonSampling(LAMBDA[j], timeHorizon);
-        for(int x=0; x<customerNum; x++) {
-            // 按概率生成顾客
-            float theta = random(deltaAngle*j, deltaAngle*(j+1));
-            float r = random(innerR, outerR);
-            Spot *c = new Spot();
-            // 顾客的id从1开始
-            c->id =  ++count;
-            c->x = r * sin(theta);
-            c->y = r * cos(theta);
-            c->serviceTime = random(0, 10);
-            c->prop = 0;
-            c->type = 'C';
-            // 随机选出商店
-            int index = int(random(0, STORE_NUM));
-            index = min(STORE_NUM-1, index);
-            Spot *store = new Spot(*storeSet[index]);
-            store->type = 'S';
-            c->choice = store;
-            store->choice = c;
-            float distFromCustomerToStore = dist(c, c->choice);
-            float distFromDepotToStore = dist(depot, c->choice);
-            float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
-            if(minTimeLen > timeHorizon) {
-                continue;
-            } else {
-                // 保证足够长的时间窗
-                c->startTime = random(0, timeHorizon-alpha*minTimeLen);
-                c->endTime = random(c->startTime+alpha*minTimeLen, timeHorizon);
-                c->quantity = random(0, MAX_DEMAND);
-                customerSet.push_back(c);
+        for(int i=0; i<TIME_SLOT_NUM-1; i++) {
+            int customerNum = poissonSampling(LAMBDA[j], TIME_SLOT_LEN);
+            for(int x=0; x<customerNum; x++) {
+                // 按概率生成顾客
+                float theta = random(deltaAngle*j, deltaAngle*(j+1));
+                float r = random(innerR, outerR);
+                Spot *c = new Spot();
+                // 顾客的id从1开始
+                c->id =  ++count;
+                c->x = r * sin(theta);
+                c->y = r * cos(theta);
+                c->serviceTime = random(0, 5);
+                c->prop = 0;
+                c->type = 'C';
+                // 随机选出商店
+                int index = int(random(0, STORE_NUM));
+                index = min(STORE_NUM-1, index);
+                Spot *store = new Spot(*storeSet[index]);
+                store->type = 'S';
+                c->choice = store;
+                store->choice = c;
+                float distFromCustomerToStore = dist(c, c->choice);
+                float distFromDepotToStore = dist(depot, c->choice);
+                float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
+                if(i*TIME_SLOT_LEN+ALPHA*minTimeLen > timeHorizon) {
+                    continue;
+                } else {
+                    // 保证足够长的时间窗
+                    c->startTime = random(i*TIME_SLOT_LEN, timeHorizon-ALPHA*minTimeLen);
+                    c->endTime = random(c->startTime+ALPHA*minTimeLen, timeHorizon);
+                    c->quantity = random(0, MAX_DEMAND);
+                    customerSet.push_back(c);
+                }
             }
         }
     }

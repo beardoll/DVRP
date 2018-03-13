@@ -34,17 +34,17 @@ int main(int argc, char *argv[]){
         // 获取benchmark中的数据
         vector<Spot*> allCustomer;
         Spot depot;
-        float capacity = 40.0f;
+        float time = TIME_SLOT_LEN;
 
         // 建立新的benchmark（修改服务时间以及时间窗 + 分static和dynamic）
         vector<Spot*> staticCustomer, dynamicCustomer;
         vector<Spot*> store;
 
         SetBench sb;
-        sb.construct(staticCustomer, dynamicCustomer, store, depot, capacity);
+        sb.construct(staticCustomer, dynamicCustomer, store, depot, time);
         string savePath = BENCH_FILE_PATH + "bench_exp.xml";
         BenchWrapper bw;
-        bw.saveBench(savePath, staticCustomer, dynamicCustomer, store, depot, capacity);
+        bw.saveBench(savePath, staticCustomer, dynamicCustomer, store, depot, 40);
         cout << "OK, new version of bench has been established!" << endl;
     } else if(condition == 1) {
         // 调试ALNS

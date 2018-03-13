@@ -34,6 +34,7 @@ public:
     Spot* pastPos() {return current->front;}     // 前一个节点的位置
     Spot* getHeadNode();    // 得到头结点
     Spot* getRearNode();    // 得到尾节点
+    Spot* findCustomer(int id);
 
     // 获取链表属性
     float getQuantity() {return this->quantity;}            // 得到本车已使用的容量(装载顾客)
@@ -44,6 +45,7 @@ public:
     int getSize();           // 得到当前链表的大小
     vector<float> getArrivedTime();      // 得到本车所有节点的arrivedTime
     vector<Spot*> getAllCustomer();  // 得到路径中所有的顾客节点
+    vector<Spot*> getAllSpot();      // 得到所有的节点
     vector<int> getAllID();          // 获取所有节点的ID，按顺序
 
     // 修改链表属性

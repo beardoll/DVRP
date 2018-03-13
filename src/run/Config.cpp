@@ -3,13 +3,13 @@
 // 定义全局变量
 float DYNAMICISM = 0.3;
 Strategy STRATEGY = Negative;
-float ITER_PERCENTAGE = 1.0;
+float ITER_PERCENTAGE = 0.1;
 int SAMPLE_RATE = 1;
 int CUSTOMER_NUM = 200;
 int TIME_SLOT_LEN = 40;
 int TIME_SLOT_NUM = 5;
 int CORE_NUM = 10;
-int OFF_WORK_TIME = 280;
+float OFF_WORK_TIME = 350;
 int STORE_NUM = 20;
 int SUBCIRCLE_NUM = 6;
 float R1 = 10;

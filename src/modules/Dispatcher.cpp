@@ -177,28 +177,21 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             // tempVec: 存放new served以及new abandoned顾客
             //          将原来的wait Customer和tempVec作差即可得到最新的wait Customer
             vector<int> tempVec;
-            if(newservedCustomerId.size() != 0) {
-                for (intIter = newservedCustomerId.begin(); intIter < newservedCustomerId.end(); 
-                        intIter++) {
-                    promisedCustomerId.push_back(*intIter);
-                    tempVec.push_back(*intIter);
-                }
-                sort(promisedCustomerId.begin(), promisedCustomerId.end());
-            }
+            promisedCustomerId.insert(promisedCustomerId.end(), newservedCustomerId.begin(), 
+                    newservedCustomerId.end());
+            sort(promisedCustomerId.begin(), promisedCustomerId.end());
+            tempVec.insert(tempVec.end(), newservedCustomerId.begin(), newservedCustomerId.end());
 
-            if(newAbandonedCustomerId.size() != 0) {
-                for (intIter = newAbandonedCustomerId.begin(); intIter < newAbandonedCustomerId.end();
-                        intIter++) {
-                    rejectCustomerId.push_back(*intIter);
-                    tempVec.push_back(*intIter);
-                }
-                sort(rejectCustomerId.begin(), rejectCustomerId.end());
-            }
+            rejectCustomerId.insert(rejectCustomerId.end(), newAbandonedCustomerId.begin(),
+                    newAbandonedCustomerId.end());
+            sort(rejectCustomerId.begin(), rejectCustomerId.end());
+            tempVec.insert(tempVec.end(), newAbandonedCustomerId.begin(),
+                    newAbandonedCustomerId.end());
             // 检查是否tempVec的元素都在原来的wait Customer中
             try {
                 for(intIter = tempVec.begin(); intIter < tempVec.end(); intIter++) {
-                    vector<int>::iterator intIter2 = find(waitCustomerId.begin(), waitCustomerId.end(), 
-                            *intIter);
+                    vector<int>::iterator intIter2 = find(waitCustomerId.begin(), 
+                            waitCustomerId.end(), *intIter);
                     if(intIter2 == waitCustomerId.end()) { 
                         // 没有找到，报错
                         throw out_of_range("tempVec not totally in waitCustomerId!!");

@@ -13,7 +13,7 @@ public:
     vector<Car*> initialPlan(Spot depot, float capacity);     // 利用采样制定初始计划
     vector<Car*> replan(vector<int> &newServedCustomerId, vector<int> &newAbandonedCustomerId, 
             vector<int> &delayCustomerId, float capacity);
-    vector<Spot*> generateScenario();  // 产生动态顾客的情景
+    vector<Spot*> generateScenario(Spot depot);  // 产生动态顾客的情景
     vector<Car*> no_replan();
     bool checkFeasible(vector<Car*> carSet);
 private:

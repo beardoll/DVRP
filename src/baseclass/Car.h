@@ -35,6 +35,7 @@ public:
         return travelDistance - route.getOriginLen(); 
     }
     vector<int> getAllID();   // 获取货车内所有节点的ID，按顺序
+    bool checkTimeConstraint() {return route.checkTimeConstraint(); }
 
     // 更改货车属性
     void changeCarIndex(int newIndex) {carIndex = newIndex;}    // 更改车辆编号

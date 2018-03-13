@@ -373,3 +373,4 @@ void showDetailForPlan(vector<Car*> carSet) {
         cout << "Depot: x-" << 0 << "\t" <<  "y-" << 0 << endl;
     }
 }
+

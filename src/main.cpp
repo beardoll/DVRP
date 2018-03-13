@@ -10,7 +10,7 @@
 #include<cstdlib>
 
 #include "run/SetBench.h"
-//#include "modules/Timer.h"
+#include "modules/Timer.h"
 #include "run/TxtRecorder.h"
 //#include "baseclass/Car.h"
 #include "algorithm/ALNS.h"
@@ -24,7 +24,7 @@ using namespace std;
 
 int main(int argc, char *argv[]){
     cout << "================ Preparation =============" << endl;
-    cout << "Please choose the mode (0 for set bench, 1 for run):";
+    cout << "Please choose the mode (0 for set bench, 1 for ALNS, 2 for whole simulation):";
     int condition;
     cin >> condition;
     if(condition == 0) {
@@ -59,9 +59,15 @@ int main(int argc, char *argv[]){
         vector<Car*> finalCarSet;
         float finalCost;
         alg.run(finalCarSet, finalCost);
+        vector<Car*>::iterator carIter;
+        for(carIter = finalCarSet.begin(); carIter < finalCarSet.end(); carIter++) {
+            if((*carIter)->checkTimeConstraint() == false) {
+                cerr << "Error Result in car: #" << (*carIter)->getCarIndex() << endl;
+                exit(1);
+            }
+        }
     }
-    /*
-    else if(condition == 1) {
+    else if(condition == 2) {
         BenchWrapper bw;
         srand(unsigned(time(0)));
         
@@ -70,11 +76,12 @@ int main(int argc, char *argv[]){
         //string xmlName = SIMULATION_PATH + "xml/";
         string loadFileName = BENCH_FILE_PATH + "bench_exp.xml";
 
-        vector<Customer*> staticCustomer, dynamicCustomer;
-        Customer depot;
+        vector<Spot*> staticCustomer, dynamicCustomer, store;
+        Spot depot;
         float capacity;
         try {
-            bw.loadBench(loadFileName, staticCustomer, dynamicCustomer, depot, capacity);
+            bw.loadBench(loadFileName, staticCustomer, dynamicCustomer, store, 
+                    depot, capacity);
         } catch (exception &e) {
             cerr << e.what() << endl;
             exit(1);
@@ -86,8 +93,8 @@ int main(int argc, char *argv[]){
         cout << "There are " << staticCustomer.size() << " static customers and " << 
             dynamicCustomer.size() << " dynamic customers" << endl;
 
-        Timer timer(staticCustomer, dynamicCustomer, capacity, depot);
-        vector<Customer*> rejectCustomer;
+        Timer timer(staticCustomer, dynamicCustomer, store, capacity, depot);
+        vector<Spot*> rejectCustomer;
         vector<Car*> finalCarSet;
         float travelDistance = 0;
         float addAveDistance = 0;
@@ -103,13 +110,12 @@ int main(int argc, char *argv[]){
         vector<Car*> bestCarSet;
         float bestCost = 0;
         computeBest(finalCarSet, bestCarSet, bestCost);
-        vector<Customer*> temp1, temp2;
+        vector<Spot*> temp1, temp2;
         // ALNS结果的存放地
         string name2 = BENCH_FILE_PATH + "staticResult.xml";
         bw.saveResult(name2, bestCarSet, temp1, temp2, depot, bestCost, 0);
-                        
         withdrawPlan(finalCarSet);
         withdrawPlan(bestCarSet);
-    }*/
+    }
     return 0;
 }

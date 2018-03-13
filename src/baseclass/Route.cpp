@@ -909,6 +909,29 @@ bool Route::checkPassRoute(){
     }
 }
 
+bool Route::checkTimeConstraint() {
+    // 检查当前路径是否满足时间窗约束
+    if(size == 0) return true;
+    Spot *pre = head;
+    Spot *cur = head->next;
+    float time = 0;
+    while(cur != rear) {
+        time += dist(pre, cur);
+        if(cur->type == 'C') {
+            if(time < cur->startTime) {
+                time = cur->startTime;
+            }
+            if(time > cur->endTime) {
+                return false;
+            }
+        }
+        time += cur->serviceTime;
+        pre = pre->next;
+        cur = cur->next;
+    }
+    return true;
+}
+
 vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId, int &retainNum){
     // 仅保留id在validCustomerId中的customer节点对应的服务对
     // 注意通过customer->choice可以得到顾客选取的商店
@@ -932,12 +955,16 @@ vector<int> Route::removeInvalidCustomer(vector<int> validCustomerId, int &retai
                 Spot *ptr2 = ptr1->choice;  // 该顾客选择的商店，也要一并删除
                 ptr2->front->next = ptr2->next;
                 ptr2->next->front = ptr2->front;
+                delete ptr2;
+                ptr2 = ptr1->next;
+                delete ptr1;
+                ptr1 = ptr2;
             } else {
                 retainNum++;
                 int pos = intIter - validCustomerId.begin();
                 posVec.push_back(pos);
+                ptr1 = ptr1->next;
             } 
-            ptr1 = ptr1->next;
         }
     }
     posVec.push_back(0);  // 仓库节点位置

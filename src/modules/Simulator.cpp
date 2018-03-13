@@ -38,61 +38,72 @@ void clearPlanSet(vector<vector<Car*> > planSet) {
     planSet.resize(0);
 }
 
-vector<Spot*> Simulator::generateScenario(){
-    // 产生情景
-    // 根据动态顾客的随机信息产生其时间窗
-    // 注意动态顾客只可能出现在slotIndex之后
-    float alpha = ALPHA;   // 时间窗长度与dist(顾客，商家)的比例系数
+vector<Spot*> Simulator::generateScenario(Spot depot){
+    // Intro:
+    //   * 产生动态顾客出现的情景（时间窗、位置等）
+    // Args:
+    //   * depot: 仓库节点，用来估算时间窗长度
     float leftBound, rightBound;  // 时间窗长度浮动因子(>=1)
+    // 动态顾客的起始id
+    int beginIdx = CUSTOMER_NUM;
     switch(STRATEGY) {
         case Negative: {
-            leftBound = max(0.5*alpha, 1.0);
-            rightBound = alpha;
+            leftBound = max(0.5*ALPHA, 1.0);
+            rightBound = ALPHA;
             break;
         }
         case Positive: {
-            leftBound = alpha;
-            rightBound = 2*alpha;
+            leftBound = ALPHA;
+            rightBound = 2*ALPHA;
             break;
         }
     }
     // 随机产生顾客节点
-    float innerR = R2;   // 内圈
-    float outerR = R3;   // 外圈
-    float deltaT = 10;   // 采样间隔时间
+    float innerR = R3;   // 内圈
+    float outerR = R4;   // 外圈
 
     float timeHorizon = TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
-    int sliceNum = int(timeHorizon/deltaT);
-    float *lambda = LAMBDA;
+    // 当前timeSlot的起始时间点，动态顾客必须在此之后提出需求
+    float currentTime = TIME_SLOT_LEN * slotIndex;
     int subcircleNum = SUBCIRCLE_NUM;  // 扇形数量
     float deltaAngle = 2 * PI / subcircleNum;  // 各个区域夹角
     int storeNum = (int)storeSet.size();
     vector<Spot*> dynamicCustomer;
-    for(int t=0; t<sliceNum; t++) {
-        for(int j=0; j<subcircleNum; j++) {
-            float p = lambda[j] * deltaT * exp(-lambda[j] * deltaT);
-            if(p < random(0,1)) {
-                // 按概率生成顾客
-                float theta = random(deltaAngle*j, deltaAngle*(j+1));
-                float r = random(innerR, outerR);
-                Spot *c = new Spot();
-                c->id = CUSTOMER_NUM + STORE_NUM + dynamicCustomer.size() + 1;
-                c->x = r * sin(theta);
-                c->y = r * cos(theta);
-                c->serviceTime = random(0, 10);
-                c->prop = 1;
-                // 随机选出商店
-                int index = int(random(0, storeNum));
-                index = min(storeNum-1, index);
-                Spot *store = new Spot(*storeSet[index]);
-                store->prop = 1;
-                c->choice = store;
-                store->choice = c;
-                c->prop = 1;
-                float distFromCustomerToStore = dist(c, c->choice);
-                float timeWindowLen = random(leftBound, rightBound) * distFromCustomerToStore;
-                c->startTime = random(slotIndex * TIME_SLOT_LEN, timeHorizon-timeWindowLen);
-                c->endTime = min(c->startTime, timeHorizon);
+    for(int j=0; j<SUBCIRCLE_NUM; j++) {
+        int customerNum = poissonSampling(LAMBDA[j], timeHorizon);
+        for(int x=0; x<customerNum; x++) {
+            // 按概率生成顾客
+            float currentAlpha = random(leftBound, rightBound);
+            float theta = random(deltaAngle*j, deltaAngle*(j+1));
+            float r = random(innerR, outerR);
+            Spot *c = new Spot();
+            c->id = beginIdx++;
+            c->x = r*sin(theta);
+            c->y = r*cos(theta);
+            c->serviceTime = random(0, 10);
+            c->prop = 1;
+            c->type = 'C';
+            // 随机选出商店
+            int index = int(random(0, storeNum));
+            index = min(storeNum-1, index);
+            Spot *store = new Spot(*storeSet[index]);
+            store->type = 'S';
+            c->choice = store;
+            store->choice = c;
+            float distFromCustomerToStore = dist(c, c->choice);
+            float distFromDepotToStore = dist(&depot, c->choice);
+            // 最短时间窗
+            float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
+            if(currentTime + currentAlpha * minTimeLen > timeHorizon) {
+                // 产生了不合法样本，删除之
+                delete c, store;
+                continue;
+            } 
+            else {
+                // 保证足够长的时间窗
+                c->startTime = random(0, timeHorizon-currentAlpha*minTimeLen);
+                c->endTime = random(c->startTime+currentAlpha*minTimeLen, timeHorizon);
+                c->quantity = random(0, MAX_DEMAND);
                 dynamicCustomer.push_back(c);
             }
         }
@@ -199,7 +210,7 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
         for(int i=0; i<min(CORE_NUM,restSampleNum); i++) {
             // 所有顾客信息
             vector<Spot*> allCustomer = copyCustomerSet(promiseCustomerSet);
-            vector<Spot*> currentDynamicCust = generateScenario();  // 采样
+            vector<Spot*> currentDynamicCust = generateScenario(depot);  // 采样
             allCustomer.insert(allCustomer.end(), currentDynamicCust.begin(), currentDynamicCust.end());
             thread_pool.push_back(thread(threadForInitial, depot, capacity, coreId + i, 
                         ref(planSet), allCustomer, validId, ref(transformMatrix), ref(record_lck)));
@@ -389,7 +400,8 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         validPromise(newPlan, hurryCustomer, newServedCustomerId, newAbandonedCustomerId);
         if(patientCustomer.size() != 0) {
             ostr.str("");
-            ostr << "Replan for patient customer, the number is " << patientCustomer.size() << endl;
+            ostr << "Replan for patient customer, the number is " << 
+                patientCustomer.size() << endl;
             TxtRecorder::addLine(ostr.str());
             cout << ostr.str();
             // 如果patientCustomer不为空，则应该对其进行replan
@@ -437,12 +449,10 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     allServedCustomerId.push_back(0);   // 仓库节点是评分矩阵中的第一个节点
     vector<int>::iterator intIter;
     vector<int> promiseCustomerId = getCustomerID(promiseCustomerSet);
-    for(intIter = promiseCustomerId.begin(); intIter < promiseCustomerId.end(); intIter++) {
-        allServedCustomerId.push_back(*intIter);
-    }
-    for(intIter = newServedCustomerId.begin(); intIter < newServedCustomerId.end(); intIter++) {
-        allServedCustomerId.push_back(*intIter);
-    }
+    allServedCustomerId.insert(allServedCustomerId.end(), promiseCustomerId.begin(),
+            promiseCustomerId.end());
+    allServedCustomerId.insert(allServedCustomerId.end(), newServedCustomerId.begin(), 
+            newServedCustomerId.end());
     sort(allServedCustomerId.begin(), allServedCustomerId.end());
     // 然后进行采样，调用SSLR算法计算各个采样情景下的计划
     // 并且计算评分矩阵
@@ -470,7 +480,8 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         thread_pool.resize(0);
         int coreId = SAMPLE_RATE - restSampleNum + 1;
         for (int i = 0; i < min(CORE_NUM, restSampleNum); i++) {
-            vector<Spot*> sampleCustomer = generateScenario(); // 产生动态顾客到达的情景
+            Spot *depot = newPlan[0]->getRoute()->getRearNode();
+            vector<Spot*> sampleCustomer = generateScenario(*depot); // 产生动态顾客到达的情景
             vector<Car*> temp = copyPlan(newPlan);
             thread_pool.push_back(thread(threadForReplan, capacity, coreId + i, 
                         ref(planSet), sampleCustomer, temp, allServedCustomerId, 

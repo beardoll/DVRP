@@ -305,6 +305,9 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         removedCustomer.resize(0);
 
         // 执行remove heuristic
+        // dangerous!!
+        removeIndex = 2;
+        //////////////
         switch(removeIndex) {
             case 0: {
                 // 首先得到maxArrivedTime

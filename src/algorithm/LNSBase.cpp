@@ -79,7 +79,7 @@ void checkRepeatID(vector<int> sortedArray) {
     vector<int>::iterator iter1, iter2;
     iter1 = sortedArray.begin();
     iter2 = iter1 + 1;
-    for (; iter2 > sortedArray.end(); iter1++, iter2++) {
+    for (; iter2 < sortedArray.end(); iter1++, iter2++) {
         if (*iter1 == *iter2) {
             throw invalid_argument("Catch repeat elements!");
         }
@@ -138,6 +138,11 @@ void removeCustomerFromCar(vector<int> removedIndexset, vector<int> customerNum,
             copyStore->choice = copyCustomer;
             originCarSet[carIndex]->deleteCustomer(store, customer);
         } catch (exception &e) {
+            cout << "All removed Indexes are: " << endl;
+            for(int k=0; k<indexRemovedLen; k++) {
+                cout << removedIndexset[k] << "\t";
+            }
+            cout << endl;
             ostringstream ostr;
             ostr.str("");
             ostr << "Deleted customer #" << allCustomerInOrder[currentIndex]->id << 
@@ -512,7 +517,8 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCu
         int indexInRouteLen = indexsetInRoute.end() - indexsetInRoute.begin();  
         int selectedIndex = int(random(0, indexInRouteLen));     // 在indexsetInRoute中的索引
         selectedIndex = min(selectedIndex, indexInRouteLen-1);   // avoid reaching the right side
-        if(allCustomerInOrder[selectedIndex]->choice->type == 'D') {
+        int index = indexsetInRoute[selectedIndex];
+        if(allCustomerInOrder[index]->choice->type == 'D') {
             // 如果customer指向的商店是仓库，说明这是一个虚拟的商店
             // 当计划开始后，在replan阶段，往往会出现store访问了但是customer尚未访问的
             // 情况，这时customer指向的store会临时安排为depot。为了避免将该customer转
@@ -520,7 +526,7 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCu
             // 类顾客节点执行"remove"操作
             continue;
         } else {
-            removedIndexset.push_back(indexsetInRoute[selectedIndex]);
+            removedIndexset.push_back(index);
             sort(removedIndexset.begin(), removedIndexset.end());
             vector<int>::iterator iterINT;
             iterINT = set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), 
@@ -550,6 +556,15 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCu
     }
 }
 
+void printIndex(vector<pair<float, int> > cost) {
+    cout << "All index in route:" << endl;
+    for(int i=0; i<cost.size();i++) {
+        cout << cost[i].second << "\t";
+    }
+    cout << endl;
+}
+
+
 void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCustomer,
         int q) {
     // worst removal算子	
@@ -575,7 +590,9 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         cout << "Warning: Currently no customers in plan (worstRemoval)" << endl;     
     }                                                         
     indexsetInRoute = allIndex;
-    while((int)removedIndexset.size() < q){
+    int maxTrial = 20;
+    int trialCount = 0;
+    while((int)removedIndexset.size() < q && (trialCount++) < maxTrial){
         vector<pair<float, int> > reducedCost(customerTotalNum);  // 各节点的移除代价	
         computeReducedCost(originCarSet, indexsetInRoute, removedIndexset, reducedCost, DTpara);
         sort(reducedCost.begin(), reducedCost.end(), ascendSort<float, int>);   // 递增排序
@@ -610,6 +627,17 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         checkRepeatID(removedIndexset);
     }
     catch (exception &e) {
+        cout << "indexsetInRoute:" << endl;
+        vector<int>::iterator iter;
+        for(iter=indexsetInRoute.begin(); iter<indexsetInRoute.end(); iter++) {
+            cout << *iter << "\t";
+        }
+        cout << endl;
+        cout << "All ids are: " << endl;
+        for(iter=allIndex.begin(); iter<allIndex.end(); iter++) {
+            cout << *iter << "\t";
+        }
+        cout << endl;
         cerr << "In worst removal: " << e.what() << endl;
         exit(1);
     }

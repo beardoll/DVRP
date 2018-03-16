@@ -58,20 +58,25 @@ void Route::copy(const Route &L){
             copyPtr = temp;
             if(originPtr->type == 'C') {
                 // 追溯其指向的商户(D)
-                temp = L.head->next;
+                temp = L.head;
                 int i = 0;
                 while(temp != L.rear) {
                     if(temp == originPtr->choice) break;
                     temp = temp->next;
                     i++;
                 }
-                temp = head->next;
+                temp = head;
                 for(int j=0; j<i; j++) {
                     temp = temp->next;
                 }
-                // 双向索引
-                copyPtr->choice = temp;
-                temp->choice = copyPtr;
+                if(temp->type == 'D') {
+                    // 商店是depot，则只需要单向索引
+                    copyPtr->choice = temp;
+                } else {
+                    // 双向索引
+                    copyPtr->choice = temp;
+                    temp->choice = copyPtr;
+                }
             }
 		}
         if(L.current == originPtr){
@@ -218,11 +223,10 @@ void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *cu
         try {
             refreshArrivedTime();  // 插入节点后，更新arrivedTime
         } catch (exception &e) {
-            cout << "refStore: " << refStore->type << " refCustomer: " << refCustomer->type << endl;
+            cout << "refStore: " << refStore->id << " refCustomer: " << refCustomer->id << endl;
             cout << "While inserting: store: " << store->id << " customer: " 
                 << customer->id << endl;
-            cout << "In insertAfter: " << e.what() << endl;
-            exit(1);
+            throw out_of_range("In insertAfter: " + string(e.what()));
         }
     }
 }
@@ -264,6 +268,8 @@ void Route::insertAtRear(Spot *node) {
     // 需要由用户自己保证节点是可以凑成(P-D)对
     rear->front->next = node;
     node->next = rear;
+    node->front = rear->front;
+    rear->front = node;
     if(node->type == 'C') {
         quantity = quantity + node->quantity;
         size++;
@@ -275,7 +281,6 @@ void Route::insertAtRear(Spot *node) {
         exit(1);
     }
 }
-
 
 void Route::deleteNode(Spot *node) {
     // 删除node节点
@@ -307,7 +312,8 @@ void Route::deleteNode(Spot *node) {
 void Route::deleteNode(Spot *store, Spot *customer){
     // 删除链表中指针值与store和customer相同的节点
     // 只能删除current指针后面的节点
-    assert(store->type == 'S' && customer->type == 'C');
+    assert(store->type == 'S' || store->type == 'D');
+    assert(customer->type == 'C');
     if(current == rear) {
         // 已经走完了路径中的所有节点，禁止删除
         throw out_of_range("Forbid deleting for we have finished the route!");
@@ -368,7 +374,7 @@ Spot* Route::getRearNode() {
 }
 
 Spot* Route::findCustomer(int id) {
-    for(Spot *node=head->next; node<rear; node=node->next) {
+    for(Spot *node=head->next; node!=rear; node=node->next) {
         if(node->id == id) {
             return node;
         }
@@ -521,8 +527,8 @@ vector<int> Route::getAllID() {
 
 //=============== 修改链表属性 ================//
 bool Route::moveForward(){
-    current->visit = true;
     current = current->next;
+    current->visit = true;
     if(current == NULL) {  // 已经完成任务
         return false;
     } else {
@@ -549,50 +555,56 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
     vector<float> costArr(0);
     for(Spot* ptr = head; ptr != rear; ptr = ptr->next) {
         if(ptr->type == 'C') {
-            // 从customer寻迹找到store
-            Spot *customer = ptr;
-            Spot *customerPre = customer->front;
-            Spot *customerNext = customer->next;
-            Spot *store = ptr->choice;
-            Spot *storePre = store->front;
-            Spot *storeNext = store->next;
-            float diff1 = -dist(customerPre, customer) - dist(customer, 
-                    customerNext) + dist(customerPre, customerNext);
-            float diff2 = -dist(storePre, store) - dist(store, storeNext) + 
-                    dist(storePre, storeNext);
-            float cost = diff1 + diff2;
-            if(artificial == true) {
-                switch(ptr->priority){
-                    case 0: {
-                        cost += 0;
-                        break;
-                    }
-                    case 1: {
-                        cost -= DTH2;
-                        break;
-                    }
-                    case 2: {
-                        cost -= DTL2;
-                        break;
-                    }
-                }
+            if(ptr->choice->type == 'D') {
+                // 对于choice为Depot的顾客节点，其removeCost为无穷大
+                // 表示这类节点不可以被remove
+                costArr.push_back(MAX_FLOAT);
             } else {
-                switch(ptr->priority){
-                    case 0: {
-                        cost += 0;
-                        break;
+                // 从customer寻迹找到store
+                Spot *customer = ptr;
+                Spot *customerPre = customer->front;
+                Spot *customerNext = customer->next;
+                Spot *store = ptr->choice;
+                Spot *storePre = store->front;
+                Spot *storeNext = store->next;
+                float diff1 = -dist(customerPre, customer) - dist(customer, 
+                        customerNext) + dist(customerPre, customerNext);
+                float diff2 = -dist(storePre, store) - dist(store, storeNext) + 
+                        dist(storePre, storeNext);
+                float cost = diff1 + diff2;
+                if(artificial == true) {
+                    switch(ptr->priority){
+                        case 0: {
+                            cost += 0;
+                            break;
+                        }
+                        case 1: {
+                            cost -= DTH2;
+                            break;
+                        }
+                        case 2: {
+                            cost -= DTL2;
+                            break;
+                        }
                     }
-                    case 1: {
-                        cost += DTH1;
-                        break;
-                    }
-                    case 2: {
-                        cost += DTL1;
-                        break;
-                    }
-                }		
+                } else {
+                    switch(ptr->priority){
+                        case 0: {
+                            cost += 0;
+                            break;
+                        }
+                        case 1: {
+                            cost += DTH1;
+                            break;
+                        }
+                        case 2: {
+                            cost += DTL1;
+                            break;
+                        }
+                    }		
+                }
+                costArr.push_back(cost);
             }
-            costArr.push_back(cost);
         }
     }
     return costArr;
@@ -856,8 +868,8 @@ Route* Route::capture(){
         if(temp->type == 'C' && temp->choice->visit == true) {
             // customer对应的store已经被访问过
             temp->choice = newRoute->getHeadNode();
-            newRoute->insertAtRear(temp);
         }
+        newRoute->insertAtRear(temp);
     }
     return newRoute;
 }
@@ -903,6 +915,7 @@ void Route::replaceRoute(Route *route) {
     }
     // 清空变量
     customerPool.clear();
+    refreshArrivedTime();
     return;
 }
 

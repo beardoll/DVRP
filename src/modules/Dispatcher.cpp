@@ -295,9 +295,12 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
     // insertType:
     //    * 记录插入点(refStore, refCustomer)它们原始的类型是顾客还是商家
     pair<int, pair<int, int> > insertPos;   
-    pair<int, pair<char, char> > insertType
+    pair<int, pair<char, char> > insertType;
     vector<Car*>::iterator carIter;
     float currentTime = newCustomer->startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
+    if(newCustomer->id == 75) {
+        cout << "stop here" << endl;
+    }
     for (carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
         // 求newCustomer在每条route的最小插入代价
         Car *tempCar = (*carIter)->capturePartRoute(currentTime);
@@ -309,7 +312,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
             int pos = carIter - currentPlan.begin();  
             minInsertCost = minValue;           
             insertPos = make_pair(pos, make_pair(mapID(refStore1), mapID(refCustomer1)));
-            insertType = make_pair(pos, make_pair(refStore1->type, refCustomer1->id));
+            insertType = make_pair(pos, make_pair(refStore1->type, refCustomer1->type));
         }
     }
     EventElement newEvent;
@@ -356,21 +359,29 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
         sort(promisedCustomerId.begin(), promisedCustomerId.end());
         int selectedCarPos = insertPos.first;
 
-        Spot* refStore = insertPos.second.first;
-        Spot* refCustomer = insertPos.second.second;
+        int refStoreID = insertPos.second.first;
+        int refCustomerID = insertPos.second.second;
+        char refStoreType = insertType.second.first;
+        char refCustomerType = insertType.second.second;
+        Car *selectedCar = currentPlan[selectedCarPos];
+        Spot *refStore = getMappedNode(refStoreID, refStoreType, selectedCar);
+        Spot *refCustomer = getMappedNode(refCustomerID, refCustomerType, selectedCar);
         try {
-            currentPlan[selectedCarPos]->insertAfter(refStore, refCustomer, 
+            selectedCar->insertAfter(refStore, refCustomer, 
                     newCustomer->choice, newCustomer);
         } catch (exception &e) {
-            cerr << e.what() << endl;
+            cout << "current id: " << selectedCar->getRoute()->currentPos()->id << endl;
+            cout << "refStoreType: " << refStoreType << " refCustomerType: "
+                << refCustomerType << endl;
+            cout << e.what() << endl;
             exit(1);
         }
-        if(currentPlan[selectedCarPos]->getState() == wait) {  // if the car stays asleep
-            newEvent = currentPlan[selectedCarPos]->launchCar(currentTime);
+        if(selectedCar->getState() == wait) {  // if the car stays asleep
+            newEvent = selectedCar->launchCar(currentTime);
         } else {
-            newEvent = currentPlan[selectedCarPos]->getCurrentAction(currentTime);
+            newEvent = selectedCar->getCurrentAction(currentTime);
         }
-        int carIndex = currentPlan[selectedCarPos]->getCarIndex();
+        int carIndex = selectedCar->getCarIndex();
         ostr.str("");
         ostr << "He is arranged to car #" << carIndex << endl << endl;
         TxtRecorder::addLine(ostr.str());

@@ -296,8 +296,8 @@ void Car::updateState(float time){
                         if(currentPos->type == 'C') {
                             // 货车的剩余载货量减少
                             route.decreaseLeftQuantity(currentPos->quantity);
-                            state = serving;
                         }
+                        state = serving;
                     }
                 }
             }

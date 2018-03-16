@@ -430,9 +430,6 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
             cout << ostr.str();
         }
     }
-
-    deleteCustomerSet(hurryCustomer);
-    deleteCustomerSet(patientCustomer);
 	
     ostr.str("");
     ostr << "There are newly " << newServedCustomerId.size() << " customers get service!" << endl;
@@ -531,11 +528,6 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         exit(1);
     }
     clearPlanSet(planSet);
-    deleteCustomerSet(waitCustomerSet);
-    deleteCustomerSet(promiseCustomerSet);
-    deleteCustomerSet(dynamicCustomerSet);
-    withdrawPlan(currentPlan);
-    withdrawPlan(newPlan);
     return outputPlan;
 }
 

@@ -6,8 +6,6 @@
 #include "../run/Config.h"
 #include <stdexcept>
 
-const float MAX_FLOAT = numeric_limits<float>::max();
-
 Dispatcher::Dispatcher(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet, 
         vector<Spot*> storeSet, Spot depot, float capacity) {
     this->depot = depot;

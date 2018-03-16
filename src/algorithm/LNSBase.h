@@ -3,10 +3,8 @@
 
 #include "../baseclass/Spot.h"
 #include "../baseclass/Car.h"
+#include "../public/PublicFunction.h"
 #include <vector>
-
-const float MAX_FLOAT = numeric_limits<float>::max();
-const float LARGE_FLOAT = 10000.0f;
 
 using namespace std;
 

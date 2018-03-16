@@ -10,8 +10,6 @@
 #include "../public/PublicFunction.h"
 #include "../run/Config.h"
 
-const float MAX_FLOAT = numeric_limits<float>::max();
-
 using namespace std;
 Route::Route(Spot &headNode, Spot &rearNode, float capacity):capacity(capacity)
 { 
@@ -558,7 +556,7 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
             if(ptr->choice->type == 'D') {
                 // 对于choice为Depot的顾客节点，其removeCost为无穷大
                 // 表示这类节点不可以被remove
-                costArr.push_back(MAX_FLOAT);
+                costArr.push_back(LARGE_FLOAT);
             } else {
                 // 从customer寻迹找到store
                 Spot *customer = ptr;

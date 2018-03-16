@@ -9,6 +9,9 @@
 
 using namespace std;
 
+const float MAX_FLOAT = numeric_limits<float>::max();
+const float LARGE_FLOAT = 100000000.0f;
+
 float random(float start, float end);
 template<class T1, class T2> bool ascendSort(pair<T1, T2> x, pair<T1, T2> y) {
     // µİÔöÅÅĞò

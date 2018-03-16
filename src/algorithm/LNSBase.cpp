@@ -1,6 +1,5 @@
 #include "LNSBase.h"
 #include "../baseclass/Matrix.h"
-#include "../public/PublicFunction.h"
 #include<stdexcept>
 #include<algorithm>
 #include<cassert>

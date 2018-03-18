@@ -250,10 +250,9 @@ Car* Car::capturePartRoute(float time){
     float leftQuantity = route.getLeftQuantity();  // 货车剩余容量
     Spot *depot = route.getRearNode();          // 任何一辆车，终点都是depot
     Car *newCar = new Car(*startNode, *depot, leftQuantity, carIndex, false);
-    Route* tempRoute = route.capture();                       // 抓取current指针后的路径
-    vector<Spot*> tempSpot = tempRoute->getAllSpot();         // 获得current指针后的所有节点
+    vector<Spot*> nodes = route.capture();
     vector<Spot*>::iterator custIter;
-    for(custIter = tempSpot.begin(); custIter < tempSpot.end(); custIter++) {
+    for(custIter = nodes.begin(); custIter < nodes.end(); custIter++) {
         try {
             newCar->insertAtRear(*custIter);
         } catch (exception &e) {
@@ -377,6 +376,7 @@ EventElement Car::launchCar(float currentTime){
         state = depature;
         Spot *currentPos = route.currentPos();  // 当前驻点
         Spot *nextPos = route.nextPos();        // 下一目的地
+        currentPos->arrivedTime = currentTime;
         nearestDepatureTime = currentTime;
         float time = currentTime + dist(currentPos, nextPos);
         nextArriveTime = time;

@@ -271,12 +271,14 @@ void Route::insertAtRear(Spot *node) {
     if(node->type == 'C') {
         quantity = quantity + node->quantity;
         size++;
+        if(node->choice->type == 'D') {
+            node->choice = head;
+        }
     }
     try{
         refreshArrivedTime();  // 插入节点后，更新arrivedTime
     } catch (exception &e) {
-        cout << "In insertAtRear: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In insert at rear: " + string(e.what()));
     }
 }
 
@@ -850,33 +852,44 @@ Route* Route::getEmptyRoute(vector<Spot*> &removedCustomer) {
     return newRoute;
 }
 
-Route* Route::capture(){ 
+vector<Spot*> Route::capture(){ 
     // Intro:
-    //   * 抓取current指针后的路径
-    //   * current指针当前节点将作为head节点
-    //   * 将当前路径的capacity和leftQuantity原样复制
+    //   * 抓取current指针后的所有节点
     //   * 对于已经访问过对应pickup节点的delivery节点，其选择的store暂时为
     //   * 抓取路径的head节点
-    Route* newRoute = new Route(*current, *rear, capacity);
+    vector<Spot*> output;
     if(current->next == rear) { // current指针后已经没有路径
-        return newRoute;
+        return output;
     }
     for(Spot* ptr=current->next; ptr != rear; ptr = ptr->next) {
         Spot *temp = new Spot(*ptr);
-        if(temp->type == 'C' && temp->choice->visit == true) {
-            // customer对应的store已经被访问过
-            temp->choice = newRoute->getHeadNode();
+        if(temp->type == 'C') {
+            if(temp->choice->visit == true) {
+                // customer对应的store已经被访问过
+                temp->choice = rear;
+            } else {
+                // 由于节点是复制的，因此choice信息丢失，需要
+                // 根据原有的位置关系确定choice指向
+                int count = 0;
+                Spot* temp2 = current->next;
+                while(temp2->choice->id != ptr->id) {
+                    temp2 = temp2->next;
+                    count++;
+                }
+                output[count]->choice = temp;
+                temp->choice = output[count];
+            }
         }
-        newRoute->insertAtRear(temp);
+        output.push_back(temp);
     }
-    return newRoute;
+    return output;
 }
 
 void Route::replaceRoute(Route *route) {  
     // 以route替换掉current指针后的路径
     // 对于route中choice为depot的customer，需要找回其原本指向的商店
     vector<Spot*> customerPool(CUSTOMER_NUM);
-    Spot *ptr1, *ptr2, *ptr3;
+    Spot *ptr1, *ptr2;
     // 清空本路径中current指针后面的节点 
     if(current->next != rear) { // current后面还有节点
         // 清除原路径中current指针后面的元素
@@ -885,31 +898,33 @@ void Route::replaceRoute(Route *route) {
         while(ptr1 != rear) {
             if(ptr1->type == 'C') {
                 customerPool[ptr1->id] = ptr1->choice;
-                ptr2 = ptr1->next;
-                deleteNode(ptr1);
-                ptr1 = ptr2;
-            }
+            }    
+            ptr2 = ptr1->next;
+            deleteNode(ptr1);
+            ptr1 = ptr2;
         }
     }
     // 修改route中choice为depot的customer其选择的商店
-    ptr1 = route->current->next;
+    ptr1 = route->head->next;
     while(ptr1 != NULL) {
         if(ptr1->type == 'C' && ptr1->choice->type == 'D') {
             Spot *store = customerPool[ptr1->id];
             store->choice = ptr1;
             ptr1->choice = store;
         }
+        ptr1 = ptr1->next;
     }
 
     // 将route中除head和rear外的节点都复制到current指针后
     ptr1 = route->head->next;
     while(ptr1 != route->rear) {
+        ptr2 = ptr1->next;
         try {
             insertAtRear(ptr1);
         } catch (exception &e) {
             cout << "While replace route: " << e.what() << endl;
         }
-        ptr1 = ptr1->next; 
+        ptr1 = ptr2; 
     }
     // 清空变量
     customerPool.clear();

@@ -77,7 +77,7 @@ public:
     Route* getEmptyRoute(vector<Spot*> &removedCustomer);
     void replaceRoute(Route *route);  
     // 抓取current指针后的路径
-    Route* capture();  
+    vector<Spot*> capture();  
 
     // 其余辅助性质的函数
     vector<int> removeInvalidCustomer(vector<int> validCustomerId, int &retainNum);

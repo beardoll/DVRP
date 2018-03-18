@@ -194,7 +194,14 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
     vector<int> validId;
     validId.push_back(0);   // 第一个节点时仓库节点
     // 所有在计划开始前已知的顾客id（属于必须服务的顾客）
-    vector<int> tempId = getCustomerID(promiseCustomerSet);
+    vector<int> tempId;
+    try{
+        tempId = getCustomerID(promiseCustomerSet);
+    } catch (exception &e) {
+        cout << "In initial plan, loading ids of promise: " << endl;
+        cout << e.what() << endl;
+        exit(1);
+    }
     validId.insert(validId.end(), tempId.begin(), tempId.end());
     // 初始化transformMatrix
     Matrix<int> transformMatrix(validId.size(), validId.size());
@@ -452,7 +459,14 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     vector<int> allServedCustomerId;    // 所有得到了service promise的顾客id
     allServedCustomerId.push_back(0);   // 仓库节点是评分矩阵中的第一个节点
     vector<int>::iterator intIter;
-    vector<int> promiseCustomerId = getCustomerID(promiseCustomerSet);
+    vector<int> promiseCustomerId;
+    try{
+        promiseCustomerId = getCustomerID(promiseCustomerSet);
+    } catch (exception &e) {
+        cout << "In replan, get ids of promise: " << endl;
+        cout << e.what() << endl;
+        exit(1);
+    }
     allServedCustomerId.insert(allServedCustomerId.end(), promiseCustomerId.begin(),
             promiseCustomerId.end());
     allServedCustomerId.insert(allServedCustomerId.end(), newServedCustomerId.begin(), 

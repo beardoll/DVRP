@@ -281,7 +281,9 @@ vector<int> getCustomerID(vector<Spot*> customerSet){
     ids.reserve(customerSet.end() - customerSet.begin());
     vector<Spot*>::iterator iter = customerSet.begin();
     for(iter; iter<customerSet.end(); iter++){
-        assert((*iter)->type == 'C');
+        if((*iter)->type != 'C') {
+            throw out_of_range("Require customer node to be of type 'C' but the type is actually: " + string(&((*iter)->type))[0]);
+        }
         ids.push_back((*iter)->id);
     }
     sort(ids.begin(), ids.end());

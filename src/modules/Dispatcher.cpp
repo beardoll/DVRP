@@ -106,6 +106,30 @@ void checkFeasible(vector<Car*> carSet, vector<int> promisedCustomerId){
     }
 }
 
+void checkConnection(vector<Car*> carSet) {
+    vector<Car*>::iterator carIter;
+    for(carIter=carSet.begin(); carIter<carSet.end(); carIter++) {
+        vector<Spot*> allSpot = (*carIter)->getRoute()->getAllSpot();
+        int count = 0;
+        vector<Spot*>::iterator custIter;
+        for(custIter=allSpot.begin(); custIter<allSpot.end(); custIter++) {
+            if((*custIter)->id >= 1000) {
+                // id大于等于1000目前是store
+                count++;
+            } else {
+                count--;
+            }
+        }
+        if(count != 0) {
+            ostringstream ostr;
+            ostr << "Car #" << (*carIter)->getCarIndex() << 
+                "has unbalanced ids"; 
+            throw out_of_range(ostr.str());
+            break;
+        }
+    }
+}
+
 
 vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){ 
     // 新时间段开始
@@ -135,6 +159,11 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
             EventElement newEvent = (*carIter)->launchCar(0);  // 将车辆发动
             newEventList.push_back(newEvent);
+        }
+        try {
+            checkConnection(currentPlan);
+        } catch(exception &e) {
+            cout << "In initial: " << e.what() << endl;
         }
         ostr.str("");
         ostr << "----Initialization Finished! Now there are " << currentPlan.size() 
@@ -227,6 +256,11 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                 newEventList.push_back(newEvent);
                 count++;
             }
+            try {
+                checkConnection(currentPlan);
+            } catch(exception &e) {
+                cout << "In replan: " << e.what() << endl;
+            }
             ostr.str("");
             ostr << "----Replan Finished! Now there are " << currentPlan.size() 
                 << " cars working!" << endl << endl;
@@ -301,7 +335,12 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
     }
     for (carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
         // 求newCustomer在每条route的最小插入代价
-        Car *tempCar = (*carIter)->capturePartRoute(currentTime);
+        Car *tempCar;
+        try {
+            tempCar = (*carIter)->capturePartRoute(currentTime);
+        } catch (exception &e) {
+            cout << e.what() << endl;
+        }
         Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
         float minValue, secondValue;
         tempCar->computeInsertCost(newCustomer->choice, newCustomer, minValue, refStore1,
@@ -356,7 +395,6 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
         promisedCustomerId.push_back(newCustomer->id);  // 这些顾客一定会得到服务
         sort(promisedCustomerId.begin(), promisedCustomerId.end());
         int selectedCarPos = insertPos.first;
-
         int refStoreID = insertPos.second.first;
         int refCustomerID = insertPos.second.second;
         char refStoreType = insertType.second.first;

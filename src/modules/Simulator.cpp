@@ -309,7 +309,7 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
     //   * transformMatrix: 得到service promise的顾客之间的转移频数
     vector<Car*> tempPlan;
     float finalCost = 0;
-    SSLR alg(sampleCustomer, currentPlan, capacity, 1000, true);
+    SSLR alg(sampleCustomer, currentPlan, capacity, 10000*ITER_PERCENTAGE, true);
     alg.run(tempPlan, finalCost, record_lck);
     vector<Car*>::iterator carIter;
     int totalRetainNum = 0;

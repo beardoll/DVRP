@@ -158,6 +158,9 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         globalCarIndex = currentPlan.size();
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
             EventElement newEvent = (*carIter)->launchCar(0);  // 将车辆发动
+            if(newEvent.customerId != -1) {
+                cout << "Car #" << newEvent.carIndex << " has been launched!" << endl;
+            }
             newEventList.push_back(newEvent);
         }
         try {
@@ -249,6 +252,10 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                 if (currentPlan[count]->getState() == wait) {
                     // 如果货车原来处于wait状态，则需要将其发动
                     newEvent = currentPlan[count]->launchCar(currentTime);
+                    if(newEvent.customerId != -1) {
+                        cout << "Car #" << newEvent.carIndex << 
+                            " has been launched!" << endl;
+                    }
                 }
                 else {
                     newEvent = currentPlan[count]->getCurrentAction(currentTime);
@@ -381,6 +388,8 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
                 newCar->insertAtHead(newCustomer->choice, newCustomer);
                 newEvent = newCar->launchCar(newCustomer->startTime);
                 currentPlan.push_back(newCar);
+                cout << "Open new car #" << newCar->getCarIndex() <<
+                    " to serve him" << endl;
             }
         } else {  
             // 否则，进入等待的顾客序列

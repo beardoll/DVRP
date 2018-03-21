@@ -207,8 +207,9 @@ void computeReducedCost(vector<Car*> originCarSet, vector<int> indexsetInRoute,
 void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet, 
         vector<Spot*> removedCustomer, Matrix<float> &minInsertPerRoute, 
         Matrix<pair<Spot*, Spot*> > &minInsertPos, Matrix<float> &secondInsertPerRoute, 
-        Matrix<pair<Spot*, Spot*> > &secondInsertPos, 
-        float baseNoise, float DTpara[], float randomRange[], bool allowNegativeCost){
+        Matrix<pair<Spot*, Spot*> > &secondInsertPos, float baseNoise, 
+        float DTpara[], float randomRange[], 
+        bool allowNegativeCost){
     // 计算removedCustomer到removedCarSet的最小和次小插入代价
     // Args:
     //   * allIndex: 从0-len(removedCustomer)，作为返回值
@@ -344,8 +345,8 @@ void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRout
         float randomNoise = noiseAmount * random(randomRange[0], randomRange[1]);
         Spot *currentCustomer = removedCustomer[index];
         removedCarSet[selectedCarPos]->computeInsertCost(currentCustomer->choice, currentCustomer, 
-                minValue, refStore1, refCustomer1, secondValue, refStore2, refCustomer2, randomNoise, 
-                allowNegativeCost);
+                minValue, refStore1, refCustomer1, secondValue, refStore2, 
+                refCustomer2, randomNoise, allowNegativeCost);
         minInsertPerRoute.setValue(selectedCarPos, index, minValue);
         minInsertPos.setValue(selectedCarPos, index, make_pair(refStore1, refCustomer1));
         secondInsertPerRoute.setValue(selectedCarPos, index, secondValue);
@@ -410,13 +411,26 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCust
     }
     int selectedIndex;           // 被选中的节点在allCustomer中的下标
     vector<int> removedIndexset; // 所有被移除的节点的下标集合(allCustomer中)
-    selectedIndex = int(random(0,customerTotalNum));          // 随机选取一个节点
-    selectedIndex = min(selectedIndex, customerTotalNum-1);   // 防止越界
+    int maxTrail = customerTotalNum;
+    int trailCount = 0;
+    while((trailCount++) < maxTrail) {
+        // 选取一个choice不为depot的顾客节点
+        selectedIndex = int(random(0,customerTotalNum));          // 随机选取一个节点
+        selectedIndex = min(selectedIndex, customerTotalNum-1);   // 防止越界
+        if(allCustomerInOrder[selectedIndex]->choice->type == 'D') {
+            selectedIndex = -1;
+            continue;
+        } 
+        else break;
+    }
+    if(selectedIndex == -1) return;
     removedIndexset.push_back(selectedIndex);
     vector<int> indexsetInRoute(customerTotalNum-1);     // 尚在路径中的节点的下标集合
     set_difference(allIndex.begin(), allIndex.end(), removedIndexset.begin(), 
             removedIndexset.end(), indexsetInRoute.begin());
-    while((int)removedIndexset.size() < q){ 
+    maxTrail = 1;
+    trailCount = 0;
+    while((int)removedIndexset.size() < q && (trailCount++) < maxTrail){ 
         // 要移除掉一共q个节点
         // 当前要进行排序的相似矩阵（向量），仅包含尚在路径中的节点
         vector<pair<float, int> > currentR(0);      
@@ -727,10 +741,6 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             Spot* refStore = ref.first;
             Spot* refCustomer = ref.second;
             Spot* selectedCustomer = removedCustomer[selectedCustIndex];
-            if(removedCarSet[selectedCarPos]->timeWindowJudge(refStore, refCustomer, 
-                        selectedCustomer->choice, selectedCustomer) == false) {
-                cout << "Stop here!!" << endl;            
-            }
             try {
                 removedCarSet[selectedCarPos]->insertAfter(refStore, refCustomer, 
                         selectedCustomer->choice, selectedCustomer);
@@ -746,9 +756,10 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             iterINT = set_difference(allIndex.begin(), allIndex.end(), alreadyInsertIndex.begin(), 
                     alreadyInsertIndex.end(), restCustomerIndex.begin());
             restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
-            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
-                    secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                    tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
+            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
+                    secondInsertPerRoute, secondInsertPos, selectedCarPos, 
+                    removedCarSet, removedCustomer, tempBaseNoise, 
+                    DTpara, tempRandomRange, allowNegativeCost);
         } 
         else {  // 没有可行插入位置，则再新开一辆货车
             int selectedCarPos = carNum++;  // 被选中的车辆位置
@@ -772,9 +783,10 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             minInsertPos.addOneRow();
             secondInsertPerRoute.addOneRow();
             secondInsertPos.addOneRow();
-            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
-                    secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                    tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
+            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
+                    secondInsertPerRoute, secondInsertPos, selectedCarPos, 
+                    removedCarSet, removedCustomer, tempBaseNoise, 
+                    DTpara, tempRandomRange, allowNegativeCost);
         }
     }
     delete[] tempRandomRange;
@@ -828,7 +840,7 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
         tempRandomRange[1] = randomRange[1];
     }
     generateMatrix(allIndex, removedCarSet, removedCustomer, minInsertPerRoute,  
-            minInsertPos, secondInsertPerRoute, secondInsertPos, 
+            minInsertPos, secondInsertPerRoute, secondInsertPos,
             tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
     // 尚未插入到路径中的节点位置，相对于最初的removedCustomer
     vector<int> restCustomerIndex = allIndex;  
@@ -897,9 +909,10 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             minInsertPos.addOneRow();
             secondInsertPerRoute.addOneRow();
             secondInsertPos.addOneRow();
-            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
-                    secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                    tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);	
+            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
+                    secondInsertPerRoute, secondInsertPos, selectedCarPos, 
+                    removedCarSet, removedCustomer, tempBaseNoise, 
+                    DTpara, tempRandomRange, allowNegativeCost);	
         } else {
             // 否则，不需要开辟新车
             selectedCarPos = regretdiffPerRestCust[0].second.second;
@@ -921,9 +934,10 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             iterINT = set_difference(allIndex.begin(), allIndex.end(), alreadyInsertIndex.begin(), 
                     alreadyInsertIndex.end(), restCustomerIndex.begin());
             restCustomerIndex.resize(iterINT-restCustomerIndex.begin());
-            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, secondInsertPerRoute, 
-                        secondInsertPos, selectedCarPos, removedCarSet, removedCustomer, 
-                        tempBaseNoise, DTpara, tempRandomRange, allowNegativeCost);
+            updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
+                    secondInsertPerRoute, secondInsertPos, selectedCarPos, 
+                    removedCarSet, removedCustomer, tempBaseNoise, 
+                    DTpara, tempRandomRange, allowNegativeCost);
         }
     }
     delete[] tempRandomRange;

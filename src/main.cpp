@@ -114,7 +114,6 @@ int main(int argc, char *argv[]){
         // ALNS结果的存放地
         string name2 = BENCH_FILE_PATH + "staticResult.xml";
         bw.saveResult(name2, bestCarSet, temp1, temp2, depot, bestCost, 0);
-        withdrawPlan(finalCarSet);
         withdrawPlan(bestCarSet);
     }
     return 0;

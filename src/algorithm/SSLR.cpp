@@ -32,10 +32,11 @@ vector<Spot*> feedDataForLNSBase(vector<Spot*> waitCustomer, vector<Car*> origin
     return output;
 }
 
-SSLR::SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter,
-        bool verbose, int pshaw, int pworst, float eta): LNSBase(pshaw, 
-        pworst, eta, capacity, RANDOM_RANGE_SSLR, feedDataForLNSBase(waitCustomer, 
-        originPlan), *originPlan[0]->getRearNode(), true, true) 
+SSLR::SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, 
+        int maxIter, bool verbose, int pshaw, int pworst, float eta): 
+    LNSBase(pshaw,  pworst, eta, capacity, RANDOM_RANGE_SSLR, 
+            feedDataForLNSBase(waitCustomer, originPlan), *originPlan[0]->getRearNode(), 
+            true, true) 
 {
     this->maxIter = maxIter;
     this->verbose = verbose;
@@ -305,9 +306,6 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         removedCustomer.resize(0);
 
         // 执行remove heuristic
-        // dangerous!!
-        removeIndex = 2;
-        //////////////
         switch(removeIndex) {
             case 0: {
                 // 首先得到maxArrivedTime

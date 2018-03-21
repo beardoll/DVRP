@@ -45,7 +45,7 @@ Timer::Timer(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet,
     this->storeSet = storeSet;
     EventElement newEvent;
     int i;
-    for(i=1; i<TIME_SLOT_NUM-1; i++) {  
+    for(i=1; i<=TIME_SLOT_NUM; i++) {  
         // 增加“时间段到达”事件
         newEvent = EventElement(i*TIME_SLOT_LEN, newTimeSlot, -1, -1);
         eventList.push_back(newEvent);

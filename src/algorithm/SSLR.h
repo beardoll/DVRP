@@ -11,8 +11,9 @@
 
 class SSLR: public LNSBase{  // SSALNSÀ„∑®
 public:
-    SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, int maxIter=15000,
-        bool verbose=false, int pshaw=6, int pworst=3, float eta=0.0f); 
+    SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, 
+            int maxIter=15000, bool verbose=false, int pshaw=6, 
+            int pworst=3, float eta=0.0f); 
     ~SSLR();
     void run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck);
 private:

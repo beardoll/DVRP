@@ -62,11 +62,11 @@ void Dispatcher::carFinishTask(int carIndex){
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
     } else {
-        // 如果所有剩余的车辆都处于wait状态，则也算是完成了任务
+        // 如果所有剩余的车辆都是空车
         bool mark = true;
         int num = 0;
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
-            if((*carIter)->getState() != wait) {
+            if((*carIter)->getRoute()->getSize() != 0) {
                 mark = false;
                 break;
             } else {
@@ -107,6 +107,7 @@ void checkFeasible(vector<Car*> carSet, vector<int> promisedCustomerId){
 }
 
 void checkConnection(vector<Car*> carSet) {
+    // 检查每一辆车中store和customer的数量是否对等
     vector<Car*>::iterator carIter;
     for(carIter=carSet.begin(); carIter<carSet.end(); carIter++) {
         vector<Spot*> allSpot = (*carIter)->getRoute()->getAllSpot();
@@ -133,6 +134,7 @@ void checkConnection(vector<Car*> carSet) {
 
 vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){ 
     // 新时间段开始
+    cout << "Handle new time slot!" << endl;
     vector<Spot*> promiseCustomerSet;
     vector<Spot*> waitCustomerSet;
     vector<Spot*> dynamicCustomerSet;
@@ -154,11 +156,12 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         cout << ostr.str();
         Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
                 currentPlan, storeSet);
+        depot.arrivedTime = slotIndex * TIME_SLOT_LEN;
         currentPlan = smu.initialPlan(depot, capacity);
         globalCarIndex = currentPlan.size();
         for(carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
-            EventElement newEvent = (*carIter)->launchCar(0);  // 将车辆发动
-            if(newEvent.customerId != -1) {
+            EventElement newEvent = (*carIter)->launchCar(slotIndex*TIME_SLOT_LEN);  // 将车辆发动
+            if(newEvent.customerId != 0 && newEvent.customerId != -1) {
                 cout << "Car #" << newEvent.carIndex << " has been launched!" << endl;
             }
             newEventList.push_back(newEvent);
@@ -170,7 +173,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         }
         ostr.str("");
         ostr << "----Initialization Finished! Now there are " << currentPlan.size() 
-            << " cars dispatched!" << endl << endl;
+            << " cars dispartched!" << endl << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
     } else {
@@ -203,13 +206,14 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             vector<Spot*>::iterator custIter;
 
             // 更新promiseCustomerId, rejectCustomerId以及waitCustomerId
-            vector<int>::iterator intIter;
-            // tempVec: 存放new served以及new abandoned顾客
-            //          将原来的wait Customer和tempVec作差即可得到最新的wait Customer
-            vector<int> tempVec;
+            vector<int>::iterator intIter1, intIter2;
             promisedCustomerId.insert(promisedCustomerId.end(), newservedCustomerId.begin(), 
                     newservedCustomerId.end());
             sort(promisedCustomerId.begin(), promisedCustomerId.end());
+            
+            // tempVec: 存放new served以及new abandoned顾客
+            //          将原来的wait Customer和tempVec作差即可得到最新的wait Customer
+            vector<int> tempVec;
             tempVec.insert(tempVec.end(), newservedCustomerId.begin(), newservedCustomerId.end());
 
             rejectCustomerId.insert(rejectCustomerId.end(), newAbandonedCustomerId.begin(),
@@ -217,20 +221,15 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             sort(rejectCustomerId.begin(), rejectCustomerId.end());
             tempVec.insert(tempVec.end(), newAbandonedCustomerId.begin(),
                     newAbandonedCustomerId.end());
+            
             // 检查是否tempVec的元素都在原来的wait Customer中
-            try {
-                for(intIter = tempVec.begin(); intIter < tempVec.end(); intIter++) {
-                    vector<int>::iterator intIter2 = find(waitCustomerId.begin(), 
-                            waitCustomerId.end(), *intIter);
-                    if(intIter2 == waitCustomerId.end()) { 
-                        // 没有找到，报错
-                        throw out_of_range("tempVec not totally in waitCustomerId!!");
-                    }   
-                }
-            }
-            catch (exception &e) {
-                cerr << "In distpacher: " << e.what() << endl;
-                exit(1);
+            for(intIter1 = tempVec.begin(); intIter1 < tempVec.end(); intIter1++) {
+                intIter2 = find(waitCustomerId.begin(), waitCustomerId.end(), *intIter1);
+                if(intIter2 == waitCustomerId.end()) { 
+                    // 没有找到，报错
+                    cerr << "tempVec not totally in waitCustomerId!!" << endl;
+                    exit(1);
+                }   
             }
 
             if(tempVec.size() != 0) {
@@ -238,12 +237,12 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                 sort(waitCustomerId.begin(), waitCustomerId.end());
                 sort(tempVec.begin(), tempVec.end());
                 vector<int> tempVec2(20);
-                vector<int>::iterator iterxx = set_difference(waitCustomerId.begin(), 
-                        waitCustomerId.end(), tempVec.begin(), tempVec.end(), tempVec2.begin());
-                tempVec2.resize(iterxx - tempVec2.begin());
+                intIter1 = set_difference(waitCustomerId.begin(), waitCustomerId.end(), 
+                        tempVec.begin(), tempVec.end(), tempVec2.begin());
+                tempVec2.resize(intIter1 - tempVec2.begin());
                 waitCustomerId = tempVec2;
             }
-
+            
             // 将变更后的future plan安插到currentPlan对应位置之后
             int count = 0;
             for (carIter = updatedPlan.begin(); carIter < updatedPlan.end(); carIter++) {
@@ -263,6 +262,16 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                 newEventList.push_back(newEvent);
                 count++;
             }
+            
+            // 之前出现过replace part route后allCustomer数据被替换
+            // 因此在这里跟踪这个情况
+            for(int i=0; i<allCustomer.size(); i++) {
+                if(allCustomer[i]->type != 'C') {
+                    cout << i << "th elements in allCustomer is not customer" << endl;
+                    exit(1);
+                }
+            }
+
             try {
                 checkConnection(currentPlan);
             } catch(exception &e) {
@@ -273,6 +282,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                 << " cars working!" << endl << endl;
             TxtRecorder::addLine(ostr.str());
             cout << ostr.str();
+               
         }
         else {
             ostr.str("");
@@ -294,7 +304,6 @@ int mapID(Spot *node) {
         id = node->id;
     }
     return id;
-
 }
 
 Spot* getMappedNode(int id, char type, Car *currentCar) {
@@ -321,75 +330,83 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
     //    * globalCarIndex: 新车的id，如果派遣了新车，则自加1         
     ostringstream ostr;
     ostr.str("");
-    ostr<< "----Customer with id #" << newCustomer->id << " is arriving..." << endl;
+    ostr<< "----Time: " << newCustomer->startTime << ", Customer with id #" 
+        << newCustomer->id << " is arriving..." << endl;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
+    Spot *copyNewCustomer = new Spot(*newCustomer);
+    Spot *copyNewStore = new Spot(*(newCustomer->choice));
+    copyNewCustomer->choice = copyNewStore;
+    copyNewStore->choice = copyNewCustomer;
     vector<int>::iterator intIter = find(dynamicCustomerId.begin(), dynamicCustomerId.end(), 
-            newCustomer->id);
+            copyNewCustomer->id);
     dynamicCustomerId.erase(intIter);
     float minInsertCost = MAX_FLOAT;
     // insertPos:
     //    * 第一个int是货车编号（于currentPlan中的位置）
-    //    * 第二个pair组合分别是customer id (即使插入点是store，也记录其customer)
-    // insertType:
-    //    * 记录插入点(refStore, refCustomer)它们原始的类型是顾客还是商家
+    //    * 第二个pair组合都是customer id(即使插入点是store，也记录其customer)
     pair<int, pair<int, int> > insertPos;   
     pair<int, pair<char, char> > insertType;
     vector<Car*>::iterator carIter;
-    float currentTime = newCustomer->startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
-    if(newCustomer->id == 75) {
-        cout << "stop here" << endl;
-    }
+    float currentTime = copyNewCustomer->startTime;       // 顾客提出需求的时间正好是时间窗开始的时间
     for (carIter = currentPlan.begin(); carIter < currentPlan.end(); carIter++) {
-        // 求newCustomer在每条route的最小插入代价
+        // 求copyNewCustomer在每条route的最小插入代价
         Car *tempCar;
         try {
             tempCar = (*carIter)->capturePartRoute(currentTime);
         } catch (exception &e) {
+            cout << "While handling new customer: " << endl;
             cout << e.what() << endl;
         }
         Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
         float minValue, secondValue;
-        tempCar->computeInsertCost(newCustomer->choice, newCustomer, minValue, refStore1,
-                refCustomer1, secondValue, refStore2, refCustomer2);
+        tempCar->computeInsertCost(copyNewCustomer->choice, copyNewCustomer, minValue, 
+                refStore1, refCustomer1, secondValue, refStore2, refCustomer2, 
+                currentTime);
         if(minValue < minInsertCost) {
             int pos = carIter - currentPlan.begin();  
             minInsertCost = minValue;           
-            insertPos = make_pair(pos, make_pair(mapID(refStore1), mapID(refCustomer1)));
-            insertType = make_pair(pos, make_pair(refStore1->type, refCustomer1->type));
+            insertPos = make_pair(pos, make_pair(mapID(refStore1), 
+                        mapID(refCustomer1)));
+            insertType = make_pair(pos, make_pair(refStore1->type, 
+                        refCustomer1->type));
         }
     }
     EventElement newEvent;
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
-        if(newCustomer->tolerantTime < slotIndex * TIME_SLOT_LEN) { 
+        if(copyNewCustomer->tolerantTime < slotIndex * TIME_SLOT_LEN) { 
             // 等不到replan，则优先安排新的骑手为其服务
             Spot *newDepot = new Spot(depot);
-            newDepot->arrivedTime = newCustomer->startTime;
+            newDepot->arrivedTime = copyNewCustomer->startTime;
             Car *newCar = new Car(*newDepot, *newDepot, capacity, globalCarIndex);
             Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
             float minValue, secondValue;
-            newCar->computeInsertCost(newCustomer->choice, newCustomer, minValue, refStore1,
-                    refCustomer1, secondValue, refStore2, refCustomer2);
+            newCar->computeInsertCost(copyNewCustomer->choice, copyNewCustomer, minValue, 
+                    refStore1, refCustomer1, secondValue, refStore2, refCustomer2, 
+                    currentTime);
             if(minValue == MAX_FLOAT) {
                 // 如果已经来不及派送，则拒绝为其服务
                 // 最好尽量避免tolerantTime-endTime为不可达时间
                 ostr.str("");
                 ostr << "He is rejected!" << endl;
-                ostr << "His tolerance time is " << newCustomer->tolerantTime << endl;
+                ostr << "His tolerance time is " << copyNewCustomer->tolerantTime << endl;
                 ostr << endl;
                 TxtRecorder::addLine(ostr.str());
                 cout << ostr.str();
-                rejectCustomerId.push_back(newCustomer->id);
+                rejectCustomerId.push_back(copyNewCustomer->id);
+                sort(rejectCustomerId.begin(), rejectCustomerId.end());
                 delete newCar;
             } else {
                 // 否则，将其安排给新的骑手
+                promisedCustomerId.push_back(copyNewCustomer->id);
+                sort(promisedCustomerId.begin(), promisedCustomerId.end());
                 globalCarIndex++;
-                newCar->insertAtHead(newCustomer->choice, newCustomer);
-                newEvent = newCar->launchCar(newCustomer->startTime);
+                newCar->insertAtHead(copyNewCustomer->choice, copyNewCustomer);
+                newEvent = newCar->launchCar(copyNewCustomer->startTime);
                 currentPlan.push_back(newCar);
                 cout << "Open new car #" << newCar->getCarIndex() <<
-                    " to serve him" << endl;
+                    " to serve him" << endl << endl;
             }
         } else {  
             // 否则，进入等待的顾客序列
@@ -397,11 +414,11 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
             ostr << "He will wait for replan!" << endl << endl;
             TxtRecorder::addLine(ostr.str());
             cout << ostr.str();
-            waitCustomerId.push_back(newCustomer->id);  
+            waitCustomerId.push_back(copyNewCustomer->id);  
             sort(waitCustomerId.begin(), waitCustomerId.end());
         }
     } else {
-        promisedCustomerId.push_back(newCustomer->id);  // 这些顾客一定会得到服务
+        promisedCustomerId.push_back(copyNewCustomer->id);  // 这些顾客一定会得到服务
         sort(promisedCustomerId.begin(), promisedCustomerId.end());
         int selectedCarPos = insertPos.first;
         int refStoreID = insertPos.second.first;
@@ -413,22 +430,31 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
         Spot *refCustomer = getMappedNode(refCustomerID, refCustomerType, selectedCar);
         try {
             selectedCar->insertAfter(refStore, refCustomer, 
-                    newCustomer->choice, newCustomer);
+                    copyNewCustomer->choice, copyNewCustomer, currentTime);
         } catch (exception &e) {
             cout << "current id: " << selectedCar->getRoute()->currentPos()->id << endl;
-            cout << "refStoreType: " << refStoreType << " refCustomerType: "
-                << refCustomerType << endl;
+            cout << "refStoreType: " << refStore->type << " refCustomerType: "
+                << refCustomer->type << endl;
             cout << e.what() << endl;
             exit(1);
         }
         if(selectedCar->getState() == wait) {  // if the car stays asleep
             newEvent = selectedCar->launchCar(currentTime);
+            cout << "launch car #" << selectedCar->getCarIndex() << endl; 
         } else {
             newEvent = selectedCar->getCurrentAction(currentTime);
         }
         int carIndex = selectedCar->getCarIndex();
+        try {
+            selectedCar->getRoute()->checkArrivedTime();
+        } catch (exception &e) {
+            cout << "Car #" << carIndex << " invalid!!!" << endl;
+            exit(1);
+        }
         ostr.str("");
-        ostr << "He is arranged to car #" << carIndex << endl << endl;
+        ostr << "He is arranged to car #" << carIndex << endl;
+        ostr << "refStore: #" << refStore->id << " refCustomer: #" <<
+            refCustomer->id << endl << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
     }
@@ -468,13 +494,13 @@ EventElement Dispatcher::handleCarArrived(float time, int carIndex){
             sort(servedCustomerId.begin(), servedCustomerId.end());
             ostr.str("");
             ostr << "----Time " << time << ", Car #" << currentPlan[pos]->getCarIndex() 
-                << " arrives at customer #" << currentId << endl;
+                << " arrives at customer #" << currentId << endl << endl;
             TxtRecorder::addLine(ostr.str());
             cout << ostr.str();
         } else {
             ostr.str("");
             ostr << "----Time " << time << ", Car #" << currentPlan[pos]->getCarIndex()
-                << " arrives at store #" << currentId << endl;
+                << " arrives at store #" << currentId << endl << endl;
             TxtRecorder::addLine(ostr.str());
             cout << ostr.str();
         }
@@ -495,6 +521,12 @@ EventElement Dispatcher::handleFinishedService(float time, int carIndex){
         }
     }
     newEvent = currentPlan[pos]->getCurrentAction(time);
+    try {
+        currentPlan[pos]->getRoute()->checkArrivedTime();
+    } catch (exception &e) {
+        cout << "Car #" << carIndex << " seems wrong after providing service." << endl;
+        exit(1);
+    }
     Spot *currentNode = currentPlan[pos]->getCurrentNode();
     int currentId = currentNode->id;
     ostr.str("");

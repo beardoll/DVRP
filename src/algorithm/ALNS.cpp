@@ -10,9 +10,9 @@ using namespace std;
 
 float RANDOM_RANGE_ALNS[2] = {-1, 1};
 
-ALNS::ALNS(vector<Spot*> allCustomer, Spot depot, float capacity, int maxIter,
-            bool verbose, int pshaw, int pworst, float eta): LNSBase(
-                pshaw, pworst, eta, capacity, RANDOM_RANGE_ALNS, allCustomer, depot) 
+ALNS::ALNS(vector<Spot*> allCustomer, Spot depot, float capacity,
+        int maxIter, bool verbose, int pshaw, int pworst, float eta): LNSBase(
+        pshaw, pworst, eta, capacity, RANDOM_RANGE_ALNS, allCustomer, depot) 
 {
     this->maxIter = maxIter;
     this->verbose = verbose;
@@ -148,12 +148,6 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
         if(noiseProb[0] > noiseSelection) {
             noiseAdd = true;
         }
-
-        // ********* dangerous ********* //
-        // insertIndex = 0;
-        // noiseAdd = 0;
-        // removeIndex = 2;
-        ///////////////////////////////////
 
         // 相应算子使用次数加一
         removeFreq[removeIndex]++;

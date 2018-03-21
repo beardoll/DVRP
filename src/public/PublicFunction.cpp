@@ -198,8 +198,9 @@ void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
     depot->serviceTime = 0;
     depot->arrivedTime = 0;
     depot->prop = 0;
-    ALNS alg(allCustomer, *depot, capacity, 25000);
+    ALNS alg(allCustomer, *depot, capacity, 500, true);
     alg.run(bestRoute, bestCost);
+    cout << "ALNS: use " << bestRoute.size() << " cars to serve" << endl;
 }
 
 
@@ -282,7 +283,8 @@ vector<int> getCustomerID(vector<Spot*> customerSet){
     vector<Spot*>::iterator iter = customerSet.begin();
     for(iter; iter<customerSet.end(); iter++){
         if((*iter)->type != 'C') {
-            throw out_of_range("Require customer node to be of type 'C' but the type is actually: " + string(&((*iter)->type))[0]);
+            cout << "Non-customer type node in customerSet!!" << endl;
+            exit(1);
         }
         ids.push_back((*iter)->id);
     }

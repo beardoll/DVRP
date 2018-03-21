@@ -17,6 +17,7 @@ extern int CUSTOMER_NUM;
 extern int TIME_SLOT_LEN;
 extern int TIME_SLOT_NUM;
 extern float OFF_WORK_TIME; // 骑手收工时间
+extern float LATEST_SERVICE_TIME; // 最晚的仍在服务的时间
 // R1-R2是store区
 // R3-R4是customer区
 extern float R1;

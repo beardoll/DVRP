@@ -8,7 +8,7 @@ Car::Car(Spot &headNode, Spot &rearNode, float capacity, int index, bool artific
     carIndex(index), route(headNode, rearNode, capacity), artificial(artificial)
 {
     state = wait;
-    nearestDepatureTime = 0;
+    nearestDepartureTime = 0;
     nextArriveTime = 0;
     travelDistance = 0;
 }
@@ -17,7 +17,7 @@ Car::Car(Route &route, int index, bool artificial): carIndex(index),
     artificial(artificial), route(route)
 {
     state = wait;
-    nearestDepatureTime = 0;
+    nearestDepartureTime = 0;
     nextArriveTime = 0;
     travelDistance = 0;
 }
@@ -32,7 +32,7 @@ Car::Car(const Car& item):route(item.route), artificial(item.artificial){
     this->carIndex = item.carIndex;
     this->state = item.state;
     this->artificial = item.artificial;
-    this->nearestDepatureTime = item.nearestDepatureTime;
+    this->nearestDepartureTime = item.nearestDepartureTime;
     this->nextArriveTime = item.nextArriveTime;
     this->travelDistance = item.travelDistance;
 }
@@ -44,7 +44,7 @@ Car& Car::operator= (Car &item){
     this->carIndex = item.carIndex;
     this->state = item.state;
     this->artificial = item.artificial;
-    this->nearestDepatureTime = item.nearestDepatureTime;
+    this->nearestDepartureTime = item.nearestDepartureTime;
     this->nextArriveTime = item.nextArriveTime;
     this->travelDistance = item.travelDistance;
     return *this;
@@ -72,7 +72,7 @@ void Car::computeInsertCost(Spot *store, Spot *customer, float &minValue,
         Spot *&refStore1, Spot *&refCustomer1, float &secondValue, Spot *&refStore2,
         Spot *&refCustomer2, float randomNoise, bool allowNegativeCost){
         
-    // 计算服务对(stoer, customer)在路径中的最小插入代价和次小插入代价
+    // 计算服务对(store, customer)在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点(refStore, refCustomer)
     // Args:
     //   * randomNoise: 随机化的噪声量
@@ -94,6 +94,7 @@ vector<float> Car::computeReducedCost(float DTpara[]){
 
 //================ insert 和 delete Customer方法 =================//
 void Car::insertAtRear(Spot *item){
+    // 一般是用在往空车里面塞节点，因此不重新计算nextArriveTime
     try {
         route.insertAtRear(item);
     } catch (exception &e) {
@@ -102,7 +103,8 @@ void Car::insertAtRear(Spot *item){
     }
 } 
 
-void Car::insertAtHead(Spot *store, Spot *customer){    
+void Car::insertAtHead(Spot *store, Spot *customer){
+    // 只能当车子为空时才可使用，也不重新计算nextArriveTime
     try {
         route.insertAtHead(store, customer);
     } catch (exception &e) {
@@ -111,49 +113,47 @@ void Car::insertAtHead(Spot *store, Spot *customer){
     }
 }
 
-void Car::insertAfter(Spot *ref, Spot *current) {
-    // 在ref节点后面插入current节点
-    // 属于单节点插入，暂时只在Route.capture()方法中使用
-    try {
-        route.insertAfter(ref, current);
-    } catch (exception &e) {
-        throw out_of_range(e.what());
-    }
-}
-
-void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer) {
+void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, 
+        Spot *customer) {
     // 在refStore后面插入store，在refCustomer后面插入customer
-    Spot *tempSpot1 = refStore;
-    Spot *tempSpot2 = refCustomer;
-    if(refStore->id == 0) {
-        // 说明refStore节点是虚构的，这种情况发生在上一个节点已被访问
-        // 而此时的服务对(store, customer)需要插入到原本的上一个节点到下一个节点之间
-        // 这说明车子在路途中，而且更换路径后目的地改变，故应该修改nextArriveTime属性
-        Spot *lastStop = route.currentPos();  // 货车最近驻点（上一个访问的节点）
-        // 当前时间 = 从lastStop出发的时间 + dist(lastStop, refStore)
-        float currentTime = nearestDepatureTime + dist(lastStop, refStore);
-        nextArriveTime = currentTime + dist(refStore, store);
-        tempSpot1 = lastStop;
-	}
-    if(refCustomer == refStore) {
-        // store到customer之间没有别的节点
-        tempSpot2 = tempSpot1;
-    }
+    // update: 是否需要更新stand节点
     try {
-        route.insertAfter(tempSpot1, tempSpot2, store, customer);
+        route.insertAfter(refStore, refCustomer, store, customer);
     } catch (exception &e) {
         throw out_of_range(e.what());
         exit(1);
+    }
+    // 更新nextArriveTime，不管下一站目的地是否改变
+    Spot *lastStop = route.getStand();  // 货车最近驻点（上一个访问的节点）
+    // 当前时间 = 从lastStop出发的时间 + dist(lastStop, refStore)
+    float currentTime = lastStop->arrivedTime + lastStop->serviceTime;
+    Spot *nextStop = route.nextPos();
+    nextArriveTime = currentTime + dist(lastStop, nextStop);
+    // 更新nearestDepartureTime
+    if(state == departure) {
+        nearestDepartureTime = currentTime;
     }
 }
 
-void Car::deleteCustomer(Spot *item) {
-    // 删除单节点操作
+void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store,
+        Spot *customer, float time) {
+    // 需要更新stand节点的版本
+    updateState(time);  
     try {
-        route.deleteNode(item);
+        route.insertAfter(refStore, refCustomer, store, customer);
     } catch (exception &e) {
         throw out_of_range(e.what());
         exit(1);
+    }
+    // 更新nextArriveTime，不管下一站目的地是否改变
+    Spot *lastStop = route.getStand();  // 货车最近驻点（上一个访问的节点）
+    // 当前时间 = 从lastStop出发的时间 + dist(lastStop, refStore)
+    float currentTime = lastStop->arrivedTime + lastStop->serviceTime;
+    Spot *nextStop = route.nextPos();
+    nextArriveTime = currentTime + dist(lastStop, nextStop);
+    // 更新nearestDepartureTime
+    if(state == departure) {
+        nearestDepartureTime = currentTime;
     }
 }
 
@@ -171,21 +171,21 @@ void Car::deleteCustomer(Spot *store, Spot *customer) {
 //================ part Route操作 =================//
 void Car::replaceRoute(Car *newCar, float currentTime){      
     // 将newCar的路径插入到当前货车路径的current节点之后
-    updateState(currentTime);  // 先更新状态
-    Spot* currentNode = route.currentPos();  // 最近出发点
+    // 此函数与capturePartRoute配套使用，默认时间节点不变
+    // 由于在capture中已经更新了stand，在这里无需更新
     Spot* originNextNode = route.nextPos();  // 原目的地
-    route.replaceRoute(newCar->getRoute());      // replaceRoute不更改货车的状态
-    Spot* changedNextNode = route.nextPos(); // 更改后的目的地
-    if(state == depature && originNextNode->id != changedNextNode->id) {
+    Spot* changedNextNode = newCar->getRoute()->nextPos(); // 更改后的目的地
+    if(state == departure && originNextNode->id != changedNextNode->id) {
         // 如果车子在路途中，而且更换路径后目的地改变，则应该修改nextArriveTime属性
-        float dist = nextArriveTime - nearestDepatureTime;
-        // x,y是货车当前位置
-        float x = (currentTime - nearestDepatureTime) / dist * (originNextNode->x - 
-                currentNode->x) + currentNode->x;
-        float y = (currentTime - nearestDepatureTime) / dist * (originNextNode->y - 
-                currentNode->y) + currentNode->y;
-        nextArriveTime = currentTime + sqrt(pow(x - changedNextNode->x, 2) + 
-                pow(y - changedNextNode->y, 2));
+        Spot *standPos = route.getStand();
+        nextArriveTime = currentTime + dist(standPos, changedNextNode);
+    }
+    try{
+        route.replaceRoute(newCar->getRoute());      // replaceRoute不更改货车的状态
+    } catch (exception &e) {
+        cout << "Car #" << carIndex << ":" << endl;
+        cout << e.what() << endl;
+        exit(1);
     }
 }
 
@@ -201,18 +201,21 @@ Car* Car::capturePartRoute(float time){
     startNode->priority = 0;
     // 确定货车的位置信息以及时间信息
     switch(state) {
-        case depature: {
+        case departure: {
             // 车子在路途中，构造虚拟的初始点
             // 该点地理位置位于出发点和目的地连线上的某一点
             // 该点的arrivedTime设定为当前时间，而服务时间为0，和仓库一样
-            float dist = nextArriveTime - nearestDepatureTime;
-            startNode->x = (time - nearestDepatureTime) / dist * (nextNode->x - 
+            currentNode = route.getStand();   // departure状态下驻点作为当前点
+            float dist = nextArriveTime - nearestDepartureTime;
+            startNode->x = (time - nearestDepartureTime) / dist * (nextNode->x - 
                     currentNode->x) + currentNode->x;
-            startNode->y = (time - nearestDepatureTime) / dist * (nextNode->y - 
+            startNode->y = (time - nearestDepartureTime) / dist * (nextNode->y - 
                     currentNode->y) + currentNode->y;
             startNode->arrivedTime = time;
             startNode->serviceTime = 0;
             startNode->startTime = time;
+            route.setStand(startNode->x, startNode->y, time);
+            nearestDepartureTime = time;
             break;
         }
         case wait: {
@@ -223,21 +226,23 @@ Car* Car::capturePartRoute(float time){
             startNode->arrivedTime = time;
             startNode->serviceTime = 0;
             startNode->startTime = time;
+            route.setStand(startNode->x, startNode->y, time);
             break;
         }
         case serving: {
             // 车子当前在服务顾客，起始点为当前服务点
             // 而服务时间设定到服务结束时间减去当前时间
             // 注意当货车在等待着为顾客服务时，我们也将状态设定为serving
-            // 注意货车到达顾客点后立即更新了nearestDepatureTime，因此我们可以利用之
+            // 注意货车到达顾客点后立即更新了nearestDepartureTime，因此我们可以利用之
             Spot *currentPos = route.currentPos();
             startNode->x = currentNode->x;
             startNode->y = currentNode->y;
             startNode->arrivedTime = time;
-            startNode->serviceTime = nearestDepatureTime - time;  
+            startNode->serviceTime = nearestDepartureTime - time;  
             // 服务时间已经过去了一部分，注意顾客到达后应该确定arrivedTime
             // time - baseTime表示已经服务过的时间
             startNode->startTime = time;
+            route.setStand(startNode->x, startNode->y, time, startNode->serviceTime);
             break;
         }
         case offwork: {  
@@ -250,12 +255,18 @@ Car* Car::capturePartRoute(float time){
     float leftQuantity = route.getLeftQuantity();  // 货车剩余容量
     Spot *depot = route.getRearNode();          // 任何一辆车，终点都是depot
     Car *newCar = new Car(*startNode, *depot, leftQuantity, carIndex, false);
+    try {
+        route.checkArrivedTime();
+    } catch(exception &e) {
+        cout << "Problem happens before!!" << endl;
+    }
     vector<Spot*> nodes = route.capture();
     vector<Spot*>::iterator custIter;
     for(custIter = nodes.begin(); custIter < nodes.end(); custIter++) {
         try {
             newCar->insertAtRear(*custIter);
         } catch (exception &e) {
+            cout << "In car #" << carIndex << ":" << endl;
             cerr << "In capture: " << e.what() << endl;
             exit(1);
         }
@@ -268,12 +279,12 @@ Car* Car::capturePartRoute(float time){
 void Car::updateState(float time){
     // 更新货车状态
     switch(state){
-        case depature: {
+        case departure: {
             // 原状态是出发，则下一状态是货车执行服务
             // 在这里更新货车的nearestDepartureTime
             if(time == nextArriveTime) {
                 // 若当前时间正好是状态改变的时间，则状态改变
-                travelDistance += nextArriveTime - nearestDepatureTime;   // 更新travelDistance
+                travelDistance += nextArriveTime - nearestDepartureTime;   // 更新travelDistance
                 route.moveForward();   // 执行服务，更改当前驻点
                 Spot *currentPos = route.currentPos();  // 当前驻点
                 // *Note*: 在这里正式更新当前顾客的到达时间
@@ -286,12 +297,15 @@ void Car::updateState(float time){
                         // 只考虑customer类型节点的时间窗问题
                         time = currentPos->startTime;
                     }
-                    nearestDepatureTime = time + currentPos->serviceTime;
-                    if(nearestDepatureTime == time) {  
+                    nearestDepartureTime = time + currentPos->serviceTime;
+                    if(nearestDepartureTime == time) {  
                         // 如果货车既不需要等待，也不需要服务，则继续出发
-                        state = depature;
-                        nextArriveTime = nearestDepatureTime + dist(currentPos, nextPos);
+                        route.setStand(currentPos->x, currentPos->y, time);
+                        state = departure;
+                        nextArriveTime = nearestDepartureTime + dist(currentPos, nextPos);
                     } else {
+                        route.setStand(currentPos->x, currentPos->y, time, 
+                                currentPos->serviceTime);
                         if(currentPos->type == 'C') {
                             // 货车的剩余载货量减少
                             route.decreaseLeftQuantity(currentPos->quantity);
@@ -306,21 +320,31 @@ void Car::updateState(float time){
             // 原状态是执行服务，则下一状态是货车出发
             Spot* currentPos = route.currentPos();
             Spot* nextPos = route.nextPos();
-            if(time == nearestDepatureTime) {
-                if(nextPos->type == 'D' && time < OFF_WORK_TIME)  {
+            if(time == nearestDepartureTime) {
+                if(nextPos->type == 'D' && time < LATEST_SERVICE_TIME)  {
                     // 如果下一站是回到仓库而且未到下班时间，则等待
-                    state = wait;            
+                    state = wait;
+                    nearestDepartureTime = LATEST_SERVICE_TIME;
+                    route.setStand(currentPos->x, currentPos->y, time);
+                    cout << "Car #" << carIndex << ": nothing to do, wait" << endl;
                 } else {
                     // 继续出发
-                    state = depature;
-                    nextArriveTime = nearestDepatureTime + dist(currentPos, nextPos);
+                    route.setStand(currentPos->x, currentPos->y, time);
+                    state = departure;
+                    nextArriveTime = nearestDepartureTime + dist(currentPos, nextPos);
                 }
-            }
             break;
+            }
         }
         case wait: {
             // do nothing now
-            // 必须是启动了货车之后才能进行状态转换
+            if(time == nearestDepartureTime) {
+                Spot *currentPos = route.currentPos();
+                Spot *nextPos = route.nextPos();
+                nextArriveTime = time + dist(currentPos, nextPos);
+                route.setStand(currentPos->x, currentPos->y, time);
+                state = departure;
+            }
             break;
         }
         case offwork: {
@@ -338,7 +362,7 @@ EventElement Car::getCurrentAction(float time){
     updateState(time);   // 先更新状态
     Spot *currentPos = route.currentPos();
     switch(state){
-        case depature: {
+        case departure: {
             Spot *nextPos = route.nextPos();
             event.time = nextArriveTime;
             event.eventType = carArrived;
@@ -346,13 +370,15 @@ EventElement Car::getCurrentAction(float time){
             break;
         }
         case wait: {
-            // do nothing	
-            // 返回无效事件，说明货车还没有启动
+            // do nothing
+            event.time = nearestDepartureTime;
+            event.eventType = finishedService;
+            event.customerId = 0;
             break;
         }
         case serving: {
             Spot *currentPos = route.currentPos();
-            event.time = nearestDepatureTime;
+            event.time = nearestDepartureTime;
             event.customerId = currentPos->id; 
             event.eventType = finishedService;
             break;
@@ -373,17 +399,29 @@ EventElement Car::launchCar(float currentTime){
     EventElement event;
     if(state == wait && route.getSize() != 0) {
         // 当货车有顾客点时才会启动
-        state = depature;
         Spot *currentPos = route.currentPos();  // 当前驻点
         Spot *nextPos = route.nextPos();        // 下一目的地
-        currentPos->arrivedTime = currentTime;
-        nearestDepatureTime = currentTime;
-        float time = currentTime + dist(currentPos, nextPos);
-        nextArriveTime = time;
-        event.time = time;
-        event.eventType = carArrived;
-        event.carIndex = carIndex;
-        event.customerId = nextPos->id;
+        if(nextPos->type == 'D' && currentTime < LATEST_SERVICE_TIME) {
+            // 停车等待策略：如果下一站是仓库并且还没有到停止服务时间
+            // 则继续呆在原地等待，如果往后再没有服务，则在LATEST_SERVICE_TIME
+            // 时启程返回仓库，故返回一个有效事件
+            state = wait;
+            event.time = LATEST_SERVICE_TIME;
+            event.eventType = finishedService;
+            event.carIndex = carIndex;
+            event.customerId = 0;
+        } else {
+            // 车辆继续出发
+            state = departure;
+            currentPos->arrivedTime = currentTime;
+            nearestDepartureTime = currentTime;
+            float time = currentTime + dist(currentPos, nextPos);
+            nextArriveTime = time;
+            event.time = time;
+            event.eventType = carArrived;
+            event.carIndex = carIndex;
+            event.customerId = nextPos->id;
+        }
     }
     return event;
 }

@@ -41,7 +41,7 @@ void SetBench::constructCustomerSet() {
     float innerR = R3;
     float outerR = R4;
     //float timeHorizon = (float)TIME_SLOT_LEN * TIME_SLOT_NUM; // 仿真的时间轴长度
-    float timeHorizon = OFF_WORK_TIME;
+    float timeHorizon = LATEST_SERVICE_TIME;
     float deltaT = 1; // 采样间隔时间
     float deltaAngle = 2 * PI / SUBCIRCLE_NUM;  // 各个区域夹角
     bool mark = true;
@@ -72,11 +72,15 @@ void SetBench::constructCustomerSet() {
                 float distFromDepotToStore = dist(depot, c->choice);
                 float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
                 if(i*TIME_SLOT_LEN+ALPHA*minTimeLen > timeHorizon) {
+                    count--;
                     continue;
                 } else {
                     // 保证足够长的时间窗
-                    c->startTime = random(i*TIME_SLOT_LEN, timeHorizon-ALPHA*minTimeLen);
+                    c->startTime = random(i*TIME_SLOT_LEN, (i+1)*TIME_SLOT_LEN);
+                    c->startTime = min(c->startTime, timeHorizon-ALPHA*minTimeLen);
                     c->endTime = random(c->startTime+ALPHA*minTimeLen, timeHorizon);
+                    float windowLen = c->endTime - c->startTime;
+                    c->tolerantTime = c->startTime + random(0.6*windowLen, 0.8*windowLen);
                     c->quantity = random(0, MAX_DEMAND);
                     customerSet.push_back(c);
                 }

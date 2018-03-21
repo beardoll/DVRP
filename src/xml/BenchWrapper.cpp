@@ -155,14 +155,13 @@ void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Spot*
         // 写入Route节点，为RouteSetElem的子节点
         routeElem = new TiXmlElement("Route");
         routeElem->SetAttribute("index", (*carIter)->getCarIndex());
-        vector<Spot*> tempCust = (*carIter)->getRoute()->getAllCustomer();
+        vector<Spot*> tempCust = (*carIter)->getRoute()->getAllSpot();
         // tempCust首尾均不含depot节点，因此在下面添加depot节点
         // 这里考虑到销毁tempCust时会对里面所有指针的实例进行销毁，因此
         // 添加两个depot节点的复制品，他们拥有不同的地址
         Spot* newdepot1 = new Spot(depot);
         Spot* newdepot2 = new Spot(depot);
-        vector<Spot*>::iterator custIter = tempCust.begin();
-        tempCust.insert(custIter, newdepot1);
+        tempCust.insert(tempCust.begin(), newdepot1);
         tempCust.push_back(newdepot2);
         // 然后依次将tempCust中的节点信息写入XML文件中
         saveSpotInfo(tempCust, routeElem);

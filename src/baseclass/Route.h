@@ -35,6 +35,7 @@ public:
     Spot* getHeadNode();    // 得到头结点
     Spot* getRearNode();    // 得到尾节点
     Spot* findCustomer(int id);
+    Spot* getStand() { return stand; } // 获得驻点
 
     // 获取链表属性
     float getQuantity() {return this->quantity;}            // 得到本车已使用的容量(装载顾客)
@@ -55,6 +56,7 @@ public:
     void setCurrentArrivedTime(float time) {current->arrivedTime = time;}      
     // 设置当前节点的到达时间
     bool moveForward();      // 向前进
+    void setStand(float x, float y, float arrivedTime, float serviceTime=0.0f); // 设置当前驻点
 
     // 计算插入/删除节点代价
     // 计算所有节点的移除代价
@@ -70,7 +72,7 @@ public:
     bool timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer);
     
     // 更新一下各个节点的到达时刻
-    void refreshArrivedTime();   
+    void checkArrivedTime();   
 
     // 路径的替换和提取
     // 以route替换掉current指针后的路径
@@ -84,7 +86,10 @@ public:
     bool checkPassRoute();
     bool checkTimeConstraint();
 private:
-    Spot *head, *current, *rear;  // 表头，表尾和当前指针，当前指针指向货车当前的驻地
+    // 表头，表尾，当前指针和驻地
+    // 当前指针指向前一次出发地（若未出发则为仓库）
+    // 驻地指货车当前所在地
+    Spot *head, *current, *rear, *stand;
     int size;         // 链表的长度
     float quantity;   // 当前已使用的容量(与装载的顾客数量有关)
     float leftQuantity;   // 剩余容量（与车辆行驶情况有关）

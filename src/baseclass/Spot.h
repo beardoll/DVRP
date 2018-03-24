@@ -24,7 +24,6 @@ public:
     float durationTime;  // 持续时间（可以参与的时间）
     Spot *next;     // 指向下一个节点的指针
     Spot *front;    // 指向上一个节点的指针
-    Spot *choice;   // 顾客选用的商家（仅"C"有效）
     int priority;   // 优先级，数值大的优先级小
 };
 

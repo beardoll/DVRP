@@ -64,7 +64,7 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
         splitString(line, data, " ");
         Spot *dp = new Spot();
         dp->timeDuration = data[0];
-        dp->demand = data[1];
+        dp->quantity = data[1];
         depots.push_back(dp);
     }
     for(int i=0; i<customerNum; i++) {
@@ -77,7 +77,7 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
         cust->x = data[1];
         cust->y = data[2];
         cust->serviceTime = data[3];
-        cust->demand = data[4];
+        cust->quantity = data[4];
         cust->startTime = data[8];
         cust->endTime = data[9];
         customers.push_back(cust);

@@ -9,16 +9,14 @@ enum State{wait, departure, serving, offwork};
 
 class Car{
 public:
-    Car(Spot &headNode, Spot &rearNode, float capacity, int index, 
-            bool artificial = false);  // 构造函数
+    Car(Spot &headNode, Spot &rearNode, int index, bool artificial = false);  // 构造函数
     Car(Route &route, int index, bool artificial=false);  // 构造函数
     ~Car();          // 析构函数
     Car(const Car& item);  //复制构造函数
     Car& operator= (Car &item);       // 重载赋值操作
 
-    bool timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store,
-            Spot *customer) {
-        return route.timeWindowJudge(refStore, refCustomer, store, customer);
+    bool timeWindowJudge(Spot *ref, Spot *cur) {
+        return route.timeWindowJudge(ref, cur);
     }
 
     // 获取货车属性
@@ -27,7 +25,7 @@ public:
     Route* getRoute(){ return &route;}      // 得到本车路径
     float getCapacity() {return route.getCapacity();}    // 返回车容量
     vector<Spot*> getAllCustomer() { return route.getAllCustomer();}
-    int getCustomerNum(){ return route.getSize();}       // 获取(P-D)对的数目
+    int getCustomerNum(){ return route.getSize();}       // 获取顾客数目
     vector<int> getAllID();   // 获取货车内所有节点的ID，按顺序
     bool checkTimeConstraint() {return route.checkTimeConstraint(); }
     Spot* findCustomer(int id) { return route.findCustomer(id); }
@@ -37,23 +35,18 @@ public:
     void setProperty(bool newProperty) { artificial = newProperty; } // 设置货车的新属性
 
     // 计算insert cost和remove cost
-    void computeInsertCost(Spot *store, Spot *customer, float &minValue,
-            Spot *&refStore1, Spot *&refCustomer1, float &secondValue, Spot *&refStore2,
-            Spot *&refCustomer2, float randomNoise=0, bool allowNegativeCost=false);
+    void computeInsertCost(Spot *cur, float &minValue, Spot *&ref1, float &secondValue, 
+            Spot *&ref2, Spot *&refCustomer2, float randomNoise=0, bool allowNegativeCost=false);
     vector<float> computeReducedCost(float DTpara[]);  // 计算所有节点的移除代价
 
     // getCustomer方法
     Spot* getHeadNode(){return route.getHeadNode();}    // 得到车辆的头结点
     Spot* getRearNode(){return route.getRearNode();}    // 得到车辆的尾节点
-    Spot* getCurrentNode() {return route.currentPos();} // 得到current指针指向的节点
 
     // insert 和 delete Customer方法
     void insertAtRear(Spot *item);   // 在路径的尾部插入节点
-    void insertAtHead(Spot *store, Spot *customer);     // 在路径头部插入节点
-    void insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer);
-    void insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer,
-            float time);
-    void deleteCustomer(Spot *store, Spot *customer);
+    void insertAfter(Spot *ref, Spot *cur);
+    void deleteCustomer(Spot *node);
 private:
     Route route;    // 计划要走的路径
     bool artificial;  // 为true表示是虚构的车辆，false表示真实的车辆

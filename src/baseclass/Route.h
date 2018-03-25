@@ -10,7 +10,7 @@ using namespace std;
 
 class Route{
 public:
-    Route(Spot &headNode, Spot &rearNode, float capacity, float timeDuration);      // 构造函数
+    Route(Spot &headNode, Spot &rearNode);      // 构造函数
     ~Route();   // 析构函数
     Route(const Route &L);  // 复制构造函数
     Route& operator= (const Route &L);  // 重载赋值运算符 

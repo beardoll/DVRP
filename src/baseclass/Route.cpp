@@ -11,7 +11,8 @@
 #include "../run/Config.h"
 
 using namespace std;
-Route::Route(Spot &headNode, Spot &rearNode, float capacity, float timeDuration):capacity(capacity), timeDuration(timeDuration)
+Route::Route(Spot &headNode, Spot &rearNode):
+    capacity(CAPACITY), timeDuration(TIME_DURATION) 
 { 
     // 构造函数
     head = new Spot(headNode);
@@ -445,6 +446,7 @@ bool Route::checkTimeConstraint() {
     while(cur != rear) {
         time += dist(pre, cur);
         td += dist(pre, cur);
+        cur->arrivedTime = time;  // 更新arrivedTime
         if(td > timeDuration) return false;
         if(time > cur->endTime) return false;
         if(time < cur->startTime) time = cur->startTime;

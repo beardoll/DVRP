@@ -9,10 +9,10 @@ enum State{wait, departure, serving, offwork};
 
 class Car{
 public:
-    Car(Spot &headNode, Spot &rearNode, int index, bool artificial = false);  // 构造函数
-    Car(Route &route, int index, bool artificial=false);  // 构造函数
-    ~Car();          // 析构函数
-    Car(const Car& item);  //复制构造函数
+    Car(Spot &headNode, Spot &rearNode, int carIndex, int depotIndex, 
+        bool artificial = false);  // 构造函数
+    ~Car();                // 析构函数
+    Car(const Car& item);  // 复制构造函数
     Car& operator= (Car &item);       // 重载赋值操作
 
     bool timeWindowJudge(Spot *ref, Spot *cur) {
@@ -20,7 +20,8 @@ public:
     }
 
     // 获取货车属性
-    int getCarIndex() {return carIndex;}  // 得到车辆编号
+    int getCarIndex() { return carIndex; }  // 得到车辆编号
+    int getDepotIndex() { return depotIndex; } // 得到来源仓库编号
     bool judgeArtificial() {return artificial;} // 返回车辆性质
     Route* getRoute(){ return &route;}      // 得到本车路径
     float getCapacity() {return route.getCapacity();}    // 返回车容量
@@ -51,6 +52,7 @@ private:
     Route route;    // 计划要走的路径
     bool artificial;  // 为true表示是虚构的车辆，false表示真实的车辆
     int carIndex;     // 货车编号
+    int depotIndex;   // 来源仓库的id
 };
 
 #endif

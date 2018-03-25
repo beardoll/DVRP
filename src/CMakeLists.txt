@@ -1,24 +1,14 @@
 SET(SRC_LIST main.cpp
         algorithm/LNSBase.cpp
-        algorithm/ALNS.cpp
         algorithm/SSLR.cpp
         baseclass/Car.cpp
         baseclass/Route.cpp
         baseclass/Spot.cpp
-        modules/Dispatcher.cpp
-        modules/Simulator.cpp
-        modules/Timer.cpp
         public/PublicFunction.cpp
-        run/SetBench.cpp
         run/TxtRecorder.cpp
         run/Config.cpp
-        xml/BenchWrapper.cpp
-        xml/tinystr.cpp
-        xml/tinyxml.cpp
-        xml/tinyxmlerror.cpp
-        xml/tinyxmlparser.cpp
+        dataset/TxtParser.cpp
         )
-
 
 ADD_EXECUTABLE(main ${SRC_LIST})
 SET(CMAKE_EXE_LINKER_FLAGS "-pthread")

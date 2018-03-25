@@ -275,7 +275,7 @@ void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet, vector<S
 void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRoute, 
         Matrix<Spot*> &minInsertPos, Matrix<float> &secondInsertPerRoute, 
         Matrix<Spot*> &secondInsertPos, int selectedCarPos, vector<Car*> &removedCarSet,
-        vector<Spot*>removedCustomer, float baseNoise, float DTpara[], 
+        vector<Spot*> removedCustomer, float baseNoise, float DTpara[], 
         float randomRange[], bool allowNegativeCost){
     // 更新removedCustomer在selectedCarPos指定的货车中的最小以及次小插入代价
     // 也就是指更新返回值中selectedCarPos指定的那一行
@@ -553,9 +553,7 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         cout << "Warning: Currently no customers in plan (worstRemoval)" << endl;     
     }                                                         
     indexsetInRoute = allIndex;
-    int maxTrial = 20;
-    int trialCount = 0;
-    while((int)removedIndexset.size() < q && (trialCount++) < maxTrial){
+    while((int)removedIndexset.size() < q){
         vector<pair<float, int> > reducedCost(customerTotalNum);  // 各节点的移除代价	
         computeReducedCost(originCarSet, indexsetInRoute, removedIndexset, reducedCost, DTpara);
         sort(reducedCost.begin(), reducedCost.end(), ascendSort<float, int>);   // 递增排序
@@ -563,7 +561,6 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         int indexInRouteLen = indexsetInRoute.end() - indexsetInRoute.begin();
         int removedNum = static_cast<int>(max((float)floor(pow(y,pworst)*indexInRouteLen), 1.0f));
         assert(removedNum <= indexInRouteLen);
-        int count = 0;
         i = 0;
         while(i<(int)indexsetInRoute.size()) {
             int index = reducedCost[i++].second;
@@ -655,7 +652,6 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
         cout << "Empty car in removedCarSet!" << endl;
         exit(1);
     }
-    int newCarIndex = removedCarSet[carNum-1]->getCarIndex()+1;  // 新车的起始标号
     int i;
     vector<int> alreadyInsertIndex(0);		   // 已经插入到路径中的节点下标，相对于allIndex
     // 在每条路径中的最小插入代价矩阵（行坐标：车辆，列坐标：顾客）
@@ -728,7 +724,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             Spot *newCar = getNewCar(removedCarSet, newCarIndex);
             try {
                 Spot* selectedCustomer = removedCustomer[selectedCustIndex];
-                newCar->insertAtHead(selectedCustomer->choice, selectedCustomer);
+                newCar->insertAtHead(selectedCustomer);
             } catch (exception &e) {
                 cerr << "In greedy insert: " << e.what() << endl;
                 exit(1);
@@ -776,7 +772,6 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
         cerr << "In greedy insertion: " << e.what() << endl;
         exit(1);
     }
-    int newCarIndex = removedCarSet[carNum - 1]->getCarIndex();  // 新车编号
     int i;
     // 已经插入到路径中的节点下标，相对于allIndex
     vector<int> alreadyInsertIndex(0);		
@@ -789,7 +784,6 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
     // 在每条路径中次小插入代价所对应的节点
     Matrix<Spot*> secondInsertPos(carNum, removedCustomerNum);
     vector<int> allIndex(0);   // 对removedCustomer进行编号
-
     float tempBaseNoise = baseNoise;
     float *tempRandomRange = new float[2];
     if(noiseAdd == false) {
@@ -901,45 +895,15 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
     delete[] tempRandomRange;
 }
 
-void LNSBase::reallocateCarIndex(vector<Car*> &originCarSet){  
-    // 重新为货车编号
-    // returns:
-    //   * originCarSet: 初始货车集合，经本函数后其中的货车编号可能该Bain
-    int count = 0;
-    for(int i=0; i<(int)originCarSet.size(); i++){
-        if(originCarSet[i]->judgeArtificial() == false) {  
-            // 若为真实的车辆，则不需要重新编号
-            count++;
-        } else{  
-            // 若为虚假的车辆，则重新编号
-            originCarSet[i]->changeCarIndex(count);
-            count++;
-        }
-    }
-}
-
-void LNSBase::removeNullRoute(vector<Car*> &originCarSet, bool mark){    
+void LNSBase::removeNullRoute(vector<Car*> &originCarSet){    
     // 清除OriginCarSet中的空车辆
-    // 若mark=true, 则只允许清除虚拟的空车
     vector<Car*>::iterator iter;
     vector<Car*>::iterator temp;
     int count = 0;
     for(iter=originCarSet.begin(); iter<originCarSet.end();){
         if ((*iter)->getRoute()->getSize() == 0){
-            if(mark == true) {
-                if ((*iter)->judgeArtificial() == true) { 
-                    // 如果是空车而且是虚拟的车
-                    delete(*iter);
-                    iter = originCarSet.erase(iter);
-                } else{
-                    (*iter)->changeCarIndex(count++);
-                    ++iter;				
-                }
-            }
-            else {
-                delete(*iter);
-                iter = originCarSet.erase(iter);
-            }
+            delete(*iter);
+            iter = originCarSet.erase(iter);
         } 
         else {
             (*iter)->changeCarIndex(count++);

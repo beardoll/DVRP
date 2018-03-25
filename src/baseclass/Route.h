@@ -10,7 +10,7 @@ using namespace std;
 
 class Route{
 public:
-    Route(Spot &headNode, Spot &rearNode);      // 构造函数
+    Route(Spot &headNode, Spot &rearNode, float capacity, float timeDuration); // 构造函数
     ~Route();   // 析构函数
     Route(const Route &L);  // 复制构造函数
     Route& operator= (const Route &L);  // 重载赋值运算符 
@@ -36,6 +36,8 @@ public:
     float getLen(float DTpara[], bool artificial = false);  // 得到路径长度
     int getSize();           // 得到当前链表的大小
     vector<Spot*> getAllCustomer();  // 得到路径中所有的顾客节点
+    vector<int> getAllID();
+    vector<float> getArrivedTime();
 
     // 计算插入/删除节点代价
     // 计算所有节点的移除代价
@@ -56,11 +58,10 @@ private:
     // 驻地指货车当前所在地
     Spot *head, *rear;
     int size;         // 链表的长度
-    float timeConstraint; // 车辆行驶时间最大值
+    float timeDuration; // 车辆行驶时间最大值
     float quantity;   // 当前已使用的容量(与装载的顾客数量有关)
     float capacity;       // 车载量，在这里保存
     void copy(const Route& L);  // 复制链表，供复制构造函数和重载“=”函数使用
 };
-
 
 #endif

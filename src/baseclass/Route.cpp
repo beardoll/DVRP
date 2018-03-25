@@ -11,8 +11,8 @@
 #include "../run/Config.h"
 
 using namespace std;
-Route::Route(Spot &headNode, Spot &rearNode):
-    capacity(CAPACITY), timeDuration(TIME_DURATION) 
+Route::Route(Spot &headNode, Spot &rearNode, float capacity, float timeDuration):
+    capacity(capacity), timeDuration(timeDuration) 
 { 
     // 构造函数
     head = new Spot(headNode);
@@ -283,6 +283,25 @@ float Route::getLen(float DTpara[], bool artificial){
         }
         return len;
     }
+}
+
+vector<int> getAllID() {
+    // 获得所有id，包括head和rear
+    Spot *ptr;
+    vector<int> IDs;
+    for(ptr=head; ptr!=NULL; ptr=ptr->next) {
+        IDs.push_back(ptr->id);
+    }
+    return IDs;
+}
+
+vector<float> getArrivedTime() {
+    Spot *ptr;
+    vector<float> arrivedTimes;
+    for(ptr=head->next; ptr!=rear; ptr=ptr->next) {
+        arrivedTimes.push_back(ptr->arrivedTime);
+    }
+    return arrivedTimes;
 }
 
 //=============== 计算插入/删除节点代价 ================//

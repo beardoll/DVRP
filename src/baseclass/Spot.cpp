@@ -14,7 +14,6 @@ Spot::Spot() {
     this->quantity = 0;
     this->next = NULL;
     this->front = NULL;
-    this->priority = 1;
 }
 
 Spot::Spot(const Spot &s) {
@@ -30,7 +29,6 @@ Spot::Spot(const Spot &s) {
     this->quantity = s.quantity;
     this->next = s.next;
     this->front = s.front;
-    this->priority = s.priority;
 }
 
 Spot& Spot::operator= (const Spot &s) {
@@ -47,7 +45,6 @@ Spot& Spot::operator= (const Spot &s) {
     this->quantity = s.quantity;
     this->next = s.next;
     this->front = s.front;
-    this->priority = s.priority;
 }
 
 bool Spot::operator< (Spot &s) {

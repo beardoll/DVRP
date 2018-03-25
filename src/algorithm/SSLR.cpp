@@ -11,41 +11,12 @@ using namespace std;
 
 float RANDOM_RANGE_SSLR[2] = {0, 1};
 
-vector<Spot*> feedDataForLNSBase(vector<Spot*> waitCustomer, vector<Car*> originPlan) {
-    // 返回allCustomer，其中对waitCustomer优先级赋值为2，对originPlan的顾客优先级赋值为1
-    vector<Spot*>::iterator custPtr;
-    vector<Spot*> lowPriorityCust;
-    for(custPtr = waitCustomer.begin(); custPtr < waitCustomer.end(); custPtr++){
-        (*custPtr)->priority = 2;
-        lowPriorityCust.push_back(*custPtr);
-    }
-    vector<Car*>::iterator carPtr;
-    vector<Spot*> highPriorityCust;
-    for(carPtr = originPlan.begin(); carPtr < originPlan.end(); carPtr++) {
-        vector<Spot*> custVec = (*carPtr)->getAllCustomer();
-        for(custPtr = custVec.begin(); custPtr < custVec.end(); custPtr++) {
-            (*custPtr)->priority = 1;
-            highPriorityCust.push_back(*custPtr);
-        }
-    }
-    vector<Spot*> output = mergeCustomer(lowPriorityCust, highPriorityCust);
-    return output;
-}
-
-SSLR::SSLR(vector<Spot*> waitCustomer, vector<Car*> originPlan, float capacity, 
-        int maxIter, bool verbose, int pshaw, int pworst, float eta): 
-    LNSBase(pshaw,  pworst, eta, capacity, RANDOM_RANGE_SSLR, 
-            feedDataForLNSBase(waitCustomer, originPlan), *originPlan[0]->getRearNode(), 
-            true, true) 
+SSLR::SSLR(vector<Spot*> allCustomer, vector<Spot*> depots, int maxIter, bool verbose, 
+            int pshaw, int pworst, float eta): LNSBase(pshaw,  pworst, eta, 
+            RANDOM_RANGE_SSLR, allCustomer, depots, true, true) 
 {
     this->maxIter = maxIter;
     this->verbose = verbose;
-    vector<Spot*>::iterator custIter;
-    // 对waitCustomer，其优先级已经在基类的初始化中赋值为2
-    this->waitCustomer = waitCustomer;
-    vector<Car*>::iterator carIter;
-    // 对于原本就在路径中的节点，其优先级已经在基类的初始化中赋值为1
-    this->originPlan = originPlan;
 }
 
 SSLR::~SSLR() {}
@@ -78,13 +49,12 @@ bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleN
     return mark;
 }
 
-float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> waitCustomer, Spot depot,
+float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> depots,
         float maxd, float mind){
     // 计算对不同优先级顾客的奖惩系数
     // Args:
     //   * maxd: 所有顾客之间的最大距离
-    //   * allCustomer: 所有顾客节点（包括所有不同优先级顾客）
-    //   * waitCustomer: 低优先级顾客
+    //   * allCustomer: 所有顾客节点（均是相同优先级）
     int PR2Num = (int)waitCustomer.size();
     int PR1Num = (int)allCustomer.size() - PR2Num;
     vector<Spot*>::iterator custPtr;
@@ -105,18 +75,18 @@ float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> waitCustomer, Spot
     float *DTpara = new float[4];
     DTpara[0] = DTH1;
     DTpara[1] = DTH2;
-    DTpara[2] = DTL1;
-    DTpara[3] = DTL2;
+    // 没有低优先级顾客
+    DTpara[2] = 0;
+    DTpara[3] = 0;
     //cout << "DTH1: " << DTpara[0] << " DTH2: " << DTpara[1] << " DTL1: " <<
     //    DTpara[2] << " DTL2:" << DTpara[3] << endl;
     return DTpara;
 }
 
-void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){  
+void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){  
     // 运行算法，相当于算法的main()函数
     int i;
     int customerTotalNum = (int)allCustomer.size();  // 总的顾客数
-    int originCarNum = (int)originPlan.size();   // 初始拥有的货车数量
     vector<Spot*>::iterator custPtr;
     vector<Car*>::iterator carIter;
 
@@ -126,41 +96,14 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     }                                                              
 
     // 计算对不同优先级顾客的奖惩系数
-    float *DTpara = computeDTpara(allCustomer, waitCustomer, depot, maxd, mind);
+    float *DTpara = computeDTpara(allCustomer, depots, maxd, mind);
     resetDTpara(DTpara);
-	
-    // 构造base solution
-    vector<Car*> baseCarSet = copyPlan(originPlan);
-    if (waitCustomer.size() != 0) {       
-        // 只有当waitCustomer不为空时才有"replan"的价值
-        // 使用virtual car去装载waitCustomer
-        vector<Car*> tempCarSet1;
-        Car *tcar = new Car(depot, depot, capacity, 100, true);
-        tempCarSet1.push_back(tcar);
-        vector<Spot*> copyWaitCustomer = copyCustomerSet(waitCustomer);
-        greedyInsert(tempCarSet1, copyWaitCustomer, false);
-        for (carIter = tempCarSet1.begin(); carIter < tempCarSet1.end(); carIter++) {
-            baseCarSet.push_back(*carIter);
-        }
-    }
-    // 基准代价，如果得到的解优于这个解，则一定可行
-    // 一般来说比这个解更差的解时不可行的
-    float baseCost = getCost(baseCarSet);   
 	
     // 构造初始全局最优解
     vector<Car*> currentCarSet(0);
-    vector<Spot*> currentCustomer(0);
-    for(carIter = originPlan.begin(); carIter < originPlan.end(); carIter++) {
-        // 保留原有的车辆，记录其起点以及终点以及剩余容量、基准时间
-        vector<Spot*> temp;
-        Car *newCar = new Car(*((*carIter)->getNullCar(temp)));
-        currentCustomer.insert(currentCustomer.end(), temp.begin(), temp.end());
-        currentCarSet.push_back(newCar);
-    }
-    vector<Spot*> copyWaitCustomer = copyCustomerSet(waitCustomer);
-    currentCustomer.insert(currentCustomer.end(), copyWaitCustomer.begin(), copyWaitCustomer.end());
-    // 以当前所拥有的working car为基础，构造初始解（完全重新构造）
-    regretInsert(currentCarSet, currentCustomer, false);  
+    Car *newCar = new Car(*depots[0], *depots[0], 0, depots[0]->id);
+    currentCarSet.push_back(newCar);
+    greedyInsert(currentCarSet, allCustomer);
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
     float currentCost = getCost(currentCarSet);
@@ -218,9 +161,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     for(int iter=0; iter<maxIter; iter++){
         if(iter%segment == 0){  // 新的segment开始
             if(verbose == true) {
-                cout << "...............Segement:" << (int)floor(iter/segment)+1 << 
+                cout << "...............Segment:" << (int)floor(iter/segment)+1 << 
                     "................" << endl;
-                cout << "base cost is: " << baseCost << endl;
                 cout << "current best cost is:" << globalCost << endl;
                 cout << "hash table length is:" << hashTable.size() << endl;
                 cout << "shaw   removal:" <<  "(score)-" << removeScore[0] 
@@ -345,18 +287,13 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
             }
         }
 
-        try {
-            if (getCustomerNum(tempCarSet) != customerTotalNum) {
-                throw out_of_range("Lose some customers in SSLR!");
-            }
-        } 
-        catch (exception &e) {
-            cerr << e.what() << endl;
+        if (getCustomerNum(tempCarSet) != customerTotalNum) {
+            cout << "Lose some customers in SSLR!" << endl;
             exit(1);
         }
 
         // 移除空路径
-        removeNullRoute(tempCarSet, true);
+        removeNullRoute(tempCarSet);
         
         // 使用模拟退火算法决定是否接收该解
         bool accept = false;
@@ -432,39 +369,11 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         }
     }    
 
-    withdrawPlan(finalCarSet);
-    finalCarSet.reserve(originPlan.size());
-    ostringstream ostr;
-    ostr.str("");
-    print_lck.lock();
-    // unique_lock<mutex> lck(print_lck);
-    int infeasibleNum;
-    
-    if(judgeFeasible(globalCarSet, originPlan, infeasibleNum) == false) {
-        // 如果搜索不到更好的解，则维持原来的解
-        ostr << "SSLR: we should use the origin plan, there are " << infeasibleNum << 
-            " high priority customers left in virtual vehicles." << endl;
-        TxtRecorder::addLine(ostr.str());
-        cout << ostr.str();
-        print_lck.unlock();
-        finalCarSet = copyPlan(originPlan);
-    } else {
-        ostr << "SSLR: we will use the new plan" << endl;
-        TxtRecorder::addLine(ostr.str());
-        for (carIter = globalCarSet.begin(); carIter < globalCarSet.end(); carIter++) {
-            if ((*carIter)->judgeArtificial() == false) {
-                Car *tempCar = new Car(**carIter);
-                finalCarSet.push_back(tempCar);
-            }
-        }
-        cout << ostr.str();
-        print_lck.unlock();
-    }
-    delete [] DTpara;
+    finalCarSet = globalCarSet;   
     finalCost = globalCost;
-    withdrawPlan(baseCarSet);
     withdrawPlan(tempCarSet);
     withdrawPlan(globalCarSet);
+    withdrawPlan(currentCarSet);
     hashTable.clear();
 }
 

@@ -4,24 +4,24 @@
 #include<cmath>
 #include <stdexcept>
 
-Car::Car(Spot &headNode, Spot &rearNode, int index, 
-        bool artificial): route(headNode, rearNode)
+Car::Car(Spot &headNode, Spot &rearNode, int carIndex, int depotIndex, 
+        bool artificial): route(headNode, rearNode, headNode.quantity, 
+        headNode.timeDuration)
 {
-    this->carIndex = index;
+    this->carIndex = carIndex;
     this->artificial = artificial;
-}
-
-Car::Car(Route &route, int index, bool artificial): carIndex(index), 
-    artificial(artificial), route(route) {
+    this->depotIndex = depotIndex;
 }
 
 Car::~Car(){  
     // 内嵌对象的析构函数会被调用，不用在此处delete route
 }
 
-Car::Car(const Car& item):route(item.route), artificial(item.artificial){  
+Car::Car(const Car& item):route(item.route){  
     // 复制构造函数
     this->carIndex = item.carIndex;
+    this->depotIndex = item.depotIndex;
+    this->artificial = artificial;
 }
 
 
@@ -29,6 +29,7 @@ Car& Car::operator= (Car &item){
     // 重载赋值操作
     this->route = item.route;
     this->carIndex = item.carIndex;
+    this->depotIndex = item.depotIndex;
     this->artificial = item.artificial;
     return *this;
 }

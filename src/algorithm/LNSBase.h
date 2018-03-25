@@ -21,8 +21,7 @@ class LNSBase {
                 bool noiseAdd);
         void regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCustomer, 
                 bool noiseAdd);
-        void reallocateCarIndex(vector<Car*> &originCarSet);
-        void removeNullRoute(vector<Car*> &originCarSet, bool mark=false);
+        void removeNullRoute(vector<Car*> &originCarSet);
         size_t codeForSolution(vector<Car*> originCarSet);
         float getCost(vector<Car*> originCarSet);
         void updateWeight(int *freq, float *weight, int *score, float r, int num);
@@ -36,7 +35,7 @@ class LNSBase {
         float *DTpara; // 不同优先级顾客的奖惩因子
         float *randomRange; // 随机化噪声量的随机数左值和右值
         vector<Spot*> allCustomer;
-        vector<Spot*> depot;
+        vector<Spot*> depots;
         // 是否存在virtual car
         bool hierarchicalCar;
         bool allowNegativeCost; // 是否允许计算insertion cost时有负数

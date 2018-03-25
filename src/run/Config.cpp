@@ -1,10 +1,11 @@
 #include "Config.h"
 
 // 定义全局变量
+bool DEBUG = false;
 float DYNAMICISM = 0.3;
 Strategy STRATEGY = Negative;
-float ITER_PERCENTAGE = 0.05;
-int SAMPLE_RATE = 1;
+float ITER_PERCENTAGE = 1.0;
+int SAMPLE_RATE = 10;
 int CUSTOMER_NUM = 200;
 int TIME_SLOT_LEN = 40;
 int TIME_SLOT_NUM = 5;

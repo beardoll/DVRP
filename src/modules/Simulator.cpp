@@ -160,7 +160,7 @@ void threadForInitial(Spot depot, float capacity, int coreId, vector<vector<Car*
     record_lck.lock();
     cout << "There are totally " << allCustomer.size() << " customers" << endl;
     record_lck.unlock();
-    ALNS alg(allCustomer, depot, capacity, 10000*ITER_PERCENTAGE, true);
+    ALNS alg(allCustomer, depot, capacity, 10000*ITER_PERCENTAGE, DEBUG);
     vector<Car*> solution(0);
     float cost = 0;
     alg.run(solution, cost);
@@ -222,7 +222,13 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
     ostr << "----Sampling begins!" << endl;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
-    int restSampleNum = SAMPLE_RATE;       // 尚未跑完的样本
+    int restSampleNum;
+    if(DEBUG) {
+        // DEBUG模式下只使用单线程
+        restSampleNum = 1;
+    } else {
+        restSampleNum = SAMPLE_RATE;   // 尚未跑完的样本
+    }
     while(restSampleNum > 0) {
         // coreId: 线程id，从0开始
         int coreId = SAMPLE_RATE - restSampleNum + 1; 
@@ -315,7 +321,7 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
     //   * transformMatrix: 得到service promise的顾客之间的转移频数
     vector<Car*> tempPlan;
     float finalCost = 0;
-    SSLR alg(sampleCustomer, currentPlan, capacity, 10000*ITER_PERCENTAGE, true);
+    SSLR alg(sampleCustomer, currentPlan, capacity, 10000*ITER_PERCENTAGE, DEBUG);
     alg.run(tempPlan, finalCost, record_lck);
     vector<Car*>::iterator carIter;
     int totalRetainNum = 0;
@@ -466,11 +472,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     // 并且计算评分矩阵
     // 初始化transformMatrix
     Matrix<int> transformMatrix(allServedCustomerId.size(), allServedCustomerId.size());
-    for(int i=0; i<allServedCustomerId.size(); i++) {
-        for(int j=0; j<allServedCustomerId.size(); j++) {
-            transformMatrix.setValue(i,j,0);
-        }
-    }
+    transformMatrix.setAll(0);
     vector<vector<Car*> > planSet;     // store all threads of all scenarios
     planSet.reserve(SAMPLE_RATE);
     vector<vector<Car*> >::iterator planIter;
@@ -482,7 +484,13 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     cout << ostr.str();
 
     // 执行sampling
-    int restSampleNum = SAMPLE_RATE;
+    int restSampleNum;
+    if(DEBUG) {
+        // DEBUG模式下只使用单线程
+        restSampleNum = 1;
+    } else {
+        restSampleNum = SAMPLE_RATE;
+    }
     while(restSampleNum > 0) {
         thread_pool.clear();
         thread_pool.resize(0);

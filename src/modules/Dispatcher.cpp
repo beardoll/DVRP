@@ -76,7 +76,7 @@ void Dispatcher::carFinishTask(int carIndex){
         if(mark == true) {
             ostr.str("");
             ostr << "=============== END ================" << endl;
-            ostr << "----There are " << num << " cars remains unused!" << endl;
+            ostr << "----There are " << num << " Cars remains unused!" << endl;
             ostr << "----" << servedCustomerId.size() << " customers get served finally" << endl;
             ostr << "----" << rejectCustomerId.size() << " customers get rejected finally" << endl;
             TxtRecorder::addLine(ostr.str());
@@ -376,38 +376,48 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
         if(copyNewCustomer->tolerantTime < slotIndex * TIME_SLOT_LEN) { 
-            // 等不到replan，则优先安排新的骑手为其服务
-            Spot *newDepot = new Spot(depot);
-            newDepot->arrivedTime = copyNewCustomer->startTime;
-            Car *newCar = new Car(*newDepot, *newDepot, capacity, globalCarIndex);
-            Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
-            float minValue, secondValue;
-            newCar->computeInsertCost(copyNewCustomer->choice, copyNewCustomer, minValue, 
-                    refStore1, refCustomer1, secondValue, refStore2, refCustomer2, 
-                    currentTime);
-            if(minValue == MAX_FLOAT) {
-                // 如果已经来不及派送，则拒绝为其服务
-                // 最好尽量避免tolerantTime-endTime为不可达时间
-                ostr.str("");
-                ostr << "He is rejected!" << endl;
-                ostr << "His tolerance time is " << copyNewCustomer->tolerantTime << endl;
-                ostr << endl;
-                TxtRecorder::addLine(ostr.str());
-                cout << ostr.str();
-                rejectCustomerId.push_back(copyNewCustomer->id);
-                sort(rejectCustomerId.begin(), rejectCustomerId.end());
-                delete newCar;
-            } else {
-                // 否则，将其安排给新的骑手
-                promisedCustomerId.push_back(copyNewCustomer->id);
-                sort(promisedCustomerId.begin(), promisedCustomerId.end());
-                globalCarIndex++;
-                newCar->insertAtHead(copyNewCustomer->choice, copyNewCustomer);
-                newEvent = newCar->launchCar(copyNewCustomer->startTime);
-                currentPlan.push_back(newCar);
-                cout << "Open new car #" << newCar->getCarIndex() <<
-                    " to serve him" << endl << endl;
-            }
+            ostr.str("");
+            ostr << "He is rejected!" << endl;
+            ostr << "His tolerance time is " << copyNewCustomer->tolerantTime << endl;
+            ostr << endl;
+            TxtRecorder::addLine(ostr.str());
+            cout << ostr.str();
+            rejectCustomerId.push_back(copyNewCustomer->id);
+            sort(rejectCustomerId.begin(), rejectCustomerId.end());
+
+            //// 等不到replan，则优先安排新的骑手为其服务
+            //Spot *newDepot = new Spot(depot);
+            //newDepot->arrivedTime = copyNewCustomer->startTime;
+            //Car *newCar = new Car(*newDepot, *newDepot, capacity, globalCarIndex);
+            //Spot *refStore1, *refCustomer1, *refStore2, *refCustomer2;
+            //float minValue, secondValue;
+            //newCar->computeInsertCost(copyNewCustomer->choice, copyNewCustomer, minValue, 
+            //        refStore1, refCustomer1, secondValue, refStore2, refCustomer2, 
+            //        currentTime);
+            //if(minValue == MAX_FLOAT) {
+            //    // 如果已经来不及派送，则拒绝为其服务
+            //    // 最好尽量避免tolerantTime-endTime为不可达时间
+            //    ostr.str("");
+            //    ostr << "He is rejected!" << endl;
+            //    ostr << "His tolerance time is " << copyNewCustomer->tolerantTime << endl;
+            //    ostr << endl;
+            //    TxtRecorder::addLine(ostr.str());
+            //    cout << ostr.str();
+            //    rejectCustomerId.push_back(copyNewCustomer->id);
+            //    sort(rejectCustomerId.begin(), rejectCustomerId.end());
+            //    delete newCar;
+            //} 
+            //else {
+            //    // 否则，将其安排给新的骑手
+            //    promisedCustomerId.push_back(copyNewCustomer->id);
+            //    sort(promisedCustomerId.begin(), promisedCustomerId.end());
+            //    globalCarIndex++;
+            //    newCar->insertAtHead(copyNewCustomer->choice, copyNewCustomer);
+            //    newEvent = newCar->launchCar(copyNewCustomer->startTime);
+            //    currentPlan.push_back(newCar);
+            //    cout << "Open new Car #" << newCar->getCarIndex() <<
+            //        " to serve him" << endl << endl;
+            //}
         } else {  
             // 否则，进入等待的顾客序列
             ostr.str("");
@@ -440,7 +450,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
         }
         if(selectedCar->getState() == wait) {  // if the car stays asleep
             newEvent = selectedCar->launchCar(currentTime);
-            cout << "launch car #" << selectedCar->getCarIndex() << endl; 
+            cout << "launch Car #" << selectedCar->getCarIndex() << endl; 
         } else {
             newEvent = selectedCar->getCurrentAction(currentTime);
         }
@@ -452,7 +462,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, Spot *newCustomer){
             exit(1);
         }
         ostr.str("");
-        ostr << "He is arranged to car #" << carIndex << endl;
+        ostr << "He is arranged to Car #" << carIndex << endl;
         ostr << "refStore: #" << refStore->id << " refCustomer: #" <<
             refCustomer->id << endl << endl;
         TxtRecorder::addLine(ostr.str());
@@ -531,10 +541,10 @@ EventElement Dispatcher::handleFinishedService(float time, int carIndex){
     int currentId = currentNode->id;
     ostr.str("");
     if(currentNode->type == 'C') {
-        ostr << "----Time " << time << ", car #" << carIndex << 
+        ostr << "----Time " << time << ", Car #" << carIndex << 
             " finished service in customer #" << currentId << endl;
     } else {
-        ostr << "----Time " << time << ", car #" << carIndex << 
+        ostr << "----Time " << time << ", Car #" << carIndex << 
             " finished service in store #" << currentId << endl;
     }
     ostr << "Its end time for servce is " << currentPlan[pos]->getCurrentNode()->endTime 

@@ -158,16 +158,18 @@ void Route::insertAfter(Spot *ref, Spot *current) {
     // 在ref节点后面插入current节点
     // 只能插入到stand节点后面
     Spot *ptr = current;
-    bool mark = false;
-    while(ptr!=rear) {
-        if(ptr == ref) {
-            mark = true;
-            break;
+    if(DEBUG) {
+        bool mark = false;
+        while(ptr!=rear) {
+            if(ptr == ref) {
+                mark = true;
+                break;
+            }
         }
-    }
-    if(mark == false) {
-        throw out_of_range("Cannot find the position to insert!");
-        return;
+        if(mark == false) {
+            throw out_of_range("Cannot find the position to insert!");
+            return;
+        }
     }
     if(ref == stand->front) {
         // 说明current节点插入到stand节点后面
@@ -193,56 +195,58 @@ void Route::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *cu
     // 在链表中refStore指针指向的节点后面插入store指针指向节点
     // 在链表中refCustomer指针指向的节点后面插入customer指向节点
     assert(store->type == 'S' && customer->type == 'C');
-    Spot *ptr = current;
-    int count = 2;   // 必须两个ref节点都找到
-    while(ptr != rear){
-        if (ptr == refStore){  
-            count--;
+    if(DEBUG) {
+        Spot *ptr = current;
+        int count = 2;   // 必须两个ref节点都找到
+        while(ptr != rear){
+            if (ptr == refStore){  
+                count--;
+            }
+            if (ptr == refCustomer) {
+                count--;
+            }
+            if(count == 0) {
+                break;
+            }
+            ptr = ptr->next;
         }
-        if (ptr == refCustomer) {
-            count--;
+        if(count > 0) {
+            // 没有完全找到，返回false
+            cout << "refStore: " << refStore->type << " refCustomer: " << refCustomer->type
+                << endl;
+            throw out_of_range("Cannot find the position to insert!");
+            return;
         }
-        if(count == 0) {
-            break;
-        }
-        ptr = ptr->next;
     }
-    if(count > 0) {
-        // 没有完全找到，返回false
-        cout << "refStore: " << refStore->type << " refCustomer: " << refCustomer->type
-            << endl;
-        throw out_of_range("Cannot find the position to insert!");
-    } else{
-        if(refStore == stand->front) {
-            stand->next = store;
-        } 
-        // 更新quantity的值，并且插入store以及customer
-        quantity += customer->quantity;
-        refStore->next->front = store;
-        store->next = refStore->next;
-        refStore->next = store;
-        store->front = refStore;
-        // 这里需要考虑如果refStore与refCustomer是同一个节点的问题
-        if(refStore == refCustomer) {
-            store->next->front = customer;
-            customer->next = store->next;
-            customer->front = store;
-            store->next = customer;
-        } else {
-            refCustomer->next->front = customer;
-            customer->next = refCustomer->next;
-            refCustomer->next = customer;
-            customer->front = refCustomer;
-        }
-        size++;
-        try {
-            checkArrivedTime();  // 插入节点后，检查arrivedTime
-        } catch (exception &e) {
-            cout << "refStore: " << refStore->id << " refCustomer: " << refCustomer->id << endl;
-            cout << "While inserting: store: " << store->id << " customer: " 
-                << customer->id << endl;
-            throw out_of_range("In insertAfter: " + string(e.what()));
-        }
+    if(refStore == stand->front) {
+        stand->next = store;
+    } 
+    // 更新quantity的值，并且插入store以及customer
+    quantity += customer->quantity;
+    refStore->next->front = store;
+    store->next = refStore->next;
+    refStore->next = store;
+    store->front = refStore;
+    // 这里需要考虑如果refStore与refCustomer是同一个节点的问题
+    if(refStore == refCustomer) {
+        store->next->front = customer;
+        customer->next = store->next;
+        customer->front = store;
+        store->next = customer;
+    } else {
+        refCustomer->next->front = customer;
+        customer->next = refCustomer->next;
+        refCustomer->next = customer;
+        customer->front = refCustomer;
+    }
+    size++;
+    try {
+        checkArrivedTime();  // 插入节点后，检查arrivedTime
+    } catch (exception &e) {
+        cout << "refStore: " << refStore->id << " refCustomer: " << refCustomer->id << endl;
+        cout << "While inserting: store: " << store->id << " customer: " 
+            << customer->id << endl;
+        throw out_of_range("In insertAfter: " + string(e.what()));
     }
 }
 
@@ -304,15 +308,17 @@ void Route::insertAtRear(Spot *node) {
 
 void Route::deleteNode(Spot *node) {
     // 删除node节点
-    bool mark = false;
-    for(Spot* ptr = current; ptr != rear; ptr = ptr->next) {
-        if(ptr == node) {
-            mark = true;
-            break;
+    if(DEBUG) {
+        bool mark = false;
+        for(Spot* ptr = current; ptr != rear; ptr = ptr->next) {
+            if(ptr == node) {
+                mark = true;
+                break;
+            }
         }
-    }
-    if(mark == false) {
-        throw out_of_range("Cannot find the node to delete!");
+        if(mark == false) {
+            throw out_of_range("Cannot find the node to delete!");
+        }
     }
     if(stand->next == node) stand->next = node->next;
     node->front->next = node->next;
@@ -344,40 +350,42 @@ void Route::deleteNode(Spot *store, Spot *customer){
         throw out_of_range("The current node is NULL!");
     }
 
-    Spot* temp1 = current->next;
-    int count = 2;  // 需要同时找到store和customer才可删除
-    while(temp1!=rear) {
-        if(temp1 == store) {
-            count--;
+    if(DEBUG) {
+        Spot* temp1 = current->next;
+        int count = 2;  // 需要同时找到store和customer才可删除
+        while(temp1!=rear) {
+            if(temp1 == store) {
+                count--;
+            }
+            if(temp1 == customer) {
+                count--;
+            }
+            if(count == 0) break;
+            temp1 = temp1->next;
         }
-        if(temp1 == customer) {
-            count--;
+        if(count > 0) {  
+            // 没有完全找到
+            throw out_of_range("We want to delete inexistent customer!");
+            return;
         }
-        if(count == 0) break;
-        temp1 = temp1->next;
     }
-    if(count > 0) {  
-        // 没有完全找到
-        throw out_of_range("We want to delete inexistent customer!");
-    } else {
-        if(stand->next == store) {
-            if(store->next == customer) stand->next = customer->next;
-            else stand->next = store->next;
-        }
-        store->front->next = store->next;
-        store->next->front = store->front;
-        customer->front->next = customer->next;
-        customer->next->front = customer->front;
-        delete store;
-        delete customer;
-        size--;
-        quantity = quantity - customer->quantity;
-        try{
-            checkArrivedTime();  // 删除节点后，更新arrivedTime
-        } catch (exception &e) {
-            cout << "In deleteNode: " << e.what() << endl;
-            exit(1);
-        }
+    if(stand->next == store) {
+        if(store->next == customer) stand->next = customer->next;
+        else stand->next = store->next;
+    }
+    store->front->next = store->next;
+    store->next->front = store->front;
+    customer->front->next = customer->next;
+    customer->next->front = customer->front;
+    delete store;
+    delete customer;
+    size--;
+    quantity = quantity - customer->quantity;
+    try{
+        checkArrivedTime();  // 删除节点后，更新arrivedTime
+    } catch (exception &e) {
+        cout << "In deleteNode: " << e.what() << endl;
+        exit(1);
     }
 }
 

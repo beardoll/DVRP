@@ -15,6 +15,7 @@
 #include<cstddef>
 #include "../baseclass/Matrix.h"
 #include "../algorithm/ALNS.h"
+#include "../run/Config.h"
 
 bool ascendSortForCustId(Spot* item1, Spot* item2) {
     return item1->id < item2->id;
@@ -193,12 +194,13 @@ void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
             }
         }
     }
+    cout << "There are totally "<< allCustomer.size() << " customers" << endl;
     depot->priority = 0;
     depot->startTime = 0;
     depot->serviceTime = 0;
     depot->arrivedTime = 0;
     depot->prop = 0;
-    ALNS alg(allCustomer, *depot, capacity, 500, true);
+    ALNS alg(allCustomer, *depot, capacity, 25000, DEBUG);
     alg.run(bestRoute, bestCost);
     cout << "ALNS: use " << bestRoute.size() << " cars to serve" << endl;
 }

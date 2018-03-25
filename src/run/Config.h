@@ -9,6 +9,7 @@ using namespace std;
 enum Strategy{Negative, Positive};
 enum DynamicLevel{low, mid, high};
 
+extern bool DEBUG;
 extern float DYNAMICISM;
 extern Strategy STRATEGY;
 extern float ITER_PERCENTAGE;

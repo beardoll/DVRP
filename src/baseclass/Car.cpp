@@ -116,7 +116,6 @@ void Car::insertAtHead(Spot *store, Spot *customer){
 void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, 
         Spot *customer) {
     // 在refStore后面插入store，在refCustomer后面插入customer
-    // update: 是否需要更新stand节点
     try {
         route.insertAfter(refStore, refCustomer, store, customer);
     } catch (exception &e) {
@@ -152,9 +151,6 @@ void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store,
     Spot *nextStop = route.nextPos();
     nextArriveTime = currentTime + dist(lastStop, nextStop);
     // 更新nearestDepartureTime
-    if(state == departure) {
-        nearestDepartureTime = currentTime;
-    }
 }
 
 void Car::deleteCustomer(Spot *store, Spot *customer) {
@@ -192,82 +188,21 @@ void Car::replaceRoute(Car *newCar, float currentTime){
 Car* Car::capturePartRoute(float time){   
     // 抓取route的current指针之后的路径，并且返回一辆车
     // time为抓取的时间
-    updateState(time);    // 先将状态更新
-    Spot* currentNode = route.currentPos();  // 从该点出发
-    Spot* nextNode = route.nextPos();        // 下一站目的地
-    Spot* startNode = new Spot();         // 车子的出发点
-    startNode->id = 0;   
-    startNode->type = 'D';
-    startNode->priority = 0;
-    // 确定货车的位置信息以及时间信息
-    switch(state) {
-        case departure: {
-            // 车子在路途中，构造虚拟的初始点
-            // 该点地理位置位于出发点和目的地连线上的某一点
-            // 该点的arrivedTime设定为当前时间，而服务时间为0，和仓库一样
-            currentNode = route.getStand();   // departure状态下驻点作为当前点
-            float dist = nextArriveTime - nearestDepartureTime;
-            startNode->x = (time - nearestDepartureTime) / dist * (nextNode->x - 
-                    currentNode->x) + currentNode->x;
-            startNode->y = (time - nearestDepartureTime) / dist * (nextNode->y - 
-                    currentNode->y) + currentNode->y;
-            startNode->arrivedTime = time;
-            startNode->serviceTime = 0;
-            startNode->startTime = time;
-            route.setStand(startNode->x, startNode->y, time);
-            nearestDepartureTime = time;
-            break;
-        }
-        case wait: {
-            // 车子处于等待状态，直接取当前节点作为起始点
-            // 车子随时可以出发，所以serviceTime为0
-            startNode->x = currentNode->x;
-            startNode->y = currentNode->y;
-            startNode->arrivedTime = time;
-            startNode->serviceTime = 0;
-            startNode->startTime = time;
-            route.setStand(startNode->x, startNode->y, time);
-            break;
-        }
-        case serving: {
-            // 车子当前在服务顾客，起始点为当前服务点
-            // 而服务时间设定到服务结束时间减去当前时间
-            // 注意当货车在等待着为顾客服务时，我们也将状态设定为serving
-            // 注意货车到达顾客点后立即更新了nearestDepartureTime，因此我们可以利用之
-            Spot *currentPos = route.currentPos();
-            startNode->x = currentNode->x;
-            startNode->y = currentNode->y;
-            startNode->arrivedTime = time;
-            startNode->serviceTime = nearestDepartureTime - time;  
-            // 服务时间已经过去了一部分，注意顾客到达后应该确定arrivedTime
-            // time - baseTime表示已经服务过的时间
-            startNode->startTime = time;
-            route.setStand(startNode->x, startNode->y, time, startNode->serviceTime);
-            break;
-        }
-        case offwork: {  
-            // 收车了的车子是不可用的
-            // 此时返回一辆空车，其中startNode没有任何意义
-            break;		
-        }
-    }
     // 将current指针后的顾客置入newCar中，注意货车剩余容量leftQuanity
+    updateState(time);
     float leftQuantity = route.getLeftQuantity();  // 货车剩余容量
     Spot *depot = route.getRearNode();          // 任何一辆车，终点都是depot
+    Spot *startNode = route.getStand();
     Car *newCar = new Car(*startNode, *depot, leftQuantity, carIndex, false);
-    try {
-        route.checkArrivedTime();
-    } catch(exception &e) {
-        cout << "Problem happens before!!" << endl;
-    }
     vector<Spot*> nodes = route.capture();
     vector<Spot*>::iterator custIter;
     for(custIter = nodes.begin(); custIter < nodes.end(); custIter++) {
         try {
             newCar->insertAtRear(*custIter);
         } catch (exception &e) {
-            cout << "In car #" << carIndex << ":" << endl;
-            cerr << "In capture: " << e.what() << endl;
+            cerr << "In car #" << carIndex << ":" << endl;
+            cerr << "In capture: " << endl;
+            cerr << e.what() << endl;
             exit(1);
         }
     }
@@ -284,7 +219,7 @@ void Car::updateState(float time){
             // 在这里更新货车的nearestDepartureTime
             if(time == nextArriveTime) {
                 // 若当前时间正好是状态改变的时间，则状态改变
-                travelDistance += nextArriveTime - nearestDepartureTime;   // 更新travelDistance
+                travelDistance = travelDistance + nextArriveTime - nearestDepartureTime;   // 更新travelDistance
                 route.moveForward();   // 执行服务，更改当前驻点
                 Spot *currentPos = route.currentPos();  // 当前驻点
                 // *Note*: 在这里正式更新当前顾客的到达时间
@@ -313,6 +248,18 @@ void Car::updateState(float time){
                         state = serving;
                     }
                 }
+            } else {
+                // 仍维持departure状态，只更新stand节点相关的信息
+                Spot *currentPos = route.getStand();   // departure状态下驻点作为当前点
+                Spot *nextPos = route.nextPos();
+                float dist = nextArriveTime - nearestDepartureTime;
+                float x = (time - nearestDepartureTime) / dist * (nextPos->x - 
+                    currentPos->x) + currentPos->x;
+                float y = (time - nearestDepartureTime) / dist * (nextPos->y - 
+                    currentPos->y) + currentPos->y;
+                route.setStand(x, y, time);
+                travelDistance = travelDistance + time - nearestDepartureTime;
+                nearestDepartureTime = time;
             }
             break;
         }
@@ -333,17 +280,27 @@ void Car::updateState(float time){
                     state = departure;
                     nextArriveTime = nearestDepartureTime + dist(currentPos, nextPos);
                 }
-            break;
+            } else {
+                // 仍维持serving状态，更新stand相关信息
+                Spot *currentNode = route.currentPos();
+                // 服务时间已经过去了一部分，注意顾客到达后应该确定arrivedTime
+                // time - baseTime表示已经服务过的时间
+                route.setStand(currentPos->x, currentPos->y, time, 
+                    nearestDepartureTime - time);
             }
+            break;
         }
         case wait: {
-            // do nothing now
             if(time == nearestDepartureTime) {
                 Spot *currentPos = route.currentPos();
                 Spot *nextPos = route.nextPos();
                 nextArriveTime = time + dist(currentPos, nextPos);
                 route.setStand(currentPos->x, currentPos->y, time);
                 state = departure;
+            } else {
+                // 仍保持wait状态，更新stand相关信息
+                Spot *currentPos = route.currentPos();
+                route.setStand(currentPos->x, currentPos->y, time);
             }
             break;
         }

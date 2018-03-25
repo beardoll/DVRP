@@ -10,7 +10,7 @@ using namespace std;
 
 class Route{
 public:
-    Route(Spot &headNode, Spot &rearNode, float capacity);      // 构造函数
+    Route(Spot &headNode, Spot &rearNode, float capacity, float timeDuration);      // 构造函数
     ~Route();   // 析构函数
     Route(const Route &L);  // 复制构造函数
     Route& operator= (const Route &L);  // 重载赋值运算符 
@@ -22,41 +22,20 @@ public:
 
     // 插入以及删除节点操作
     void insertAfter(Spot *pre, Spot *current);    
-    void insertAfter(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer); 
-    void insertAtHead(Spot *store, Spot *customer);
     void insertAtRear(Spot *node);
     void deleteNode(Spot *node);
-    void deleteNode(Spot *store, Spot *customer);
 
     // 获得单节点操作
-    Spot* currentPos();   // 返回当前位置
-    Spot* nextPos() {return current->next;}      // 下一个节点的位置
-    Spot* pastPos() {return current->front;}     // 前一个节点的位置
     Spot* getHeadNode();    // 得到头结点
     Spot* getRearNode();    // 得到尾节点
     Spot* findCustomer(int id);
-    Spot* getStand() { return stand; } // 获得驻点
 
     // 获取链表属性
     float getQuantity() {return this->quantity;}            // 得到本车已使用的容量(装载顾客)
-    float getLeftQuantity() {return this->leftQuantity;}    // 得到本车剩余容量（与车辆行驶情况相关）
     float getCapacity() {return this->capacity;}            // 返回本车的车载量
     float getLen(float DTpara[], bool artificial = false);  // 得到路径长度
-    float getOriginLen();    // 计算路径中单纯服务静态顾客节点所花费的路径代价
     int getSize();           // 得到当前链表的大小
-    vector<float> getArrivedTime();      // 得到本车所有节点的arrivedTime
     vector<Spot*> getAllCustomer();  // 得到路径中所有的顾客节点
-    vector<Spot*> getAllSpot();      // 得到所有的节点
-    vector<int> getAllID();          // 获取所有节点的ID，按顺序
-
-    // 修改链表属性
-    void decreaseLeftQuantity(float amount) {leftQuantity -= amount;}   
-    // 减少剩余的车容量（服务了新的顾客）
-    void setLeftQuantity(float newValue) {leftQuantity = newValue;}
-    void setCurrentArrivedTime(float time) {current->arrivedTime = time;}      
-    // 设置当前节点的到达时间
-    bool moveForward();      // 向前进
-    void setStand(float x, float y, float arrivedTime, float serviceTime=0.0f); // 设置当前驻点
 
     // 计算插入/删除节点代价
     // 计算所有节点的移除代价
@@ -64,38 +43,23 @@ public:
     // 计算item节点在路径中的最小插入代价和次小插入代价
     // 返回其最佳/次佳插入点前面的顾客节点
     // penaltyPara为惩罚系数，若不需要惩罚则penaltyPara = 0
-    void computeInsertCost(Spot *store, Spot *customer, float &minValue, Spot *&refStore1,
-            Spot *&refCustomer1, float &secondValue, Spot *&refStore2, Spot *&refCustomer2,
-            float randomNoise = 0.0f, bool allowNegativeCost = true);  
+    void computeInsertCost(Spot *cur, float &minValue, Spot *&ref1, float &secondValue, Spot *&ref2, 
+        float randomNoise = 0.0f, bool allowNegativeCost = true);  
 
     // 计算把item插入到pre后面是否会违反时间窗约束
-    bool timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot *customer);
-    
-    // 更新一下各个节点的到达时刻
-    void checkArrivedTime();   
-
-    // 路径的替换和提取
-    // 以route替换掉current指针后的路径
-    Route* getEmptyRoute(vector<Spot*> &removedCustomer);
-    void replaceRoute(Route *route);  
-    // 抓取current指针后的路径
-    vector<Spot*> capture();  
-
+    bool timeWindowJudge(Spot *ref, Spot *cur);
     // 其余辅助性质的函数
-    vector<int> removeInvalidCustomer(vector<int> validCustomerId, int &retainNum);
-    bool checkPassRoute();
     bool checkTimeConstraint();
 private:
     // 表头，表尾，当前指针和驻地
     // 当前指针指向前一次出发地（若未出发则为仓库）
     // 驻地指货车当前所在地
-    Spot *head, *current, *rear, *stand;
+    Spot *head, *rear;
     int size;         // 链表的长度
+    float timeConstraint; // 车辆行驶时间最大值
     float quantity;   // 当前已使用的容量(与装载的顾客数量有关)
-    float leftQuantity;   // 剩余容量（与车辆行驶情况有关）
     float capacity;       // 车载量，在这里保存
     void copy(const Route& L);  // 复制链表，供复制构造函数和重载“=”函数使用
-    vector<float> arrivedTime;  // 在各个节点的到达时刻
 };
 
 

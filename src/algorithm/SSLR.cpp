@@ -55,23 +55,19 @@ float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> depots,
     // Args:
     //   * maxd: 所有顾客之间的最大距离
     //   * allCustomer: 所有顾客节点（均是相同优先级）
-    int PR2Num = (int)waitCustomer.size();
-    int PR1Num = (int)allCustomer.size() - PR2Num;
+    int customerNum = allCustomer.size();
+    float DTH1, DTH2;
+    DTH2 = 10;
     vector<Spot*>::iterator custPtr;
-    float DTH1, DTH2, DTL1, DTL2;
     float distToDepot = 0;    // 各个顾客节点到仓库的距离
+    Spot *depot = depots[0];  // 随机选一个depot
     for(custPtr = allCustomer.begin(); custPtr < allCustomer.end(); custPtr++) {
-        distToDepot += dist(*custPtr, &depot);
+        distToDepot += dist(*custPtr, depot);
     }
-    DTL2 = 50;
-    DTL1 = 4*maxd + 1;
-    DTH2 = 80;
-    float tempsigma1 = 4*maxd + DTH2;
-    //float tempsigma2 = 2*(PR1NUM + PR2NUM + PR3NUM) * maxd + PR2NUM * DT22 + PR3NUM * DT32 - 
-    //	(PR1NUM + PR2NUM + PR3NUM) * mind + PR2NUM * DT21 + PR3NUM * DT31 - DT12;
-    float tempsigma2 = 4*distToDepot - DTH2 + PR2Num * (DTL1 + DTL2) - 
-        (PR1Num + PR2Num + 1) * mind * 2;
-    DTH1 = max(tempsigma1, tempsigma2) + 1;
+    float sigma1 = 2*maxd + DTH2;
+    float sigma2 = 2 * distToDepot - (customerNum+1) * mind - DTH2;
+    DTH1 = max(sigma1, sigma2) + 1;
+
     float *DTpara = new float[4];
     DTpara[0] = DTH1;
     DTpara[1] = DTH2;
@@ -103,7 +99,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     vector<Car*> currentCarSet(0);
     Car *newCar = new Car(*depots[0], *depots[0], 0, depots[0]->id);
     currentCarSet.push_back(newCar);
-    greedyInsert(currentCarSet, allCustomer);
+    greedyInsert(currentCarSet, allCustomer, false);
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
     float currentCost = getCost(currentCarSet);
@@ -157,7 +153,6 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     vector<Spot*> removedCustomer(0);    // 被移除的节点
     vector<Car*> tempCarSet = copyPlan(currentCarSet);      // 暂时存放当前解
 
-    pair<bool, int> removalSelectTrend = make_pair(false, 0);
     for(int iter=0; iter<maxIter; iter++){
         if(iter%segment == 0){  // 新的segment开始
             if(verbose == true) {
@@ -202,19 +197,13 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
         // 以概率选择remove heuristic
         int removeIndex;
         float sumation;
-        if(removalSelectTrend.first == false) {
-            float removeSelection = random(0,1);  // 产生0-1之间的随机数
-            sumation = removeProb[0];
-            removeIndex = 0;    // remove heuristic编号
-            while(sumation < removeSelection){
-                sumation += removeProb[++removeIndex];
-            }
-            removeIndex = min(removeIndex, removeNum-1);  // 防止溢出
+        float removeSelection = random(0,1);  // 产生0-1之间的随机数
+        sumation = removeProb[0];
+        removeIndex = 0;    // remove heuristic编号
+        while(sumation < removeSelection){
+            sumation += removeProb[++removeIndex];
         }
-        else{
-            removeIndex = removalSelectTrend.second;
-        }
-        removalSelectTrend.first = false;
+        removeIndex = min(removeIndex, removeNum-1);  // 防止溢出
         // 以概率选择insert heurisitc
         float insertSelection = random(0,1);
         sumation = insertProb[0];
@@ -334,17 +323,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
                 else {      
                     if(accept == true) {       
                         // 情况3
-                        if(newCost > baseCost) {
-                            // 如果接受了更差的解，则增加对当前解的扰动
-                            ksi = 0.8f;   				
-                            // 这时强制使用random removal来破坏当前的解
-                            removalSelectTrend.first = true;   	
-                            removalSelectTrend.second = 1;     // random removal
-                        }
-                        else {
-                            // 没有接受更差的解，则使用中等的remove顾客数
-                            ksi = 0.6f;
-                        }
+                        ksi = 0.6f;
                         removeScore[removeIndex] += sigma3;
                         insertScore[insertIndex] += sigma3;
                         noiseScore[1-(int)noiseAdd] += sigma3;						

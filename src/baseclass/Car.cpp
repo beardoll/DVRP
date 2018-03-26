@@ -70,7 +70,7 @@ void Car::insertAtRear(Spot *item){
 
 void Car::insertAfter(Spot *ref, Spot *cur) {
     // 在ref后面插入cur
-    route.insertAfter(refStore, refCustomer, store, customer);
+    route.insertAfter(ref, cur);
 }
 
 void Car::deleteCustomer(Spot *node) {

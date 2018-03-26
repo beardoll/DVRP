@@ -14,7 +14,6 @@
 #include<functional>
 #include<cstddef>
 #include "../baseclass/Matrix.h"
-#include "../algorithm/ALNS.h"
 
 bool ascendSortForCustId(Spot* item1, Spot* item2) {
     return item1->id < item2->id;

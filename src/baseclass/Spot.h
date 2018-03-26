@@ -21,7 +21,8 @@ public:
     float endTime;       // 时间窗结束时间
     float arrivedTime;   // 货车到达此节点时间，对于"D"，此值为0
     float serviceTime;   // 服务时间
-    float durationTime;  // 持续时间（可以参与的时间）
+    float timeDuration;  // 持续时间（可以参与的时间）
+    int priority;   // depot为0，而customer为1
     Spot *next;     // 指向下一个节点的指针
     Spot *front;    // 指向上一个节点的指针
 };

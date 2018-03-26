@@ -17,6 +17,7 @@ class LNSBase {
         void shawRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCustomer, int q);
         void randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCustomer, int q);
         void worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCustomer, int q);
+        Car* getNewCar(vector<Car*> carSet);
         void greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCustomer, 
                 bool noiseAdd);
         void regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCustomer, 

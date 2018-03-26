@@ -11,6 +11,7 @@
 #include "public/PublicFunction.h"
 #include "run/Config.h"
 #include "baseclass/Spot.h"
+#include "dataset/TxtParser.h"
 
 using namespace std;
 

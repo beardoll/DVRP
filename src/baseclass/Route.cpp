@@ -102,7 +102,6 @@ void Route::clear(){
     }
     head = NULL;
     rear = NULL;
-    current = NULL;
     size = 0;
 }
 
@@ -158,7 +157,7 @@ void Route::insertAtRear(Spot *node) {
 void Route::deleteNode(Spot *node) {
     // 删除node节点
     bool mark = false;
-    for(Spot* ptr = current; ptr != rear; ptr = ptr->next) {
+    for(Spot* ptr = head; ptr != rear; ptr = ptr->next) {
         if(ptr == node) {
             mark = true;
             break;
@@ -210,7 +209,6 @@ vector<Spot*> Route::getAllCustomer(){
     vector<Spot*> customerSet;
     for(Spot *ptr=head->next; ptr!=rear; ptr=ptr->next){
             customerSet.push_back(ptr);
-        }
     }
     return customerSet;
 }
@@ -285,7 +283,7 @@ float Route::getLen(float DTpara[], bool artificial){
     }
 }
 
-vector<int> getAllID() {
+vector<int> Route::getAllID() {
     // 获得所有id，包括head和rear
     Spot *ptr;
     vector<int> IDs;
@@ -295,7 +293,7 @@ vector<int> getAllID() {
     return IDs;
 }
 
-vector<float> getArrivedTime() {
+vector<float> Route::getArrivedTime() {
     Spot *ptr;
     vector<float> arrivedTimes;
     for(ptr=head->next; ptr!=rear; ptr=ptr->next) {

@@ -1,5 +1,6 @@
 #include "LNSBase.h"
 #include "../baseclass/Matrix.h"
+#include "../run/Config.h"
 #include<stdexcept>
 #include<algorithm>
 #include<cassert>
@@ -28,10 +29,8 @@ void computeMax(vector<Spot*> allCustomer, float &maxd, float &mind, float &maxq
         D2.setValue(i,i, MAX_FLOAT);
         for(int j=i+1; j<customerAmount; j++){
             Spot *p1 = allCustomer[i];
-            Spot *d1 = allCustomer[i]->choice;
             Spot *p2 = allCustomer[j];
-            Spot *d2 = allCustomer[j]->choice;
-            float temp = dist(p1, p2) + dist(d1, d2); 
+            float temp = dist(p1, p2); 
             D1.setValue(i, j, temp);
             D2.setValue(i, j, temp);
             D1.setValue(j, i, temp);
@@ -589,6 +588,7 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         exit(1);
     }
 }
+
 Car* LNSBase::getNewCar(vector<Car*> carSet) {
     // 新建一辆空车
     // 如果有仓库仍有可用车辆，则派出working Car
@@ -600,7 +600,7 @@ Car* LNSBase::getNewCar(vector<Car*> carSet) {
         vacant.push_back(VEHICLE_NUM);
     }
     for(int i=0; i<carSet.size(); i++) {
-        int depotIndex = carSet[i]->depotIndex;
+        int depotIndex = carSet[i]->getDepotIndex();
         int pos = depotIndex - depotBeginIndex;
         vacant[pos]--;
     }
@@ -610,15 +610,13 @@ Car* LNSBase::getNewCar(vector<Car*> carSet) {
             result.push_back(i);
         }
     }
-    int selectedCarPos = carNum++;  // 被选中的车辆位置
-    vector<int> vacants = getVacantDepot(removedCarSet);
     int len = result.size();
     Car *newCar;
-    int newCarIndex = removedCarSet.size();
+    int newCarIndex = carSet.size();
     if(len == 0) {
         // 如果所有仓库都没有可用车辆，则派出一辆artificial车
         int selectedDepotPos = random(0, depots.size());
-        selectedDepotPos = min(selectedDepotpos, depots.size()-1);
+        selectedDepotPos = min(selectedDepotPos, (int)depots.size()-1);
         Spot *depot = depots[selectedDepotPos];
         newCar = new Car(*depot, *depot, newCarIndex, depot->id, 
                 hierarchicalCar);
@@ -721,10 +719,10 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                     DTpara, tempRandomRange, allowNegativeCost);
         } 
         else {  // 没有可行插入位置，则再新开一辆货车
-            Spot *newCar = getNewCar(removedCarSet, newCarIndex);
+            Car *newCar = getNewCar(removedCarSet);
             try {
                 Spot* selectedCustomer = removedCustomer[selectedCustIndex];
-                newCar->insertAtHead(selectedCustomer);
+                newCar->insertAtRear(selectedCustomer);
             } catch (exception &e) {
                 cerr << "In greedy insert: " << e.what() << endl;
                 exit(1);
@@ -741,6 +739,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             minInsertPos.addOneRow();
             secondInsertPerRoute.addOneRow();
             secondInsertPos.addOneRow();
+            int selectedCarPos = removedCarSet.size();
             updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
                     secondInsertPerRoute, secondInsertPos, selectedCarPos, 
                     removedCarSet, removedCustomer, tempBaseNoise, 
@@ -847,7 +846,7 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             Car *newCar = getNewCar(removedCarSet);
             try {
                 Spot* selectedCustomer = removedCustomer[selectedCustIndex];
-                newCar->insertAtHead(selectedCustomer);
+                newCar->insertAtRear(selectedCustomer);
             } catch (exception &e) {
                 cerr << "In regret insert: " << e.what() << endl;
                 exit(1);
@@ -864,6 +863,7 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             minInsertPos.addOneRow();
             secondInsertPerRoute.addOneRow();
             secondInsertPos.addOneRow();
+            int selectedCarPos = removedCarSet.size();
             updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
                     secondInsertPerRoute, secondInsertPos, selectedCarPos, 
                     removedCarSet, removedCustomer, tempBaseNoise, 

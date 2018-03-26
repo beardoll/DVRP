@@ -4,8 +4,6 @@
 #include<cstdlib>
 #include "TxtParser.h"
 
-using namespace std;
-
 TxtParser::TxtParser(const string filename) {
     // 初始化函数
     this->filename = filename;
@@ -50,7 +48,7 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
     }
     string line;
     // 读取第一行数据
-    getLine(in, line);
+    getline(in, line);
     vector<float> data;
     splitString(line, data, " ");
     int vechileNum = (int)data[1];
@@ -60,7 +58,7 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
     for(int i=0; i<depotNum; i++) {
         data.clear();
         data.resize(0);
-        getLine(in, line);
+        getline(in, line);
         splitString(line, data, " ");
         Spot *dp = new Spot();
         dp->timeDuration = data[0];
@@ -71,7 +69,7 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
     for(int i=0; i<customerNum; i++) {
         data.clear();
         data.resize(0);
-        getLine(in, line);
+        getline(in, line);
         splitString(line, data, " ");
         Spot *cust = new Spot();
         cust->id = (int)data[0];
@@ -82,12 +80,13 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
         cust->startTime = data[8];
         cust->endTime = data[9];
         cust->type = 'C';
+        cust->priority = 1;
         customers.push_back(cust);
     }
     for(int i=0; i<depotNum; i++) {
         data.clear();
         data.resize(0);
-        getLine(in, line);
+        getline(in, line);
         splitString(line, data, " ");
         Spot *dp = depots[i];
         dp->id = (int)data[0];

@@ -7,11 +7,12 @@ Spot::Spot() {
     this->x = 0;
     this->y = 0;
     this->startTime = 0;
-    this->endTime = TIME_SLOT_NUM * TIME_SLOT_LEN;
+    this->endTime = 0;
     this->serviceTime = 0;
     this->arrivedTime = 0; 
-    this->durationTime = 0;
+    this->timeDuration = 0;
     this->quantity = 0;
+    this->priority = 0;
     this->next = NULL;
     this->front = NULL;
 }
@@ -25,8 +26,9 @@ Spot::Spot(const Spot &s) {
     this->endTime = s.endTime;
     this->arrivedTime = s.arrivedTime;
     this->serviceTime = s.serviceTime;
-    this->durationTime = s.durationTime;
+    this->timeDuration = s.timeDuration;
     this->quantity = s.quantity;
+    this->priority = s.priority;
     this->next = s.next;
     this->front = s.front;
 }
@@ -41,8 +43,9 @@ Spot& Spot::operator= (const Spot &s) {
     this->endTime = s.endTime;
     this->arrivedTime = s.arrivedTime;
     this->serviceTime = s.serviceTime;
-    this->durationTime = s.durationTime;
+    this->timeDuration = s.timeDuration;
     this->quantity = s.quantity;
+    this->priority = s.priority;
     this->next = s.next;
     this->front = s.front;
 }

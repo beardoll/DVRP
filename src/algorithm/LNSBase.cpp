@@ -50,7 +50,7 @@ LNSBase::LNSBase(int pshaw, int pworst, float eta, float *randomRange,
     computeMax(allCustomer, maxd, mind, maxquantity);
     this->pshaw = pshaw;
     this->pworst = pworst;
-    this->baseNoise = eta * maxquantity;
+    this->baseNoise = eta * maxd;
     this->depots = depots;
     this->randomRange = randomRange;
     this->hierarchicalCar = hierarchicalCar;
@@ -259,6 +259,7 @@ void generateMatrix(vector<int> &allIndex, vector<Car*> &removedCarSet, vector<S
                     }
                 }
             }
+			// float randomNoise = noiseAmount;
             float randomNoise = noiseAmount * random(randomRange[0], randomRange[1]);
             Spot *currentCustomer = removedCustomer[j];
             removedCarSet[i]->computeInsertCost(currentCustomer, minValue, ref1, 
@@ -331,6 +332,7 @@ void updateMatrix(vector<int> restCustomerIndex, Matrix<float> &minInsertPerRout
                     break;
             }		
         }
+		//float randomNoise = noiseAmount;
         float randomNoise = noiseAmount * random(randomRange[0], randomRange[1]);
         Spot *currentCustomer = removedCustomer[index];
         removedCarSet[selectedCarPos]->computeInsertCost(currentCustomer, 
@@ -560,9 +562,8 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
         int indexInRouteLen = indexsetInRoute.end() - indexsetInRoute.begin();
         int removedNum = static_cast<int>(max((float)floor(pow(y,pworst)*indexInRouteLen), 1.0f));
         assert(removedNum <= indexInRouteLen);
-        i = 0;
-        while(i<(int)indexsetInRoute.size()) {
-            int index = reducedCost[i++].second;
+        for(i=0; i<removedNum; i++) {
+            int index = reducedCost[i].second;
             removedIndexset.push_back(index);
         }
         sort(removedIndexset.begin(), removedIndexset.end());
@@ -615,6 +616,7 @@ Car* LNSBase::getNewCar(vector<Car*> carSet) {
     int newCarIndex = carSet.size();
     if(len == 0) {
         // 如果所有仓库都没有可用车辆，则派出一辆artificial车
+		// cout << "Launch artificial car!!" << endl;
         int selectedDepotPos = random(0, depots.size());
         selectedDepotPos = min(selectedDepotPos, (int)depots.size()-1);
         Spot *depot = depots[selectedDepotPos];
@@ -684,6 +686,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
     vector<pair<float, pair<int,int> > > minInsertPerRestCust(0);  
     while((int)alreadyInsertIndex.size() < removedCustomerNum){
         minInsertPerRestCust.clear();  // 每次使用之前先清空
+		minInsertPerRestCust.resize(0);
         for(i=0; i<(int)restCustomerIndex.size(); i++){               // 只计算尚在路径中的节点
             int index = restCustomerIndex[i];
             int pos;
@@ -703,7 +706,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 removedCarSet[selectedCarPos]->insertAfter(ref, selectedCustomer);
             } catch (exception &e) {
                 cerr << "In greedy insert: " << e.what() << endl;
-                exit(1);
+                //exit(1);
             }
             alreadyInsertIndex.push_back(selectedCustIndex);
             vector<int>::iterator iterINT;
@@ -725,7 +728,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 newCar->insertAtRear(selectedCustomer);
             } catch (exception &e) {
                 cerr << "In greedy insert: " << e.what() << endl;
-                exit(1);
+                //exit(1);
             }
             removedCarSet.push_back(newCar);  // 添加到货车集合中
             alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
@@ -739,7 +742,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             minInsertPos.addOneRow();
             secondInsertPerRoute.addOneRow();
             secondInsertPos.addOneRow();
-            int selectedCarPos = removedCarSet.size();
+            int selectedCarPos = removedCarSet.size() - 1;
             updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
                     secondInsertPerRoute, secondInsertPos, selectedCarPos, 
                     removedCarSet, removedCustomer, tempBaseNoise, 
@@ -863,7 +866,7 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             minInsertPos.addOneRow();
             secondInsertPerRoute.addOneRow();
             secondInsertPos.addOneRow();
-            int selectedCarPos = removedCarSet.size();
+            int selectedCarPos = removedCarSet.size() - 1;
             updateMatrix(restCustomerIndex, minInsertPerRoute, minInsertPos, 
                     secondInsertPerRoute, secondInsertPos, selectedCarPos, 
                     removedCarSet, removedCustomer, tempBaseNoise, 
@@ -912,6 +915,38 @@ void LNSBase::removeNullRoute(vector<Car*> &originCarSet){
     }
 }
 
+void LNSBase::removeNullRoute(vector<Car*> &originCarSet, bool mark){    
+    // 清除OriginCarSet中的空车辆
+    // 若mark=true, 则只允许清除虚拟的空车
+    vector<Car*>::iterator iter;
+    vector<Car*>::iterator temp;
+    int count = 0;
+    for(iter=originCarSet.begin(); iter<originCarSet.end();){
+        if ((*iter)->getRoute()->getSize() == 0){
+            if(mark == true) {
+                if ((*iter)->judgeArtificial() == true) { 
+                    // 如果是空车而且是虚拟的车
+					// cout << "remove artificial car!!" << endl;
+                    delete(*iter);
+                    iter = originCarSet.erase(iter);
+                } else{
+                    (*iter)->changeCarIndex(count++);
+                    ++iter;				
+                }
+            }
+            else {
+                delete(*iter);
+                iter = originCarSet.erase(iter);
+            }
+        } 
+        else {
+            (*iter)->changeCarIndex(count++);
+            ++iter;
+        }
+    }
+	originCarSet.resize(count);
+}
+
 size_t LNSBase::codeForSolution(vector<Car*> originCarSet){  
     // 对每个解（多条路径）进行hash编码
     stringstream ss;
@@ -934,6 +969,7 @@ float LNSBase::getCost(vector<Car*> originCarSet){
     float totalCost = 0;
     for(int i=0; i<(int)originCarSet.size(); i++){
         float temp;
+		//temp = originCarSet[i]->getRoute()->getTrueLen();
         if(originCarSet[i]->judgeArtificial() == true) {
             temp = originCarSet[i]->getRoute()->getLen(DTpara, true);
         } else {

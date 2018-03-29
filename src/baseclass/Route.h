@@ -33,7 +33,8 @@ public:
     // 获取链表属性
     float getQuantity() {return this->quantity;}            // 得到本车已使用的容量(装载顾客)
     float getCapacity() {return this->capacity;}            // 返回本车的车载量
-    float getLen(float DTpara[], bool artificial = false);  // 得到路径长度
+    float getLen(float DTpara[], bool artificial = false);  // 得到路径长度(加惩罚)
+	float getTrueLen();      // 得到真实路径长度(不加惩罚)
     int getSize();           // 得到当前链表的大小
     vector<Spot*> getAllCustomer();  // 得到路径中所有的顾客节点
     vector<int> getAllID();

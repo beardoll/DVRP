@@ -48,6 +48,7 @@ Spot& Spot::operator= (const Spot &s) {
     this->priority = s.priority;
     this->next = s.next;
     this->front = s.front;
+	return *this;
 }
 
 bool Spot::operator< (Spot &s) {

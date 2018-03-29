@@ -23,6 +23,7 @@ class LNSBase {
         void regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCustomer, 
                 bool noiseAdd);
         void removeNullRoute(vector<Car*> &originCarSet);
+		void removeNullRoute(vector<Car*> &originCarSet, bool mark);
         size_t codeForSolution(vector<Car*> originCarSet);
         float getCost(vector<Car*> originCarSet);
         void updateWeight(int *freq, float *weight, int *score, float r, int num);

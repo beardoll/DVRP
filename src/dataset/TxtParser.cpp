@@ -16,7 +16,7 @@ void splitString(const string &s, vector<float> &data, const string &sep) {
     pos1 = 0;
     while(string::npos != pos2) {
         string subs = s.substr(pos1, pos2-pos1);
-        if(subs != sep) {
+        if(subs != "") {
             // 处理分隔符连续出现的情况
             data.push_back(atof(subs.c_str()));
         }
@@ -25,7 +25,7 @@ void splitString(const string &s, vector<float> &data, const string &sep) {
     }
     if(pos1 != s.length()) {
         string subs = s.substr(pos1);
-        if(subs != sep) {
+        if(subs != "") {
             data.push_back(atof(subs.c_str()));
         }
     }
@@ -51,9 +51,9 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
     getline(in, line);
     vector<float> data;
     splitString(line, data, " ");
-    int vechileNum = (int)data[1];
+    int vehicleNum = (int)data[1];
     int customerNum = (int)data[2];
-    limitCarNum = customerNum;
+    limitCarNum = vehicleNum;
     int depotNum = (int)data[3];
     for(int i=0; i<depotNum; i++) {
         data.clear();
@@ -77,8 +77,8 @@ void TxtParser::getDataset(vector<Spot*> &depots, vector<Spot*> &customers, int 
         cust->y = data[2];
         cust->serviceTime = data[3];
         cust->quantity = data[4];
-        cust->startTime = data[8];
-        cust->endTime = data[9];
+        cust->startTime = data[11];
+        cust->endTime = data[12];
         cust->type = 'C';
         cust->priority = 1;
         customers.push_back(cust);

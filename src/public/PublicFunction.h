@@ -47,6 +47,7 @@ inline void withdrawPlan(vector<Car*> &Plan){
         delete(*carIter);
     }
     Plan.clear();
+	Plan.resize(0);
 }
 
 inline vector<Car*> copyPlan(vector<Car*> Plan) {
@@ -72,6 +73,7 @@ inline void deleteCustomerSet(vector<Spot*> &customerSet){   // É¾³ýCustomerSet
         }
     }
     customerSet.clear();
+	customerSet.resize(0);
 }
 
 inline vector<Spot*> copyCustomerSet(vector<Spot*> customerSet){  

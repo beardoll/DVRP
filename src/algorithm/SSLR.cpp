@@ -1,6 +1,7 @@
 #include "SSLR.h"
 #include "../baseclass/Matrix.h"
 #include "../run/TxtRecorder.h"
+#include "../run/Config.h"
 #include<cmath>
 #include<stdexcept>
 #include<algorithm>
@@ -9,7 +10,7 @@
 
 using namespace std;
 
-float RANDOM_RANGE_SSLR[2] = {0, 1};
+float RANDOM_RANGE_SSLR[2] = {0.95, 1};
 
 SSLR::SSLR(vector<Spot*> allCustomer, vector<Spot*> depots, int maxIter, bool verbose, 
             int pshaw, int pworst, float eta): LNSBase(pshaw,  pworst, eta, 
@@ -71,12 +72,50 @@ float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> depots,
     float *DTpara = new float[4];
     DTpara[0] = DTH1;
     DTpara[1] = DTH2;
+	//DTpara[0] = 0;
+    //DTpara[1] = 0;
     // 没有低优先级顾客
     DTpara[2] = 0;
     DTpara[3] = 0;
     //cout << "DTH1: " << DTpara[0] << " DTH2: " << DTpara[1] << " DTL1: " <<
     //    DTpara[2] << " DTL2:" << DTpara[3] << endl;
     return DTpara;
+}
+
+float getTrueLen(vector<Car*> carSet, int &dismissNum) {
+	// 计算carSet中working car的运行长度，并且返回没有在working car中的顾客数量
+	vector<Car*>::iterator carIter;
+	dismissNum = 0;
+	float len = 0;
+	for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
+		if((*carIter)->judgeArtificial() == true) {
+			dismissNum += (*carIter)->getRoute()->getSize();
+		} else {
+			len += (*carIter)->getTrueLen();
+		}
+	}
+	return len;
+}
+
+vector<Car*> initialCarSet(vector<Spot*> depots) {
+	// 初始化空的车辆集合
+	vector<Car*> carSet;
+	vector<Spot*>::iterator spotIter;
+	for(spotIter=depots.begin(); spotIter<depots.end(); spotIter++) {
+		for(int i=0; i<VEHICLE_NUM; i++) {
+			Car *newCar = new Car(**spotIter, **spotIter, carSet.size(), 
+				(*spotIter)->id);
+			carSet.push_back(newCar);
+		}
+	}
+	return carSet;
+}
+
+void showPriority(vector<Spot*> customerSet) {
+	for(int i=0; i<customerSet.size(); i++) {
+		cout << customerSet[i]->priority << "\t";
+	}
+	cout << endl;
 }
 
 void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){  
@@ -96,9 +135,9 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     resetDTpara(DTpara);
 	
     // 构造初始全局最优解
-    vector<Car*> currentCarSet(0);
-    Car *newCar = new Car(*depots[0], *depots[0], 0, depots[0]->id);
-    currentCarSet.push_back(newCar);
+	vector<Car*> currentCarSet = initialCarSet(depots);
+    //Car *newCar = new Car(*depots[0], *depots[0], 0, depots[0]->id);
+    //currentCarSet.push_back(newCar);
     greedyInsert(currentCarSet, allCustomer, false);
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
@@ -156,9 +195,14 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     for(int iter=0; iter<maxIter; iter++){
         if(iter%segment == 0){  // 新的segment开始
             if(verbose == true) {
+				int dismissNum;
+				float trueLen = getTrueLen(globalCarSet, dismissNum);
                 cout << "...............Segment:" << (int)floor(iter/segment)+1 << 
                     "................" << endl;
-                cout << "current best cost is:" << globalCost << endl;
+                cout << "current best penaled cost is:" << globalCost << endl;
+				cout << "current best true cost is: " << trueLen << endl;
+				cout << "dismiss number is best cost is: " << dismissNum << endl;
+				cout << "car number in best cost is: " << globalCarSet.size() << endl;
                 cout << "hash table length is:" << hashTable.size() << endl;
                 cout << "shaw   removal:" <<  "(score)-" << removeScore[0] 
                     << '\t' << "(freq)-" << removeFreq[0] << endl;
@@ -227,7 +271,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
         // decide the number to remove
         int currentRemoveNum;  
         // 最多移除的节点数
-        int maxRemoveNum = min(100, static_cast<int>(floor(ksi*customerTotalNum)));  
+        int maxRemoveNum = min(40, static_cast<int>(floor(ksi*customerTotalNum)));  
         // 最少移除的节点数
         int minRemoveNum = 4;
         // 当前需要移除的节点数目
@@ -235,6 +279,9 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
 
         removedCustomer.clear();
         removedCustomer.resize(0);
+
+		//removeIndex = 1;
+		// insertIndex = 0;
 
         // 执行remove heuristic
         switch(removeIndex) {
@@ -244,10 +291,12 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
                 for(i=0; i<(int)tempCarSet.size(); i++){
                     // tempCarSet[i]->getRoute().refreshArrivedTime;
                     vector<float> temp = tempCarSet[i]->getRoute()->getArrivedTime();
-                    sort(temp.begin(), temp.end(), greater<float>());
-                    if(temp[0] > maxArrivedTime) {
-                        maxArrivedTime = temp[0];
-                    }
+					if(temp.size() != 0) {
+						sort(temp.begin(), temp.end(), greater<float>());
+						if(temp[0] > maxArrivedTime) {
+							maxArrivedTime = temp[0];
+						}
+					}
                 }
                 // 重置类成员maxt
                 this->maxt = maxArrivedTime;
@@ -281,8 +330,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
             exit(1);
         }
 
-        // 移除空路径
-        removeNullRoute(tempCarSet);
+        // 移除空路径（只移除artificial car）
+        removeNullRoute(tempCarSet, true);
         
         // 使用模拟退火算法决定是否接收该解
         bool accept = false;

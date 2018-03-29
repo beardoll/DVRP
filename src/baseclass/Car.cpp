@@ -21,7 +21,7 @@ Car::Car(const Car& item):route(item.route){
     // 复制构造函数
     this->carIndex = item.carIndex;
     this->depotIndex = item.depotIndex;
-    this->artificial = artificial;
+    this->artificial = item.artificial;
 }
 
 

@@ -123,6 +123,7 @@ void Route::insertAfter(Spot *ref, Spot *current) {
             mark = true;
             break;
         }
+		ptr = ptr->next;
     }
     if(mark == false) {
         throw out_of_range("Cannot find the position to insert!");
@@ -135,8 +136,7 @@ void Route::insertAfter(Spot *ref, Spot *current) {
     quantity += current->quantity;
     size++;
     if(checkTimeConstraint() == false) {
-        cout << "In insertAfter, time constraints violated" << endl;
-        exit(1);
+        throw out_of_range("In insertAfter, time constraints violated");
     }
 }
 
@@ -149,8 +149,7 @@ void Route::insertAtRear(Spot *node) {
     quantity = quantity + node->quantity;
     size++;
     if(checkTimeConstraint() == false) {
-        cout << "In insertAtRear, time constraints violated" << endl;
-        exit(1);
+        throw out_of_range("In insertAtRear, time constraints violated");
     }
 }
 
@@ -171,8 +170,7 @@ void Route::deleteNode(Spot *node) {
     quantity -= node->quantity;
     size--;
     if(checkTimeConstraint() == false) {
-        cout << "In deleteNode, time constraints violated" << endl;
-        exit(1);
+        throw out_of_range("In deleteNode, time constraints violated");
     }
     delete node;
 }
@@ -283,6 +281,30 @@ float Route::getLen(float DTpara[], bool artificial){
     }
 }
 
+float Route::getTrueLen(){   
+    // 得到真实的路径长度（不添加惩罚）
+    // Args:
+    //   * DTpara: 对不同类型的车/顾客组合的惩罚因子
+    //   * artificial: 车辆属性，为true表示virtual car
+    // Returns:
+    //   * len: 路径长度
+
+    float len = 0;
+    if(size == 0) {
+        // 无顾客节点
+        return len;
+    }
+    Spot *pre = head;
+    Spot *cur = head->next;
+    while(cur != NULL) {
+        len += dist(pre, cur);
+        pre = pre->next;
+        cur = cur->next;
+    }
+    return len;
+
+}
+
 vector<int> Route::getAllID() {
     // 获得所有id，包括head和rear
     Spot *ptr;
@@ -363,12 +385,13 @@ bool Route::timeWindowJudge(Spot *ref, Spot *cur){
     Spot *temp = head;  
     float time = 0;
     float td = 0;
-    // 计算到达ref的时间（不检查约束）
+    // 计算到达ref的时间
     while(temp != ref) {
         if(temp->type == 'D') {
             time = temp->arrivedTime;
             time += temp->serviceTime;
         } else {
+			if(time > temp->endTime) return false;
             if(time < temp->startTime) time = temp->startTime;
             time += temp->serviceTime;
         }
@@ -393,8 +416,8 @@ bool Route::timeWindowJudge(Spot *ref, Spot *cur){
         time += dist(cur, temp);
         td += dist(cur, temp);
         if(td > timeDuration) return false;
-        if(time > cur->endTime) return false;
-        if(time < cur->startTime) time = temp->startTime;
+        if(time > temp->endTime) return false;
+        if(time < temp->startTime) time = temp->startTime;
         time += temp->serviceTime;
         temp = temp->next;
         while(temp != rear) {

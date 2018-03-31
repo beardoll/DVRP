@@ -305,6 +305,23 @@ float Route::getTrueLen(){
 
 }
 
+float Route::getTimeDuration() {
+    // time duration: travel len + serviceTime
+    float timeDuration = 0;
+    if(size == 0) {
+        return 0;
+    }
+    Spot *pre = head;
+    Spot *cur = head->next;
+    while(cur!=NULL) {
+        timeDuration += dist(pre, cur);
+        timeDuration += cur->serviceTime;
+        pre = pre->next;
+        cur = cur->next;
+    }
+    return timeDuration;
+}
+
 vector<int> Route::getAllID() {
     // 获得所有id，包括head和rear
     Spot *ptr;
@@ -390,10 +407,12 @@ bool Route::timeWindowJudge(Spot *ref, Spot *cur){
         if(temp->type == 'D') {
             time = temp->arrivedTime;
             time += temp->serviceTime;
+            td += temp->serviceTime;
         } else {
 			if(time > temp->endTime) return false;
             if(time < temp->startTime) time = temp->startTime;
             time += temp->serviceTime;
+            td += temp->serviceTime;
         }
         time += dist(temp, temp->next);
         td += dist(temp, temp->next);
@@ -403,30 +422,33 @@ bool Route::timeWindowJudge(Spot *ref, Spot *cur){
     // 计算是否违反cur的时间窗约束
     if(time < ref->startTime) time = ref->startTime;
     time += ref->serviceTime;
+    td += ref->serviceTime;
     time += dist(ref, cur);
     td += dist(ref, cur);
-    if(td > timeDuration) return false;
     if(time > cur->endTime) return false;
     if(time < cur->startTime) time = cur->startTime;
     time += cur->serviceTime;
-
+    td += cur->serviceTime;
+    if(td > timeDuration) return false;
     // 当前时间为从cur出发的时间，判断是否违反原路径中ref以后的时间窗约束
     temp = ref->next;
     if(temp != rear) {
         time += dist(cur, temp);
         td += dist(cur, temp);
-        if(td > timeDuration) return false;
         if(time > temp->endTime) return false;
         if(time < temp->startTime) time = temp->startTime;
         time += temp->serviceTime;
+        td += temp->serviceTime;
+        if(td > timeDuration) return false;
         temp = temp->next;
         while(temp != rear) {
             time += dist(temp->front, temp);
             td += dist(temp->front, temp);
-            if(td > timeDuration) return false;
             if(time > temp->endTime) return false;
             if(time < temp->startTime) time = temp->startTime;
             time += temp->serviceTime;
+            td += temp->serviceTime;
+            if(td > timeDuration) return false;
             temp = temp->next;
         }
         td += dist(rear->front, rear);
@@ -487,10 +509,11 @@ bool Route::checkTimeConstraint() {
         time += dist(pre, cur);
         td += dist(pre, cur);
         cur->arrivedTime = time;  // 更新arrivedTime
-        if(td > timeDuration) return false;
         if(time > cur->endTime) return false;
         if(time < cur->startTime) time = cur->startTime;
         time += cur->serviceTime;
+        td += cur->serviceTime;
+        if(td > timeDuration) return false;
         pre = pre->next;
         cur = cur->next;
     }

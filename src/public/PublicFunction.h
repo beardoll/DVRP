@@ -38,6 +38,8 @@ vector<int> getCustomerID(vector<Car*> carSet);
 void showAllCustomerID(vector<Car*> carSet);
 void showAllCustomerID(vector<Spot*> customerSet);
 void showDetailForPlan(vector<Car*> carSet);
+vector<float> getDemands(vector<Car*> carSet);
+vector<float> getTimeDurations(vector<Car*> carSet);
 
 // 模板函数和内联函数的实现
 inline void withdrawPlan(vector<Car*> &Plan){  

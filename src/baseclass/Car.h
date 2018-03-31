@@ -30,6 +30,8 @@ public:
     bool checkTimeConstraint() {return route.checkTimeConstraint(); }
     Spot* findCustomer(int id) { return route.findCustomer(id); }
 	float getTrueLen() { return route.getTrueLen(); }
+    float getDemand() { return route.getQuantity(); }
+    float getTimeDuration() { return route.getTimeDuration(); }
 
     // 更改货车属性
     void changeCarIndex(int newIndex) {carIndex = newIndex;}    // 更改车辆编号

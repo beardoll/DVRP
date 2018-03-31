@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
     } else {
         ostr << index;
     }
-    string data_file = "C:/Users/beardoll/Documents/DVRP/src/pr03"; 
+    string data_file = SIMULATION_PATH + "dataset/pr" + ostr.str(); 
 	//static ofstream outfile;
 	//outfile.open(data_file.c_str(), ofstream::trunc);
 	//outfile << "test" << endl;
@@ -42,6 +42,19 @@ int main(int argc, char *argv[]){
     vector<Car*> result;
     float cost;
     alg.run(result, cost);
+    // 每辆车搭载的货物量
+    vector<float> demands = getDemands(result);
+    // 每辆车的time duration
+    vector<float> tds = getTimeDurations(result);
+    for(int i=0; i<tds.size(); i++) {
+        cout << "id: #" << result[i]->getCarIndex() << " depot: #"
+            << result[i]->getDepotIndex() <<" demand: "  << demands[i] 
+            << " time duration: " << tds[i] << " customerNum: " <<
+            result[i]->getRoute()->getSize() << endl;
+    }
+    cout << "=================" << endl;
     cout << "The final cost is " << cost << endl;
+    cout << "=================" << endl;
+    showDetailForPlan(result);
     return 0;
 }

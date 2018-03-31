@@ -161,7 +161,7 @@ void showDetailForPlan(vector<Car*> carSet) {
         cout << "Depot index: #" << depot->id << " x-" << depot->x << "\t" << " y-" << depot->y << endl;
         vector<Spot*> tempCust = (*carIter)->getAllCustomer();
         for(custIter = tempCust.begin(); custIter < tempCust.end(); custIter++) {
-            cout << "Spot index: #" << (int)(custIter-tempCust.begin()) << "\t"
+            cout << "Spot index: #" << (*custIter)->id << "\t"
                 << ": x-" << (*custIter)->x << "\t" << "y-" << (*custIter)->y << "\t" 
                 << "AT-" << (*custIter)->arrivedTime << "\t" << "ST-" << (*custIter)->startTime 
                 << "\t" << "ET-" << (*custIter)->endTime << endl;
@@ -170,3 +170,20 @@ void showDetailForPlan(vector<Car*> carSet) {
     }
 }
 
+vector<float> getDemands(vector<Car*> carSet) {
+    vector<float> demands;
+    vector<Car*>::iterator carIter;
+    for(carIter=carSet.begin(); carIter<carSet.end(); carIter++) {
+        demands.push_back((*carIter)->getDemand());
+    }
+    return demands;
+}
+
+vector<float> getTimeDurations(vector<Car*> carSet) {
+    vector<float> tds;
+    vector<Car*>::iterator carIter;
+    for(carIter=carSet.begin(); carIter<carSet.end(); carIter++) {
+        tds.push_back((*carIter)->getTimeDuration());
+    }
+    return tds;
+}

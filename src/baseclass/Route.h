@@ -39,6 +39,7 @@ public:
     vector<Spot*> getAllCustomer();  // 得到路径中所有的顾客节点
     vector<int> getAllID();
     vector<float> getArrivedTime();
+    float getTimeDuration();
 
     // 计算插入/删除节点代价
     // 计算所有节点的移除代价

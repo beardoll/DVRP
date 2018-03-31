@@ -400,8 +400,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
         }
     }    
 
-    finalCarSet = globalCarSet;   
-    finalCost = globalCost;
+    finalCarSet = copyPlan(globalCarSet);   
+    finalCost = getTrueLen(globalCarSet, temp);
     withdrawPlan(tempCarSet);
     withdrawPlan(globalCarSet);
     withdrawPlan(currentCarSet);

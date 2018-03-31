@@ -10,7 +10,7 @@
 
 using namespace std;
 
-float RANDOM_RANGE_SSLR[2] = {0.95, 1};
+float RANDOM_RANGE_SSLR[2] = {0.8, 1};
 
 SSLR::SSLR(vector<Spot*> allCustomer, vector<Spot*> depots, int maxIter, bool verbose, 
             int pshaw, int pworst, float eta): LNSBase(pshaw,  pworst, eta, 
@@ -186,8 +186,11 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     // 其余核心参数
     int segment = 100;   // 每隔一个segment更新removeProb, removeWeight等参数
     float w = 0.05f;      // 初始温度设定有关参数
-    float T = w * abs(currentCost) / (float)log(2);   // 初始温度
-    float ksi = 0.8f;    // 每次移除的最大节点数目占总节点数的比例
+	int temp;
+	float refCost = getTrueLen(globalCarSet, temp);
+    float T = w * abs(refCost) / (float)log(2);   // 初始温度
+	//T = T * maxd/DTpara[0];
+	float ksi = 0.8f;    // 每次移除的最大节点数目占总节点数的比例
     float c = 0.9998f;    // 降温速率
     vector<Spot*> removedCustomer(0);    // 被移除的节点
     vector<Car*> tempCarSet = copyPlan(currentCarSet);      // 暂时存放当前解

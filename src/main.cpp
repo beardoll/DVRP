@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
     } else {
         ostr << index;
     }
-    string data_file = "C:/Users/beardoll/Documents/DVRP/src/pr02"; 
+    string data_file = "C:/Users/beardoll/Documents/DVRP/src/pr03"; 
 	//static ofstream outfile;
 	//outfile.open(data_file.c_str(), ofstream::trunc);
 	//outfile << "test" << endl;

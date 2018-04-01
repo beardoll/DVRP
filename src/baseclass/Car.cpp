@@ -200,7 +200,7 @@ Car* Car::capturePartRoute(float time){
         try {
             newCar->insertAtRear(*custIter);
         } catch (exception &e) {
-            cerr << "In car #" << carIndex << ":" << endl;
+            cerr << "In car #" << carIndex << " ,state: " << state << "..." << endl;
             cerr << "In capture: " << endl;
             cerr << e.what() << endl;
             exit(1);

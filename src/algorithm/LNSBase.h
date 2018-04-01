@@ -26,6 +26,7 @@ class LNSBase {
         void removeNullRoute(vector<Car*> &originCarSet, bool mark=false);
         size_t codeForSolution(vector<Car*> originCarSet);
         float getCost(vector<Car*> originCarSet);
+        float getTrueCost(vector<Car*> carSet);
         void updateWeight(int *freq, float *weight, int *score, float r, int num);
         void updateProb(float *removedProb, float *removedWeight, int removedNum);
 

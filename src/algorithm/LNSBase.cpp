@@ -1022,6 +1022,17 @@ float LNSBase::getCost(vector<Car*> originCarSet){
     return totalCost;
 }
 
+float LNSBase::getTrueCost(vector<Car*> carSet) {
+    // 得到carSet的真实路径长度
+    // 不管是artificial还是working car，都不惩罚或者奖励
+    float cost = 0;
+    float temp[4] = {0, 0, 0, 0};
+    for(int i=0; i<(int)carSet.size(); i++) {
+        cost += carSet[i]->getRoute()->getLen(temp, true);
+    }
+    return cost;
+}
+
 void LNSBase::updateWeight(int *freq, float *weight, int *score, float r, int num) {  
     // 更新权重
     for(int i=0; i<num; i++){

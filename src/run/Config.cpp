@@ -23,9 +23,7 @@ float ALPHA = 1.5;
 float PI = 3.1415926;
 int MAX_DEMAND = 5;
 
-// ******** Path for Solomon Benchmark ********* //
-string SOLOMON_FILENAME = "./solomon-1987-rc1/RC103_100.xml";
 
 // ******** Path for the bench we construct ******** //
-string BENCH_FILE_PATH = "./simulation/";
+string BENCH_FILE_PATH = "./O2OSimulation/";
 

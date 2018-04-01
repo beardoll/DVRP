@@ -135,9 +135,10 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     resetDTpara(DTpara);
 	
     // 构造初始全局最优解
-	vector<Car*> currentCarSet = initialCarSet(depots);
-    //Car *newCar = new Car(*depots[0], *depots[0], 0, depots[0]->id);
-    //currentCarSet.push_back(newCar);
+	// vector<Car*> currentCarSet = initialCarSet(depots);
+    vector<Car*> currentCarSet;
+    Car *newCar = new Car(*depots[0], *depots[0], 0, depots[0]->id);
+    currentCarSet.push_back(newCar);
     greedyInsert(currentCarSet, allCustomer, false);
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        

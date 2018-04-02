@@ -8,7 +8,7 @@ Car::Car(Spot &headNode, Spot &rearNode, float capacity, int index, bool artific
     carIndex(index), route(headNode, rearNode, capacity), artificial(artificial)
 {
     state = wait;
-    nearestDepartureTime = 0;
+    nearestDepartureTime = LATEST_SERVICE_TIME;
     nextArriveTime = 0;
     travelDistance = 0;
 }
@@ -17,7 +17,7 @@ Car::Car(Route &route, int index, bool artificial): carIndex(index),
     artificial(artificial), route(route)
 {
     state = wait;
-    nearestDepartureTime = 0;
+    nearestDepartureTime = LATEST_SERVICE_TIME;
     nextArriveTime = 0;
     travelDistance = 0;
 }

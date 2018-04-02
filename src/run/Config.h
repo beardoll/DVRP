@@ -10,6 +10,7 @@ enum Strategy{Negative, Positive};
 enum DynamicLevel{low, mid, high};
 
 extern bool DEBUG;
+extern bool SAMPLING;  // 是否使用采样算法
 extern float DYNAMICISM;
 extern Strategy STRATEGY;
 extern float ITER_PERCENTAGE;
@@ -19,6 +20,7 @@ extern int TIME_SLOT_LEN;
 extern int TIME_SLOT_NUM;
 extern float OFF_WORK_TIME; // 骑手收工时间
 extern float LATEST_SERVICE_TIME; // 最晚的仍在服务的时间
+extern int VEHICLE_NUM;     // 允许使用的货车数量
 // R1-R2是store区
 // R3-R4是customer区
 extern float R1;

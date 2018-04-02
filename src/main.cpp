@@ -68,53 +68,55 @@ int main(int argc, char *argv[]){
         }
     }
     else if(condition == 2) {
-        BenchWrapper bw;
-        srand(unsigned(time(0)));
-        
-        // the directory for saving txt and xml files, respectively
-        //string txtName = SIMULATION_PATH + "txt/";
-        //string xmlName = SIMULATION_PATH + "xml/";
-        string loadFileName = BENCH_FILE_PATH + "bench_exp.xml";
+        for(int kk=0; kk<10; kk++) {
+            BenchWrapper bw;
+            srand(unsigned(time(0)));
+            
+            // the directory for saving txt and xml files, respectively
+            //string txtName = SIMULATION_PATH + "txt/";
+            //string xmlName = SIMULATION_PATH + "xml/";
+            string loadFileName = BENCH_FILE_PATH + "bench_exp.xml";
 
-        vector<Spot*> staticCustomer, dynamicCustomer, store;
-        Spot depot;
-        float capacity;
-        try {
-            bw.loadBench(loadFileName, staticCustomer, dynamicCustomer, store, 
-                    depot, capacity);
-        } catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
+            vector<Spot*> staticCustomer, dynamicCustomer, store;
+            Spot depot;
+            float capacity;
+            try {
+                bw.loadBench(loadFileName, staticCustomer, dynamicCustomer, store, 
+                        depot, capacity);
+            } catch (exception &e) {
+                cerr << e.what() << endl;
+                exit(1);
+            }
+            // txt文件地址
+            string txtFileName = BENCH_FILE_PATH + "result.txt";
+            TxtRecorder::changeFile(txtFileName);
+
+            cout << "There are " << staticCustomer.size() << " static customers and " << 
+                dynamicCustomer.size() << " dynamic customers" << endl;
+
+            Timer timer(staticCustomer, dynamicCustomer, store, capacity, depot);
+            vector<Spot*> rejectCustomer;
+            vector<Car*> finalCarSet;
+            float travelDistance = 0;
+            float addAveDistance = 0;
+            timer.run(finalCarSet, rejectCustomer, travelDistance, addAveDistance);
+            TxtRecorder::closeFile();
+            
+            // xml文件地址
+            string name = BENCH_FILE_PATH + "dynamicResult.xml";
+            bw.saveResult(name, finalCarSet, rejectCustomer, dynamicCustomer, depot, travelDistance, 
+                    addAveDistance);
+
+            // using ALNS to serve customers in finalCarSet to get best results
+            vector<Car*> bestCarSet;
+            float bestCost = 0;
+            computeBest(finalCarSet, bestCarSet, bestCost);
+            vector<Spot*> temp1, temp2;
+            // ALNS结果的存放地
+            string name2 = BENCH_FILE_PATH + "staticResult.xml";
+            bw.saveResult(name2, bestCarSet, temp1, temp2, depot, bestCost, 0);
+            withdrawPlan(bestCarSet);
         }
-        // txt文件地址
-        string txtFileName = BENCH_FILE_PATH + "result.txt";
-        TxtRecorder::changeFile(txtFileName);
-
-        cout << "There are " << staticCustomer.size() << " static customers and " << 
-            dynamicCustomer.size() << " dynamic customers" << endl;
-
-        Timer timer(staticCustomer, dynamicCustomer, store, capacity, depot);
-        vector<Spot*> rejectCustomer;
-        vector<Car*> finalCarSet;
-        float travelDistance = 0;
-        float addAveDistance = 0;
-        timer.run(finalCarSet, rejectCustomer, travelDistance, addAveDistance);
-        TxtRecorder::closeFile();
-        
-        // xml文件地址
-        string name = BENCH_FILE_PATH + "dynamicResult.xml";
-        bw.saveResult(name, finalCarSet, rejectCustomer, dynamicCustomer, depot, travelDistance, 
-                addAveDistance);
-
-        // using ALNS to serve customers in finalCarSet to get best results
-        vector<Car*> bestCarSet;
-        float bestCost = 0;
-        computeBest(finalCarSet, bestCarSet, bestCost);
-        vector<Spot*> temp1, temp2;
-        // ALNS结果的存放地
-        string name2 = BENCH_FILE_PATH + "staticResult.xml";
-        bw.saveResult(name2, bestCarSet, temp1, temp2, depot, bestCost, 0);
-        withdrawPlan(bestCarSet);
     }
     return 0;
 }

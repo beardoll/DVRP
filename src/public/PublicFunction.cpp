@@ -341,7 +341,6 @@ void showAllID(vector<Car*> carSet) {
     // 按顺序展示所有id(customer+store)
     vector<Car*>::iterator carIter;
     vector<int>::iterator intIter;
-    int CUSTOMER_NUM = 150;
     for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
         vector<int>IDs = (*carIter)->getAllID();
         int carIndex = (*carIter)->getCarIndex();

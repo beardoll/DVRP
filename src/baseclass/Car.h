@@ -13,6 +13,7 @@ public:
             bool artificial = false);  // 构造函数
     Car(Route &route, int index, bool artificial=false);  // 构造函数
     ~Car();          // 析构函数
+    void testNewCar();
     Car(const Car& item);  //复制构造函数
     Car& operator= (Car &item);       // 重载赋值操作
 

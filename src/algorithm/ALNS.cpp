@@ -203,14 +203,8 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
                 break;
             }
         }
-        try {
-            if (getCustomerNum(tempCarSet) != customerTotalNum) {
-                throw out_of_range("Lose some customers in ALNS!");
-            }
-        }
-        catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
+        if (getCustomerNum(tempCarSet) != customerTotalNum) {
+            throw out_of_range("Lose some customers in ALNS!");
         }
         removeNullRoute(tempCarSet);
 

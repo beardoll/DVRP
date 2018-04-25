@@ -76,9 +76,12 @@ void SetBench::constructCustomerSet() {
                     continue;
                 } else {
                     // 保证足够长的时间窗
+                    // 保证初始解有效
                     c->startTime = random(i*TIME_SLOT_LEN, (i+1)*TIME_SLOT_LEN);
                     c->startTime = min(c->startTime, timeHorizon-ALPHA*minTimeLen);
-                    c->endTime = random(c->startTime+ALPHA*minTimeLen, timeHorizon);
+                    float minEndTime = max(BEGIN_SLOT_INDEX * TIME_SLOT_LEN + 
+                        minTimeLen, c->startTime+ALPHA*minTimeLen);
+                    c->endTime = random(minEndTime, timeHorizon);
                     float windowLen = c->endTime - c->startTime;
                     c->tolerantTime = c->startTime + random(0.6*windowLen, 0.8*windowLen);
                     c->quantity = random(0, MAX_DEMAND);

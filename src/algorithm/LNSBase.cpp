@@ -481,8 +481,7 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCust
         checkRepeatID(removedIndexset);
     }
     catch (exception &e) {
-        cerr << "In shaw removal: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In shaw removal: " + string(e.what()));
     }
 
     // 从原有路径中remove掉某些(P-D)对
@@ -490,8 +489,7 @@ void LNSBase::shawRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCust
         removeCustomerFromCar(removedIndexset, customerNumInCar, allCustomerInOrder, originCarSet, 
                                 removedCustomer);
     } catch (exception &e) {
-        cerr << "In shaw removal: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In shaw removal: " + string(e.what()));
     }
 }
 
@@ -555,8 +553,7 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCu
         checkRepeatID(removedIndexset);
     }
     catch (exception &e) {
-        cerr << "In random removal: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In random removal: " + string(e.what()));
     }
 
     try {
@@ -564,8 +561,7 @@ void LNSBase::randomRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCu
                 originCarSet, removedCustomer);
     } 
     catch (exception &e){
-        cerr << "In random remove: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In random removal: " + string(e.what()));
     }
 }
 
@@ -651,16 +647,14 @@ void LNSBase::worstRemoval(vector<Car*> &originCarSet, vector<Spot*> &removedCus
             cout << *iter << "\t";
         }
         cout << endl;
-        cerr << "In worst removal: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In worst removal: " + string(e.what()));
     }
     try {
         removeCustomerFromCar(removedIndexset, customerNumInCar, allCustomerInOrder, 
                             originCarSet, removedCustomer); 
     } 
     catch (exception &e) {
-        cerr << "In worst removal: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In worst removal: " + string(e.what()));
     }
 }
 
@@ -685,8 +679,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
         } 
     }
     catch (exception &e){
-        cerr << "In greedy insertion: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In greedy insertion: " + string(e.what()));
     }
 
     int newCarIndex = removedCarSet[carNum-1]->getCarIndex()+1;  // 新车的起始标号
@@ -745,8 +738,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 removedCarSet[selectedCarPos]->insertAfter(refStore, refCustomer, 
                         selectedCustomer->choice, selectedCustomer);
             } catch (exception &e) {
-                cerr << "In greedy insert: " << e.what() << endl;
-                exit(1);
+                throw out_of_range("In greedy insert, find valid position: " + string(e.what()));
             }
             alreadyInsertIndex.push_back(selectedCustIndex);
             vector<int>::iterator iterINT;
@@ -768,8 +760,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 Spot* selectedCustomer = removedCustomer[selectedCustIndex];
                 newCar->insertAtHead(selectedCustomer->choice, selectedCustomer);
             } catch (exception &e) {
-                cerr << "In greedy insert: " << e.what() << endl;
-                exit(1);
+                throw out_of_range("In greedy insert, cannot find valid position: " + string(e.what()));
             }
             removedCarSet.push_back(newCar);  // 添加到货车集合中
             alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
@@ -806,14 +797,9 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
     int carNum = removedCarSet.end() - removedCarSet.begin();    // 车辆数目
 
     // 如果removedCarSet中货车数量为空，则抛出异常
-    try {
-        if (carNum == 0) {
-            throw invalid_argument("Empty car in removedCarSet!");
-        } 
-    } catch (exception &e){
-        cerr << "In greedy insertion: " << e.what() << endl;
-        exit(1);
-    }
+    if (carNum == 0) {
+        throw invalid_argument("In greedy insertion: Empty car in removedCarSet!");
+    } 
     int newCarIndex = removedCarSet[carNum - 1]->getCarIndex();  // 新车编号
     int i;
     // 已经插入到路径中的节点下标，相对于allIndex
@@ -894,8 +880,7 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 Spot* selectedCustomer = removedCustomer[selectedCustIndex];
                 newCar->insertAtHead(selectedCustomer->choice, selectedCustomer);
             } catch (exception &e) {
-                cerr << "In regret insert: " << e.what() << endl;
-                exit(1);
+                throw out_of_range("In regret insert: " + string(e.what()));
             }
             removedCarSet.push_back(newCar);  // 添加到货车集合中
             alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
@@ -926,8 +911,7 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 removedCarSet[selectedCarPos]->insertAfter(refStore, refCustomer, selectCustomer->choice,
                         selectCustomer);
             } catch (exception &e) {
-                cerr << "In regret insert: " << e.what() << endl;
-                exit(1);
+                throw out_of_range("In regret insert: " + string(e.what()));
             }
             sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
             vector<int>::iterator iterINT;

@@ -186,8 +186,7 @@ void Route::insertAfter(Spot *ref, Spot *current) {
     try{
         checkArrivedTime();
     } catch (exception &e) {
-        cout << "In insertAfter: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In insertAfter: " + string(e.what()));
     }
 }
 
@@ -275,7 +274,7 @@ void Route::insertAtHead(Spot *store, Spot *customer){
             cout << "store id: " << store->id << " customer id: "
                 << customer->id << endl;
             cout << "In insertAtHead: " << e.what() << endl;
-            exit(1);
+            throw out_of_range("In insertAtHead: " + string(e.what()));
         }
     }
     else{
@@ -330,8 +329,7 @@ void Route::deleteNode(Spot *node) {
     try{
         checkArrivedTime();
     } catch (exception &e) {
-        cout << "In deleteNode: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In delteNode: " + string(e.what()));
     }
     delete node;
 }
@@ -384,8 +382,7 @@ void Route::deleteNode(Spot *store, Spot *customer){
     try{
         checkArrivedTime();  // 删除节点后，更新arrivedTime
     } catch (exception &e) {
-        cout << "In deleteNode: " << e.what() << endl;
-        exit(1);
+        throw out_of_range("In deleteNode: " + string(e.what()));
     }
 }
 
@@ -467,12 +464,7 @@ float Route::getLen(float DTpara[], bool artificial){
             Spot *pre = ptr->front;
             Spot *next = ptr->next;
             float cost = 0.0f;
-            try{
-                cost = dist(pre, ptr) + dist(ptr, next);
-            } catch (exception &e) {
-                cerr << "In getLen, Route.cpp: " << e.what() << endl;
-                exit(1);
-            }
+            cost = dist(pre, ptr) + dist(ptr, next);
             if(ptr->type == 'C') {
                 switch(ptr->priority){
                     case 0: {
@@ -496,12 +488,7 @@ float Route::getLen(float DTpara[], bool artificial){
             Spot *pre = ptr->front;
             Spot *next = ptr->next;
             float cost = 0.0f;
-            try {
-                cost = dist(pre, ptr) + dist(ptr, next);
-            } catch (exception &e) {
-                cerr << "In getLen, Route.cpp: " << e.what() << endl;
-                exit(1);
-            }
+            cost = dist(pre, ptr) + dist(ptr, next);
             if(ptr->type == 'C') {
                 switch(ptr->priority){
                     case 0: {
@@ -898,9 +885,12 @@ vector<Spot*> Route::capture(){
                 // 根据原有的位置关系确定choice指向
                 int count = 0;
                 Spot* temp2 = current->next;
-                while(temp2->choice->id != ptr->id) {
+                while(temp2->choice->id != ptr->id && temp2 != ptr) {
                     temp2 = temp2->next;
                     count++;
+                }
+                if(temp2 == ptr) {
+                    throw out_of_range("Miss store point for some customers!");
                 }
                 output[count]->choice = temp;
                 temp->choice = output[count];
@@ -914,33 +904,35 @@ vector<Spot*> Route::capture(){
 void Route::replaceRoute(Route *route) {  
     // 以route替换掉current指针后的路径
     // 对于route中choice为depot的customer，需要找回其原本指向的商店
-    vector<Spot*> customerPool(CUSTOMER_NUM);
     Spot *ptr1, *ptr2;
+    // 修改route中choice为depot的customer其选择的商店
+    ptr1 = route->head->next;
+    while(ptr1 != NULL) {
+        if(ptr1->type == 'C' && ptr1->choice->type == 'D') {
+            for(ptr2 = head; ptr2 != rear; ptr2 = ptr2->next) {
+                if(ptr2->type == 'S') {
+                    if(ptr2->choice->id == ptr1->id) {
+                        ptr2->choice = ptr1;
+                        ptr1->choice = ptr2;
+                    }
+                }
+            }
+        }
+        ptr1 = ptr1->next;
+    }
+    
     // 清空本路径中current指针后面的节点 
     if(current->next != rear) { // current后面还有节点
         // 清除原路径中current指针后面的元素
         // 不包括对rear节点的清除
         ptr1 = current->next;
         while(ptr1 != rear) {
-            if(ptr1->type == 'C') {
-                customerPool[ptr1->id] = ptr1->choice;
-            }    
             ptr2 = ptr1->next;
             deleteNode(ptr1);
             ptr1 = ptr2;
         }
     }
-    // 修改route中choice为depot的customer其选择的商店
-    ptr1 = route->head->next;
-    while(ptr1 != NULL) {
-        if(ptr1->type == 'C' && ptr1->choice->type == 'D') {
-            Spot *store = customerPool[ptr1->id];
-            store->choice = ptr1;
-            ptr1->choice = store;
-        }
-        ptr1 = ptr1->next;
-    }
-
+    
     // 将route中除head和rear外的节点都复制到current指针后
     ptr1 = route->head->next;
     while(ptr1 != route->rear) {
@@ -953,7 +945,6 @@ void Route::replaceRoute(Route *route) {
         ptr1 = ptr2; 
     }
     // 清空变量
-    customerPool.clear();
     return;
 }
 

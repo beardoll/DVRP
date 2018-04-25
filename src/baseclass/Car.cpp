@@ -99,7 +99,6 @@ void Car::insertAtRear(Spot *item){
         route.insertAtRear(item);
     } catch (exception &e) {
         throw out_of_range(e.what());
-        exit(1);
     }
 } 
 
@@ -109,7 +108,6 @@ void Car::insertAtHead(Spot *store, Spot *customer){
         route.insertAtHead(store, customer);
     } catch (exception &e) {
         throw out_of_range(e.what());
-        exit(1);
     }
 }
 
@@ -120,7 +118,6 @@ void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store,
         route.insertAfter(refStore, refCustomer, store, customer);
     } catch (exception &e) {
         throw out_of_range(e.what());
-        exit(1);
     }
     // 更新nextArriveTime，不管下一站目的地是否改变
     Spot *lastStop = route.getStand();  // 货车最近驻点（上一个访问的节点）
@@ -142,7 +139,6 @@ void Car::insertAfter(Spot *refStore, Spot *refCustomer, Spot *store,
         route.insertAfter(refStore, refCustomer, store, customer);
     } catch (exception &e) {
         throw out_of_range(e.what());
-        exit(1);
     }
     // 更新nextArriveTime，不管下一站目的地是否改变
     Spot *lastStop = route.getStand();  // 货车最近驻点（上一个访问的节点）
@@ -159,7 +155,6 @@ void Car::deleteCustomer(Spot *store, Spot *customer) {
         route.deleteNode(store, customer);
     } catch (exception &e) {
         throw out_of_range(e.what());
-        exit(1);
     }
 }
 
@@ -180,9 +175,12 @@ void Car::replaceRoute(Car *newCar, float currentTime){
         route.replaceRoute(newCar->getRoute());      // replaceRoute不更改货车的状态
     } catch (exception &e) {
         cout << "Car #" << carIndex << ":" << endl;
-        cout << e.what() << endl;
-        exit(1);
+        throw out_of_range(e.what());
     }
+}
+
+void Car::testNewCar() {
+    Car *newCar = new Car(*route.getHeadNode(), *route.getHeadNode(), 0, 0);
 }
 
 Car* Car::capturePartRoute(float time){   
@@ -202,8 +200,7 @@ Car* Car::capturePartRoute(float time){
         } catch (exception &e) {
             cerr << "In car #" << carIndex << " ,state: " << state << "..." << endl;
             cerr << "In capture: " << endl;
-            cerr << e.what() << endl;
-            exit(1);
+            throw out_of_range(e.what());
         }
     }
     return newCar;
@@ -273,7 +270,7 @@ void Car::updateState(float time){
                     state = wait;
                     nearestDepartureTime = LATEST_SERVICE_TIME;
                     route.setStand(currentPos->x, currentPos->y, time);
-                    cout << "Car #" << carIndex << ": nothing to do, wait" << endl;
+                    if(SHOW_DETAIL) cout << "Car #" << carIndex << ": nothing to do, wait" << endl;
                 } else {
                     // 继续出发
                     route.setStand(currentPos->x, currentPos->y, time);

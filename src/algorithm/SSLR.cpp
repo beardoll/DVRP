@@ -1,6 +1,7 @@
 #include "SSLR.h"
 #include "../baseclass/Matrix.h"
 #include "../run/TxtRecorder.h"
+#include "../run/Config.h"
 #include<cmath>
 #include<stdexcept>
 #include<algorithm>
@@ -347,14 +348,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
             }
         }
 
-        try {
-            if (getCustomerNum(tempCarSet) != customerTotalNum) {
-                throw out_of_range("Lose some customers in SSLR!");
-            }
-        } 
-        catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
+        if (getCustomerNum(tempCarSet) != customerTotalNum) {
+            throw out_of_range("Lose some customers in SSLR!");
         }
 
         // 移除空路径
@@ -438,17 +433,18 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     finalCarSet.reserve(originPlan.size());
     ostringstream ostr;
     ostr.str("");
-    print_lck.lock();
     // unique_lock<mutex> lck(print_lck);
     int infeasibleNum;
-    
     if(judgeFeasible(globalCarSet, originPlan, infeasibleNum) == false) {
         // 如果搜索不到更好的解，则维持原来的解
         ostr << "SSLR: we should use the origin plan, there are " << infeasibleNum << 
             " high priority customers left in virtual vehicles." << endl;
         TxtRecorder::addLine(ostr.str());
-        cout << ostr.str();
-        print_lck.unlock();
+        if(SHOW_DETAIL) {
+            print_lck.lock();
+            cout << ostr.str();
+            print_lck.unlock();
+        }
         finalCarSet = copyPlan(originPlan);
     } else {
         ostr << "SSLR: we will use the new plan" << endl;
@@ -459,8 +455,11 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
                 finalCarSet.push_back(tempCar);
             }
         }
-        cout << ostr.str();
-        print_lck.unlock();
+        if(SHOW_DETAIL){
+            print_lck.lock();
+            cout << ostr.str();
+            print_lck.unlock();
+        }
     }
     delete [] DTpara;
     finalCost = globalCost;

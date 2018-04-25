@@ -45,7 +45,7 @@ Timer::Timer(vector<Spot*> staticCustomerSet, vector<Spot*> dynamicCustomerSet,
     this->storeSet = storeSet;
     EventElement newEvent;
     int i;
-    for(i=1; i<=TIME_SLOT_NUM; i++) {  
+    for(i=BEGIN_SLOT_INDEX; i<=TIME_SLOT_NUM; i++) {  
         // 增加“时间段到达”事件
         newEvent = EventElement(i*TIME_SLOT_LEN, newTimeSlot, -1, -1);
         eventList.push_back(newEvent);
@@ -140,8 +140,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
                     searchCustomer(currentEvent.customerId, dynamicCustomerSet, cust);
                 }
                 catch (exception &e) {
-                    cerr << "In event \"newCustomer\": " << e.what() << endl;
-                    exit(1);
+                    throw out_of_range("In event \"newCustomer\": " + string(e.what()));
                 }
                 EventElement newEvent = disp.handleNewCustomer(slotIndex, cust);
                 updateEventElement(newEvent);

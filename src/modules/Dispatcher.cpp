@@ -153,7 +153,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         ostr << "============ Now Initialize the routing plan ===========" << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
-        Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
+            Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
                 currentPlan, storeSet);
         depot.arrivedTime = slotIndex * TIME_SLOT_LEN;
         currentPlan = smu.initialPlan(depot, capacity);

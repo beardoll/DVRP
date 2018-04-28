@@ -3,6 +3,7 @@
 #include<cassert>
 #include<algorithm>
 #include "../run/Config.h"
+#include "../public/PublicFunction.h"
 
 bool ascendSortEvent(const EventElement &a, const EventElement &b){  // 递增排序
     return a.time < b.time;
@@ -199,5 +200,4 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
     }
     // 为服务动态顾客所额外增加的平均路长
     addAveDistance /= (dynamicCustomerSet.size() - rejectCustomer.size());
-    disp.destroy();
 }

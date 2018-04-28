@@ -60,10 +60,10 @@ void constructDataSet() {
 
 int main(int argc, char *argv[]){
     if(!HAS_DATASET) constructDataSet();
-    int vehicleNum = 25;
+    int vehicleNum = 0;
     ostringstream ostr;
     srand(unsigned(0));
-    for(int i=1; i<4; i++) {
+    for(int i=0; i<4; i++) {
         for(int j=0; j<EXP_TIMES; j++) {
             for(int k=0; k<4; ) {
                 cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;;
@@ -76,6 +76,7 @@ int main(int argc, char *argv[]){
                 } else {
                     CONSTRAIN_CAR_NUM = false;
                 }
+                FACTOR = LAMBDA_FACTOR[i];
                 REPLAN = M_REPLAN[k];
                 ASSESSMENT = M_ASSESSMENT[k];
                 SAMPLING = M_SAMPLING[k];
@@ -106,11 +107,16 @@ int main(int argc, char *argv[]){
                     cout << e.what() << endl;
                     continue;
                 }
+                cout << "Travel len is: " << travelDistance << endl;
+                cout << "Ave len is: " << addAveDistance << endl;
                 if(k==0) vehicleNum = finalCarSet.size();
                 k++;
                 TxtRecorder::closeFile();
                 bw.saveResult(xmlName, finalCarSet, rejectCustomer, dynamicCustomer, depot, 
                     travelDistance, addAveDistance);
+                deleteCustomerSet(staticCustomer);
+                deleteCustomerSet(dynamicCustomer);
+                withdrawPlan(finalCarSet);
             } 
         } 
     }

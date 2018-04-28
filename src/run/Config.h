@@ -36,6 +36,7 @@ extern int CORE_NUM;
 extern int STORE_NUM;
 extern int SUBCIRCLE_NUM;
 extern float LAMBDA[6];
+extern float FACTOR;
 extern float ALPHA;
 extern float PI;
 extern int MAX_DEMAND;

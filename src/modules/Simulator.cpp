@@ -73,7 +73,7 @@ vector<Spot*> Simulator::generateScenario(Spot depot){
     for(int j=0; j<SUBCIRCLE_NUM; j++) {
         int customerNum;
         for(int i=slotIndex; i<TIME_SLOT_NUM-1; i++) {
-            customerNum = poissonSampling(LAMBDA[j], TIME_SLOT_LEN);
+            customerNum = poissonSampling(LAMBDA[j]*FACTOR, TIME_SLOT_LEN);
             for(int x=0; x<customerNum; x++) {
                 // 按概率生成顾客
                 float currentAlpha = random(leftBound, rightBound);
@@ -106,7 +106,9 @@ vector<Spot*> Simulator::generateScenario(Spot depot){
                     // 保证足够长的时间窗
                     c->startTime = random(currentTime, (slotIndex+1)*TIME_SLOT_LEN);
                     c->startTime = min(c->startTime, timeHorizon-ALPHA*minTimeLen);
-                    c->endTime = random(c->startTime+currentAlpha*minTimeLen, timeHorizon);
+                    float minEndTime = max(BEGIN_SLOT_INDEX * TIME_SLOT_LEN + 
+                        minTimeLen, c->startTime+ALPHA*minTimeLen);
+                    c->endTime = random(minEndTime, timeHorizon);
                     c->quantity = random(0, MAX_DEMAND);
                     dynamicCustomer.push_back(c);
                 }
@@ -145,7 +147,7 @@ bool Simulator::checkFeasible(vector<Car*> carSet) {
 }
 
 void threadForInitial(Spot depot, float capacity, int coreId, vector<vector<Car*> > &planSet, 
-        vector<Spot*> allCustomer, vector<int> validId, Matrix<int> &transformMatrix, mutex &record_lck) {
+        vector<Spot*> allCustomer, vector<int> validId, Matrix<int> &transformMatrix, mutex &record_lck, bool &flag) {
     // 路径初始化的线程操作
     // Args:
     //   * depot: 仓库节点
@@ -165,20 +167,19 @@ void threadForInitial(Spot depot, float capacity, int coreId, vector<vector<Car*
     ALNS alg(allCustomer, depot, capacity, 10000*ITER_PERCENTAGE, DEBUG);
     vector<Car*> solution(0);
     float cost = 0;
-    alg.run(solution, cost);
+    try{
+        alg.run(solution, cost);
+    } catch(exception &e) {
+        record_lck.lock();
+        flag = false;
+        record_lck.unlock();
+        return;
+    }
     vector<Car*>::iterator carIter;
     int totalRetainNum = 0;   // 看看经过removeInvalidCustomer后还有多少剩余节点
     for(carIter = solution.begin(); carIter < solution.end(); carIter++) {
         (*carIter)->removeInvalidCustomer(validId, totalRetainNum);
         (*carIter)->updateTransformMatrix(transformMatrix);
-    }
-    try {
-        if(validId.size() != totalRetainNum+1) {
-            throw out_of_range("Miss some customers after remove invalid customers!");
-        }
-    } catch (exception &e) {
-        cerr << "valid id size: " << validId.size()-1 << ";real size: " << totalRetainNum << endl;
-        throw out_of_range(e.what());
     }
     record_lck.lock();
     planSet.push_back(solution);
@@ -186,6 +187,7 @@ void threadForInitial(Spot depot, float capacity, int coreId, vector<vector<Car*
         cout << "The core with id #" << coreId << " finished its task" << endl;
     }
     record_lck.unlock();
+    return;
 }
 
 void retainVehicles(vector<Car*> &carSet, Spot depot, float capacity) {
@@ -263,6 +265,7 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
         mutex record_lck;    // 锁住planSet
         vector<thread> thread_pool;   // a pool to capitalize thread
 
+        bool flag = true;
         while(restSampleNum > 0) {
             // coreId: 线程id，从0开始
             int coreId = SAMPLE_RATE - restSampleNum + 1; 
@@ -273,10 +276,13 @@ vector<Car*> Simulator::initialPlan(Spot depot, float capacity){
                 allCustomer.insert(allCustomer.end(), currentDynamicCust.begin(), currentDynamicCust.end());
                 thread_pool.push_back(thread(threadForInitial, depot, capacity,
                     coreId + i, ref(planSet), allCustomer, validId, ref(transformMatrix),
-                    ref(record_lck)));
+                    ref(record_lck), ref(flag)));
             }
             for(auto& thread:thread_pool) {
                 thread.join();
+            }
+            if(flag == false) {
+                throw out_of_range("Problem in subthread!");
             }
             restSampleNum = restSampleNum - CORE_NUM;
             thread_pool.clear();
@@ -365,7 +371,7 @@ void validPromise(vector<Car*>Plan, vector<Spot*> hurryCustomer,
 
 void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet, 
         vector<Spot*> sampleCustomer, vector<Car*> currentPlan, vector<int> validId,
-        Matrix<int> &transformMatrix, mutex &record_lck) {
+        Matrix<int> &transformMatrix, mutex &record_lck, bool &flag) {
     // replan (SSLR) 的多线程
     // Args:
     //   * capacity: 货车容量
@@ -378,7 +384,14 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
     vector<Car*> tempPlan;
     float finalCost = 0;
     SSLR alg(sampleCustomer, currentPlan, capacity, 10000*ITER_PERCENTAGE, DEBUG);
-    alg.run(tempPlan, finalCost, record_lck);
+    try{
+        alg.run(tempPlan, finalCost, record_lck);
+    } catch (exception &e) {
+        record_lck.lock();
+        flag = false;
+        record_lck.unlock();
+        return;
+    }
     vector<Car*>::iterator carIter;
     int totalRetainNum = 0;
     for(carIter = tempPlan.begin(); carIter < tempPlan.end(); carIter++) {
@@ -397,6 +410,7 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
         cout << "Core with id #" << coreId << " finished its task!" << endl;
     }
     record_lck.unlock();
+    return;
 }
 
 vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &newAbandonedCustomerId, 
@@ -547,6 +561,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
             thread_pool.clear();
             thread_pool.resize(0);
             int coreId = SAMPLE_RATE - restSampleNum + 1;
+            bool flag = true;
             for (int i = 0; i < min(CORE_NUM, restSampleNum); i++) {
                 Spot *depot = newPlan[0]->getRoute()->getRearNode();
                 vector<Spot*> sampleCustomer;
@@ -554,10 +569,13 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
                 vector<Car*> temp = copyPlan(newPlan);
                 thread_pool.push_back(thread(threadForReplan, capacity, coreId + i, 
                             ref(planSet), sampleCustomer, temp, allServedCustomerId, 
-                            ref(transformMatrix), ref(record_lck)));
+                            ref(transformMatrix), ref(record_lck), ref(flag)));
             }
             for (auto& thread : thread_pool) {
                 thread.join();
+            }
+            if(flag == false) {
+                throw out_of_range("Error in subthread!");
             }
             restSampleNum = restSampleNum - CORE_NUM;   
         }

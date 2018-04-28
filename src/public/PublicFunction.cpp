@@ -286,7 +286,6 @@ vector<int> getCustomerID(vector<Spot*> customerSet){
     for(iter; iter<customerSet.end(); iter++){
         if((*iter)->type != 'C') {
             cout << "Non-customer type node in customerSet!!" << endl;
-            exit(1);
         }
         ids.push_back((*iter)->id);
     }

@@ -26,6 +26,7 @@ float R2 = 30;
 float R3 = 40;
 float R4 = 70;
 float LAMBDA[6] = {0.1, 0.15, 0.25, 0.1, 0.1, 0.1};
+float FACTOR = 1.0;
 float ALPHA = 1.5;
 float PI = 3.1415926;
 int MAX_DEMAND = 5;

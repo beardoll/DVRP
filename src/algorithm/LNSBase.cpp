@@ -738,8 +738,10 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 removedCarSet[selectedCarPos]->insertAfter(refStore, refCustomer, 
                         selectedCustomer->choice, selectedCustomer);
             } catch (exception &e) {
+                cout << "Customer ID is #" << selectedCustomer->id << endl;
                 throw out_of_range("In greedy insert, find valid position: " + string(e.what()));
             }
+          
             alreadyInsertIndex.push_back(selectedCustIndex);
             vector<int>::iterator iterINT;
             // set_difference要求先排序
@@ -756,10 +758,14 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
         else {  // 没有可行插入位置，则再新开一辆货车
             int selectedCarPos = carNum++;  // 被选中的车辆位置
             Car *newCar = new Car(depot, depot, capacity, newCarIndex++, hierarchicalCar);
+            Spot *selectedCustomer;
             try {
-                Spot* selectedCustomer = removedCustomer[selectedCustIndex];
+                selectedCustomer = removedCustomer[selectedCustIndex];
                 newCar->insertAtHead(selectedCustomer->choice, selectedCustomer);
             } catch (exception &e) {
+                cout << "Selected index is: " << selectedCustIndex << endl;
+                cout << "CustomerID is #" << selectedCustomer->id << " x-pos is " << selectedCustomer->x << " y-pos is: " << selectedCustomer->y << endl;
+                showAllCustomerID(removedCustomer);
                 throw out_of_range("In greedy insert, cannot find valid position: " + string(e.what()));
             }
             removedCarSet.push_back(newCar);  // 添加到货车集合中
@@ -876,11 +882,13 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             selectedCarPos = carNum++;
             selectedCustIndex = regretdiffPerRestCust[0].second.first;
             Car *newCar = new Car(depot, depot, capacity, newCarIndex++, hierarchicalCar);
+            Spot *selectedCustomer;
             try {
-                Spot* selectedCustomer = removedCustomer[selectedCustIndex];
+                selectedCustomer = removedCustomer[selectedCustIndex];
                 newCar->insertAtHead(selectedCustomer->choice, selectedCustomer);
             } catch (exception &e) {
-                throw out_of_range("In regret insert: " + string(e.what()));
+                cout << "Customer ID is #" << selectedCustomer->id << endl;
+                throw out_of_range("In regret insert, has invalid position" + string(e.what()));
             }
             removedCarSet.push_back(newCar);  // 添加到货车集合中
             alreadyInsertIndex.push_back(selectedCustIndex); // 更新selectedCustIndex
@@ -903,15 +911,17 @@ void LNSBase::regretInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
             selectedCarPos = regretdiffPerRestCust[0].second.second;
             selectedCustIndex = regretdiffPerRestCust[0].second.first;
             alreadyInsertIndex.push_back(selectedCustIndex);
+            Spot *selectedCustomer;
             try {
                 pair<Spot*, Spot*> ref = minInsertPos.getElement(selectedCarPos, selectedCustIndex);
                 Spot *refStore = ref.first;
                 Spot *refCustomer = ref.second;
-                Spot *selectCustomer = removedCustomer[selectedCustIndex];
-                removedCarSet[selectedCarPos]->insertAfter(refStore, refCustomer, selectCustomer->choice,
-                        selectCustomer);
+                selectedCustomer = removedCustomer[selectedCustIndex];
+                removedCarSet[selectedCarPos]->insertAfter(refStore, refCustomer, selectedCustomer->choice,
+                        selectedCustomer);
             } catch (exception &e) {
-                throw out_of_range("In regret insert: " + string(e.what()));
+                cout << "CustomerID is #" << selectedCustomer->id << endl;
+                throw out_of_range("In regret insert, has valid position" + string(e.what()));
             }
             sort(alreadyInsertIndex.begin(), alreadyInsertIndex.end());
             vector<int>::iterator iterINT;

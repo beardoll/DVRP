@@ -31,7 +31,7 @@ void SetBench::constructProbInfo(){
     }
 }
 
-void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*> &dynamicCustomerSet){
+void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*> &dynamicCustomerSet, Customer depot){
     // 根据概率情况构造样本
     constructProbInfo();
     int customerAmount = originCustomerSet.end() - originCustomerSet.begin();
@@ -63,13 +63,12 @@ void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*>
         float t2 = (selectSlot+1) * TIME_SLOT_LEN;     // 时间段的结束
         float tempt = random(t1, t2);
         float maxActiveTime = TIME_SLOT_NUM * TIME_SLOT_LEN;  // 货车可工作的最晚时间
-        // 至少宽限5倍的serviceTime
-        (*iter)->startTime =  min(tempt, maxActiveTime - 5 * (*iter)->serviceTime); 
-        float t3 = 3*(*iter)->serviceTime;
-        float t4 = 12*(*iter)->serviceTime;
-        float timeWindowLen = random(t3, t4);  // 时间窗长度
-        (*iter)->endTime = min((*iter)->startTime + timeWindowLen, maxActiveTime);
-        timeWindowLen = (*iter)->endTime - (*iter)->startTime;
+        float minTimeWindowLen = dist(&depot, *iter);
+        (*iter)->startTime =  min(tempt, maxActiveTime - ALPHA * minTimeWindowLen); 
+        (*iter)->endTime = random((*iter)->startTime + ALPHA * minTimeWindowLen,
+                maxActiveTime);
+
+        float timeWindowLen = (*iter)->endTime - (*iter)->startTime;  // 时间窗长度
         // 可容忍的最晚得到答复的时间，为0.3-0.6倍的时间窗长度 + startTime
         (*iter)->tolerantTime = (*iter)->startTime + random(0.6, 0.8) * timeWindowLen;
     }

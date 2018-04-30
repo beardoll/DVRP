@@ -1,5 +1,6 @@
 #include "Route.h"
 #include "Customer.h"
+#include "../public/PublicFunction.h"
 #include<iostream>
 #include<cassert>
 #include<vector>
@@ -17,15 +18,21 @@ Route::Route(Customer &headNode, Customer &rearNode, float capacity):capacity(ca
     // ¹¹Ôìº¯Êı
     head = new Customer;
     *head = headNode;  // ¸´ÖÆ½Úµã
+    head->type = 'D';
     rear = new Customer;
-    *rear = rearNode; 
+    *rear = rearNode;
+    rear->type = 'D';
+    stand = new Customer;
+    *stand = headNode;
+    stand->type = 'D';
+    stand->front = head;
+    stand->next = rear;
     head->front = NULL;
     head->next = rear;
     rear->front = head;
     rear->next = NULL;
     current = head;  // ³õÊ¼»¯currentÖ¸ÕëÖ¸Ïòhead½Úµã
     size = 0;
-    arrivedTime.push_back(head->arrivedTime);
     quantity = 0;
     leftQuantity = capacity;
 }
@@ -42,7 +49,6 @@ void Route::copy(const Route &L){
     this->capacity = L.capacity;
     this->quantity = L.quantity;
     this->leftQuantity = L.leftQuantity;
-    this->arrivedTime = L.arrivedTime;
     Customer* originPtr = L.head;
     Customer* copyPtr = head;
     Customer* temp = NULL;
@@ -68,6 +74,11 @@ void Route::copy(const Route &L){
     }
     temp->next = NULL;
     rear = temp;
+    // standÖ¸ÕëµÄÉè¶¨
+    stand = new Customer;
+    *stand = *L.stand;
+    stand->front = current;
+    stand->next = current->next;
 }
 
 Customer& Route::operator[] (int k){
@@ -115,6 +126,8 @@ void Route::clear(){  // Çå¿ÕÁ´±í£¬²»Çå¿Õhead½ÚµãºÍrear½Úµã?
     head = NULL;
     rear = NULL;
     current = NULL;
+    delete stand;
+    stand = NULL;
     size = 0;
 }
 
@@ -127,7 +140,7 @@ void Route::printRoute(){ // ´òÓ¡Á´±í
 
 
 //=============== ²åÈëÒÔ¼°É¾³ı½Úµã²Ù×÷ ================//
-void Route::insertAfter(Customer &item1, Customer &item2){
+void Route::insertAfter(Customer item1, Customer item2){
     // ÔÚÁ´±íÖĞÓëitem1ÏàÍ¬µÄ½ÚµãºóÃæ²åÈë½Úµãitem2
     Customer* temp = new Customer;
     *temp = item2;
@@ -143,17 +156,25 @@ void Route::insertAfter(Customer &item1, Customer &item2){
         delete temp;
         throw out_of_range("Cannot find the position to insert!");
     } else{
+        if(ptr->id == stand->front->id) {
+            // ËµÃ÷item2½Úµã²åÈëµ½stand½ÚµãºóÃæ
+            stand->next = temp;
+        }
         quantity = quantity + item2.quantity;
         temp->next = ptr->next;
         ptr->next->front = temp;
         temp->front = ptr;
         ptr->next = temp;
         size++;
-        refreshArrivedTime();  // ²åÈë½Úµãºó£¬¸üĞÂarrivedTime
+        try{
+            checkArrivedTime();
+        } catch (exception &e) {
+            throw out_of_range("In insertAfter: " + string(e.what()));
+        }
     }
 }
 
-void Route::insertAtHead(Customer &item){ 
+void Route::insertAtHead(Customer item){ 
     // ÔÚ±íÍ·²åÈëitem
     // Ö»ÓĞµ±currentÖ¸ÕëÎªheadÊ±·µ»Øtrue
     if(current == head) {
@@ -163,16 +184,21 @@ void Route::insertAtHead(Customer &item){
         head->next->front = temp;
         head->next = temp;
         temp->front = head;
+        stand->next = temp;
         quantity = quantity + item.quantity;
         size++;
-        refreshArrivedTime();  // ²åÈë½Úµãºó£¬¸üĞÂarrivedTime
+        try {
+            checkArrivedTime();
+        } catch(exception &e) {
+            throw out_of_range("In insertAtHead: " + string(e.what()));
+        }
     }
     else{
         throw out_of_range("The car has departured, cannot insert node after head!");
     }
 }
 
-void Route::insertAtRear(Customer &item){   
+void Route::insertAtRear(Customer item){   
     // ÔÚ±íÎ²²åÈëitem
     // Ö»ÓĞµ±±íÎ²²»ÊÇcurrent½ÚµãÊ±·µ»Øtrue
     if(current != rear) {
@@ -182,15 +208,20 @@ void Route::insertAtRear(Customer &item){
 	    temp->front = rear->front;
 	    rear->front->next = temp;
 	    rear->front = temp;
+        stand->next = current->next;
 	    quantity = quantity + item.quantity;
 	    size++;
-	    refreshArrivedTime();  // ²åÈë½Úµãºó£¬¸üĞÂarrivedTime
+        try {
+            checkArrivedTime();
+        } catch (exception &e) {
+            throw out_of_range("In insert at rear: " + string(e.what()));
+        }
 	} else {
         throw out_of_range("Has reached the end node, cannot insert any nodes!");
     }
 }
 
-void Route::deleteNode(Customer &item){
+void Route::deleteNode(Customer item){
     // É¾³ıÁ´±íÖĞÓëitemÏàÍ¬µÄ½Úµã
     // Ö»ÄÜÉ¾³ıcurrentÖ¸ÕëºóÃæµÄ½Úµã
     if(current == rear) {
@@ -215,6 +246,7 @@ void Route::deleteNode(Customer &item){
 	if(temp1 == rear) {  // Ã»ÓĞÕÒµ½
         throw out_of_range("We want to delete inexistent customer!");
 	} else {
+        if(stand->next->id == temp1->id) stand->next = temp1->next;
         Customer* nextNode = temp1->next;
         Customer* frontNode = temp1->front;
         frontNode->next = nextNode;
@@ -222,7 +254,11 @@ void Route::deleteNode(Customer &item){
         delete temp1;
         size--;
         quantity = quantity - item.quantity;
-        refreshArrivedTime();  // É¾³ı½Úµãºó£¬¸üĞÂarrivedTime
+        try{
+            checkArrivedTime();
+        } catch (exception &e) {
+            throw out_of_range("In deleteNode: " + string(e.what()));
+        }
     }
 }
 
@@ -292,7 +328,7 @@ float Route::getLen(float DTpara[], bool artificial){   // µÃµ½Â·¾¶³¤¶È
                     break;
                 }
             }
-            len = len + sqrt(pow(ptr1->x - ptr2->x, 2)+pow(ptr1->y - ptr2->y, 2));
+            len = len + dist(ptr1, ptr2);
             len += temp1;
             ptr2 = ptr2->next;
             ptr1 = ptr1->next;
@@ -316,7 +352,7 @@ float Route::getLen(float DTpara[], bool artificial){   // µÃµ½Â·¾¶³¤¶È
                 break;
                 }
             }
-            len = len + sqrt(pow(ptr1->x - ptr2->x, 2)+pow(ptr1->y - ptr2->y, 2));
+            len = len + dist(ptr1, ptr2);
             len += temp1;
             ptr2 = ptr2->next;
             ptr1 = ptr1->next;
@@ -337,26 +373,33 @@ float Route::getOriginLen() {
             back = back->next;
         } 
         else {
-            originLen += sqrt(pow(front->x - back->x, 2) + pow(front->y - back->y, 2));
+            originLen += dist(front, back);
             front = back;
             back = back->next;
         }
-        //originLen += sqrt(pow(front->x - back->x, 2) + pow(front->y - back->y, 2));
-        //front = back;
-        //back = back->next;
     }
     return originLen;
 }
 
 
 vector<float> Route::getArrivedTime(){     // µÃµ½±¾³µËùÓĞ½ÚµãµÄarrivedTime
-    return arrivedTime;
+    Customer *temp = head->next;
+    vector<float> arrivedTimes;
+    while(temp != rear) {
+        arrivedTimes.push_back(temp->arrivedTime);
+        temp = temp->next;
+    }
+    return arrivedTimes;
 }
 
 
 //=============== ĞŞ¸ÄÁ´±íÊôĞÔ ================//
 bool Route::moveForward(){
     current = current->next;
+    stand->x = current->x;
+    stand->y = current->y;
+    stand->front = current;
+    stand->next = current->next;
     if(current == NULL) {  // ÒÑ¾­Íê³ÉÈÎÎñ
         return false;
     } else {
@@ -364,6 +407,12 @@ bool Route::moveForward(){
     }
 }
 
+void Route::setStand(float x, float y, float arrivedTime, float serviceTime) {
+    stand->x = x;
+    stand->y = y;
+    stand->arrivedTime = arrivedTime;
+    stand->serviceTime = serviceTime;
+}
 
 //=============== ¼ÆËã²åÈë/É¾³ı½Úµã´ú¼Û ================//
 vector<float> Route::computeReducedCost(float DTpara[], bool artificial){ 
@@ -383,9 +432,7 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
     for(int i=0; i<size; i++){
         ptr2 = ptr1->next;  // µ±Ç°½Úµã
         ptr3 = ptr2->next;  // ºó½Úµã
-        float temp =  -sqrt(pow(ptr1->x - ptr2->x, 2) + pow(ptr1->y - ptr2->y, 2)) - 
-            sqrt(pow(ptr2->x - ptr3->x, 2) + pow(ptr2->y - ptr3->y, 2)) +
-            sqrt(pow(ptr1->x - ptr3->x, 2) + pow(ptr1->y - ptr3->y, 2));
+        float temp = -dist(ptr1, ptr2) - dist(ptr2, ptr3) + dist(ptr1, ptr3); 
         float temp1 = 0;
         if(artificial == true) {
             switch(ptr1->priority){
@@ -425,61 +472,62 @@ vector<float> Route::computeReducedCost(float DTpara[], bool artificial){
     return costArr;
 } 
 
-bool Route::timeWindowJudge(Customer *pre, int pos, Customer item){  
+bool Route::timeWindowJudge(Customer *pre, Customer item){  
     // ¼ÆËã°Ñitem²åÈëµ½preºóÃæÊÇ·ñ»áÎ¥·´Ê±¼ä´°Ô¼Êø
     // ÔİÊ±²»¿¼ÂÇ²Ö¿âµÄ¹Ø²ÖÊ±¼ä
     // posÊÇpreµÄÎ»ÖÃ, 0±íÊ¾²Ö¿â
-    float time = arrivedTime[pos];
-    Customer *ptr1, *ptr2;
+    float time = stand->arrivedTime;
+    time += stand->serviceTime;
+    Customer *temp, *temp2;
+    // ´Ócurrentµ½pre
+    if(pre != current) {
+        temp = current->next;
+        time += dist(stand, temp);
+        if(time < temp->startTime) time = temp->startTime;
+        time += temp->serviceTime;
+        temp = temp->next;
+        while(temp != pre && temp != NULL) {
+            // temp == NULLÖ¤Ã÷pre²»´æÔÚ£¬Ò»°ã²»¿ÉÄÜ
+            time += dist(temp->front, temp);
+            if(time > temp->endTime) return false;
+            if(time < temp->startTime) time = temp->startTime;
+            time += temp->serviceTime;
+            time += temp->serviceTime;
+            temp = temp->next;
+        }
+        if(temp == NULL) return false;
+        time += dist(temp->front, temp);
+        if(time > pre->endTime) return false;
+        if(time < pre->startTime) time = pre->startTime;
+        time += temp->serviceTime;
+    }
 
-    // ½ÓÏÂÀ´ÊÇÅĞ¶Ï²åÈëitemºó»á²»»áÎ¥·´item»òÕßÆäºó¼Ì½ÚµãµÄÊ±¼ä´°Ô¼Êø
-    if(time < pre->startTime){   // arrivedTime[pos]Ö»¼Óµ½ÁËpreµÄarrived time£¬Ã»ÓĞÅĞ¶ÏÊÇ·ñÌáÇ°µ½´ï
-        time = pre->startTime;
-    }
-    time += pre->serviceTime;
-    time = time + sqrt(pow(pre->x - item.x, 2) + pow(pre->y - item.y, 2));
-    if(time > item.endTime) {  // Î¥·´ÁËÊ±¼ä´°Ô¼Êø
-        return false;
-    } else{
-        if(time < item.startTime) {
-            time = item.startTime;
-        }
-        time = time + item.serviceTime;
-        ptr2 = pre->next;
-        if(ptr2 == rear){  // itemºóÃæµÄÊÇÖÕµã£¬ÔİÊ±²»¼ÆËã
-            return true;
-        } else {
-            time = time + sqrt(pow(ptr2->x - item.x, 2) + pow(ptr2->y - item.y, 2));
-            if(time > ptr2->endTime) {
-                return false;
-            } else {
-                if(time < ptr2->startTime) {
-                    time = ptr2->startTime;
-                }
-                time = time + ptr2->serviceTime;
-            }
-        }
-    }
+    // ÏÖÔÚtimeÊÇ´Ópre³ö·¢µÄÊ±¼ä
+    // ½ÓÏÂÀ´ÊÇÅĞ¶Ï²åÈëitemºó»á²»»áÎ¥·´itemÒÔ¼°Æäºó¼Ì½ÚµãµÄÊ±¼ä´°Ô¼Êø
+    time = time + dist(pre, &item);
+    if(time > item.endTime) return false;
+    if(time < item.startTime) time = item.startTime;
+    time = time + item.serviceTime;
+    // ÊÇ·ñÓ°ÏìpreµÄÏÂÒ»¸ö½Úµã
+    temp = pre->next;
+    if(temp == rear) return true;
+    time = time + dist(temp, &item);
+    if(time > temp->endTime) return false;
+    if(time < temp->startTime) time = temp->startTime;
+    time = time + temp->serviceTime;
 
     // È»ºóÅĞ¶Ï»á²»»áÎ¥·´¸ü¿¿ºóµÄ½ÚµãµÄÊ±¼ä´°Ô¼Êø
-    bool mark = true;
-    ptr1 = pre->next;
-    ptr2 = ptr1->next;
-    while(mark == true && ptr2 !=rear){ 
-        time = time + sqrt(pow(ptr1->x - ptr2->x, 2) + pow(ptr1->y - ptr2->y, 2));	
-        if(time > ptr2->endTime){
-            mark = false;
-            break;
-        } else {
-            if(time < ptr2->startTime){
-                time = ptr2->startTime;
-            }
-            time = time + ptr2->serviceTime;
-        }
-        ptr1 = ptr1->next;
-        ptr2 = ptr2->next;
+    temp = pre->next;
+    temp2 = temp->next;
+    while(temp2 !=rear){ 
+        time = time + dist(temp, temp2);
+        if(time > temp2->endTime) return false;
+        if(time < temp2->startTime) time = temp2->startTime;
+        time = time + temp2->serviceTime;
+        temp = temp->next;
+        temp2 = temp2->next;
     }
-    return mark;
+    return true;
 }
 
 void Route::computeInsertCost(Customer item, float &minValue, Customer &customer1, 
@@ -490,67 +538,55 @@ void Route::computeInsertCost(Customer item, float &minValue, Customer &customer
     // pertubation: ÈÅ¶¯µÄÔëÉùÁ¿
     // allowNegativeCost: Îªtrue±íÊ¾²åÈë´ú¼ÛÈ¡·Ç¸ºÊı£¬Îªfalse±íÊ¾¿ÉÈ¡¸ºÊı
     // randomNoise: Ëæ»úÔëÉùÁ¿
-    Customer *pre = current;   // Ö»ÄÜ²åÈëµ½Î´×ß¹ıµÄ½ÚµãÇ°
-    Customer *succ = pre->next;
+    Customer *pre;
     minValue = MAX_FLOAT;
     secondValue = MAX_FLOAT;
     customer1.id = -1;
     customer2.id = -1;
-    int startPos = 0;
-    Customer* temp = head;
-    while(temp!= pre) {
-        temp = temp->next;
-        startPos++;
-    }
-    for(int i=startPos; i<=size; i++) {  // Ò»¹²ÓĞsize+1¸öÎ»ÖÃ¿ÉÒÔ¿¼ÂÇ²åÈë
+    for(pre=current; pre!=rear; pre=pre->next) {  // Ò»¹²ÓĞsize+1¸öÎ»ÖÃ¿ÉÒÔ¿¼ÂÇ²åÈë
         if(quantity + item.quantity <= capacity){   // ÈİÁ¿Ô¼Êø
-            if(timeWindowJudge(pre, i, item) == true) { // Âú×ãÊ±¼ä´°Ô¼Êø
-                float temp = sqrt(pow(pre->x - item.x, 2) + pow(pre->y - item.y, 2)) +
-                    sqrt(pow(item.x - succ->x, 2) + pow(item.y - succ->y, 2)) -
-                    sqrt(pow(pre->x - succ->x, 2) + pow(pre->y - succ->y, 2));
-                temp += randomNoise;
+            if(timeWindowJudge(pre, item) == true) { // Âú×ãÊ±¼ä´°Ô¼Êø
+                float cost = dist(pre, &item) + dist(&item, pre->next) -
+                    dist(pre, pre->next);
+                cost += randomNoise;
                 if(allowNegativeCost == false) {
-                    temp = max(0.0f, temp);
+                    cost = max(0.0f, cost);
                 }
-                if(temp <= minValue){  // ÕÒµ½ÁË¸üĞ¡µÄ£¬¸üĞÂminValueºÍsecondValue
+                if(cost <= minValue){  // ÕÒµ½ÁË¸üĞ¡µÄ£¬¸üĞÂminValueºÍsecondValue
                     secondValue = minValue;
                     customer2 = customer1;
-                    minValue = temp;
+                    minValue = cost;
                     customer1 = *pre;
                 }
             }
         }
-        pre = pre->next;
-        if(succ != rear){
-            succ = succ->next;
-        }
     }
 }
 
-void Route::refreshArrivedTime(){   
-    // ¸üĞÂÒ»ÏÂ¸÷¸ö½ÚµãµÄµ½´ïÊ±¿Ì
-    // Í·½áµãµÄarrivedTime + serviceTime½«×÷Îª»ù×¼Ê±¼ä
-    arrivedTime.clear();
-    Customer* tfront = head;
-    while(tfront != current->next){
-        // ´ÓÍ·½áµãµ½current½ÚµãÖ®Ç°µÄarrivedTime¶¼²»ĞèÒªÖØĞÂ¼ÆËã
-        arrivedTime.push_back(tfront->arrivedTime);
-        tfront = tfront->next;
-    }
-    tfront = current;
-    Customer* tcurrent = current->next;
-    float time = current->arrivedTime + current->serviceTime;
-    while(tcurrent != rear){
-        // current½ÚµãºóÃæµÄarrivedTimeĞèÒªÖØĞÂ¼ÆËã
-        time = time + sqrt(pow(tfront->x - tcurrent->x, 2) + pow(tfront->y - tcurrent->y, 2));
-        arrivedTime.push_back(time);
-        // tcurrent->arrivedTime = time;
-        if(time < tcurrent->startTime){
-            time = tcurrent->startTime;
+void Route::checkArrivedTime() {
+    float time = stand->arrivedTime;
+    time += stand->serviceTime;
+    Customer *pre = stand;
+    Customer *cur = stand->next;
+    while(cur != rear) {
+        time += dist(pre, cur);
+        cur->arrivedTime = time;
+        if(time > cur->endTime) {
+            cout << "Problem in: " << cur->id << " type is: " << cur->type << endl;
+            cout << "Now time is: " << time << " end time for him: " <<
+                cur->endTime << endl;
+            Customer *temp = head->next;
+            cout << "Now ids are: " << endl;
+            for(temp; temp != rear; temp = temp->next) {
+                cout << temp->id << "\t";
+            }
+            cout << endl;
+            throw out_of_range("Violating time constraints");
         }
-        time = time + tcurrent->serviceTime;
-        tfront = tfront->next;
-        tcurrent = tcurrent->next;
+        if(time < cur->startTime) time = cur->startTime;
+        time += cur->serviceTime;
+        pre = pre->next;
+        cur = cur->next;
     }
 }
 
@@ -581,7 +617,6 @@ Route& Route::capture(){
     ptr3->next = ptr1->rear;
     ptr1->rear->front = ptr3;
     ptr1->setLeftQuantity(leftQuantity);
-    ptr1->refreshArrivedTime();   // ¸üĞÂpart routeµÄarrivedTime
     return *ptr1;
 }
 
@@ -592,30 +627,28 @@ void Route::replaceRoute(const Route &route) {  // ÒÔrouteÌæ»»µôcurrentÖ¸ÕëºóµÄÂ
         ptr2 = current->next;
         // Çå³ıÔ­Â·¾¶ÖĞcurrentÖ¸ÕëºóÃæµÄÔªËØ
         // ²»°üÀ¨¶Ôrear½ÚµãµÄÇå³ı
-        while(ptr2 != rear) { 
-            quantity = quantity - ptr2->quantity;
+        while(ptr2 != rear) {
+            quantity -= ptr2->quantity;
             ptr3 = ptr2->next;
             delete ptr2;
             ptr2 = ptr3;
             size--;
         }
     }
+    current->next = rear;
+    rear->front = current;
+    stand->next = rear;
     // ½«routeÖĞ³ıheadºÍrearÍâµÄ½Úµã¶¼¸´ÖÆµ½currentÖ¸Õëºó
     ptr1 = route.head->next;
-    ptr3 = current;
-    while(ptr1 != route.rear){  
-        quantity = quantity + ptr1->quantity;
-        ptr2 = new Customer;
-        *ptr2 = *ptr1;
-        ptr3->next = ptr2;
-        ptr2->front = ptr3;
-        ptr3 = ptr2;
-        ptr1 = ptr1->next;
-        size++;
+    while(ptr1 != route.rear) {
+        ptr2 = ptr1->next;
+        try{
+            insertAtRear(*ptr1);
+        } catch (exception &e) {
+            throw out_of_range("While replace route: " + string(e.what()));
+        }
+        ptr1 = ptr2;
     }
-    ptr3->next = rear;
-    rear->front = ptr3;
-    refreshArrivedTime();   // ¸üĞÂÍêÂ·¾¶ºó£¬refreshÒ»ÏÂarrivedTime
     return;
 }
 

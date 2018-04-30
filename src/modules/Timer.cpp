@@ -139,8 +139,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Customer*> &rejectCustomer,
                     searchCustomer(currentEvent.customerId, dynamicCustomerSet, cust);
                 }
                 catch (exception &e) {
-                    cerr << "In event \"newCustomer\": " << e.what() << endl;
-                    exit(1);
+                    throw out_of_range("In event \"newCustomer\": ");
                 }
                 EventElement newEvent = disp.handleNewCustomer(slotIndex, cust);
                 updateEventElement(newEvent);
@@ -186,7 +185,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Customer*> &rejectCustomer,
     vector<int> rejectCustomerId = disp.getRejectCustomerId();
     vector<int>::iterator intIter;
     for(intIter = rejectCustomerId.begin(); intIter < rejectCustomerId.end(); intIter++) {
-        rejectCustomer.push_back(allCustomer[*intIter]);
+        rejectCustomer.push_back(allCustomer[*intIter-1]);
     }
     finishedPlan = disp.getFinishedPlan();
     vector<Car*>::iterator carIter;

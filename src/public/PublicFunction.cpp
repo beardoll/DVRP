@@ -43,6 +43,10 @@ vector<float> randomVec(int num){
     return output;
 }
 
+float dist(Customer *p1, Customer *p2) {
+    return sqrt(pow(p1->x - p2->x, 2) + pow(p1->y - p2->y, 2));
+}
+
 vector<int> getRandom(int lb, int ub, int m, vector<int> &restData){
     // 产生m个不同的，范围为[lb, ub)的随机数
     // restData, 除了返回值外剩余的数值

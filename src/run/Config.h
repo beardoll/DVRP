@@ -8,7 +8,11 @@ using namespace std;
 enum Strategy{Negative, Positive};
 enum DynamicLevel{low, mid, high};
 
+extern bool SHOW_DETAIL;
 extern float DYNAMICISM;
+extern bool SAMPLING;
+extern bool ASSESSMENT;
+extern bool REPLAN;
 extern Strategy STRATEGY;
 extern float ITER_PERCENTAGE;
 extern int SAMPLE_RATE;
@@ -16,10 +20,9 @@ extern int NUM_OF_CUSTOMER;
 extern int TIME_SLOT_LEN;
 extern int TIME_SLOT_NUM;
 extern int CORE_NUM;
-
-// ******** Noise param for Algorithm ******** //
-extern float* RANDOM_RANGE_ALNS;
-extern float* RANDOM_RANGE_SSLR;
+extern bool CONSTRAIN_CAR_NUM;
+extern int VEHICLE_NUM;
+extern float ALPHA;
 
 // ******** Path for Solomon Benchmark ********* //
 extern string SOLOMON_PATH;

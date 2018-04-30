@@ -163,7 +163,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             Car *tempCar = new Car((*carIter)->capturePartRoute(currentTime));
             futurePlan.push_back(tempCar);
         }
-        if (currentPlan.size() != 0) {  // 有货车可派时，才进行replan
+        if (currentPlan.size() != 0 && REPLAN) {  // 有货车可派时，才进行replan
             Simulator smu(slotIndex, promiseCustomerSet, waitCustomerSet, dynamicCustomerSet, 
                     futurePlan);
             vector<int> newservedCustomerId;
@@ -172,7 +172,6 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             updatedPlan = smu.replan(newservedCustomerId, newAbandonedCustomerId, 
                     delayCustomerId, capacity);
             withdrawPlan(futurePlan);
-            //updatedPlan = smu.no_replan();
             vector<Customer*>::iterator custIter;
 
             // 更新promiseCustomerId, rejectCustomerId以及waitCustomerId
@@ -180,50 +179,36 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             // tempVec: 存放new served以及new abandoned顾客
             //          将原来的wait Customer和tempVec作差即可得到最新的wait Customer
             vector<int> tempVec;
-            if(newservedCustomerId.size() != 0) {
-                for (intIter = newservedCustomerId.begin(); intIter < newservedCustomerId.end(); 
-                        intIter++) {
-                    promisedCustomerId.push_back(*intIter);
-                    tempVec.push_back(*intIter);
-                }
-                sort(promisedCustomerId.begin(), promisedCustomerId.end());
-            }
+            tempVec.insert(tempVec.end(), newServedCustomerId.begin(), newServedCustomerId.end());
+            // newServedCustomer将会成为新的promisedCustomer
+            promisedCustomerId.insert(promisedCustomerId.end(), newServedCustomerId.begin(), newServedCustomerId.end());
+            sort(promisedCustomerId.begin(), promisedCustomerId.end());
 
-            if(newAbandonedCustomerId.size() != 0) {
-                for (intIter = newAbandonedCustomerId.begin(); intIter < newAbandonedCustomerId.end();
-                        intIter++) {
-                    rejectCustomerId.push_back(*intIter);
-                    tempVec.push_back(*intIter);
-                }
-                sort(rejectCustomerId.begin(), rejectCustomerId.end());
-            }
+            tempVec.insert(tempVec.end(), newAbandonedCustomerId.begin(), newAbandonedCustomerId.end());
+            rejectCustomerId.insert(rejectCustomerId.end(), newAbandonedCustomerId.begin(), newAbandonedCustomerId.end());
+            sort(rejectCustomerId.begin(), rejectCustomerId.end());
+            
             // 检查是否tempVec的元素都在原来的wait Customer中
-            try {
-                for(intIter = tempVec.begin(); intIter < tempVec.end(); intIter++) {
-                    vector<int>::iterator intIter2 = find(waitCustomerId.begin(), waitCustomerId.end(), 
-                            *intIter);
-                    if(intIter2 == waitCustomerId.end()) { 
-                        // 没有找到，报错
-                        throw out_of_range("tempVec not totally in waitCustomerId!!");
-                    }   
-                }
-            }
-            catch (exception &e) {
-                cerr << "In distpacher: " << e.what() << endl;
-                exit(1);
+            for(intIter = tempVec.begin(); intIter < tempVec.end(); intIter++) {
+                vector<int>::iterator intIter2 = find(waitCustomerId.begin(), waitCustomerId.end(), 
+                        *intIter);
+                if(intIter2 == waitCustomerId.end()) { 
+                    // 没有找到，报错
+                    throw out_of_range("tempVec not totally in waitCustomerId!!");
+                }   
             }
 
             if(tempVec.size() != 0) {
                 // 提取最新的waitCustomerId
                 sort(waitCustomerId.begin(), waitCustomerId.end());
                 sort(tempVec.begin(), tempVec.end());
-                vector<int> tempVec2(20);
+                vector<int> tempVec2(waitCustomerId.size());
                 vector<int>::iterator iterxx = set_difference(waitCustomerId.begin(), 
                         waitCustomerId.end(), tempVec.begin(), tempVec.end(), tempVec2.begin());
                 tempVec2.resize(iterxx - tempVec2.begin());
                 waitCustomerId = tempVec2;
             }
-
+            
             // 将变更后的future plan安插到currentPlan对应位置之后
             int count = 0;
             for (carIter = updatedPlan.begin(); carIter < updatedPlan.end(); carIter++) {
@@ -248,10 +233,19 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             cout << ostr.str();
         }
         else {
-            ostr.str("");
-            ostr << "----no car is applicable!!!" << endl << endl;
-            TxtRecorder::addLine(ostr.str());
-            cout << ostr.str();
+            if(currentPlan.size() == 0) {
+                ostr.str("");
+                ostr << "----no car is applicable!!!" << endl << endl;
+                TxtRecorder::addLine(ostr.str());
+                cout << ostr.str();
+            } else {
+                if(!REPLAN) {
+                    ostr.str("");
+                    ostr << "----Not use replan!!" << endl << endl;
+                    TxtRecorder::addLine(ostr.str());
+                    cout << ostr.str();
+                }
+            }
         }
     }
     return newEventList;
@@ -263,7 +257,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
     ostr.str("");
     ostr<< "----Customer with id #" << newCustomer.id << " is arriving..." << endl;
     TxtRecorder::addLine(ostr.str());
-    cout << ostr.str();
+    if(SHOW_DETAIL) cout << ostr.str();
     vector<int>::iterator intIter = find(dynamicCustomerId.begin(), dynamicCustomerId.end(), 
             newCustomer.id);
     dynamicCustomerId.erase(intIter);
@@ -287,20 +281,20 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
     EventElement newEvent;
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
-        if(newCustomer.tolerantTime < slotIndex * TIME_SLOT_LEN) { 
+        if(newCustomer.tolerantTime < slotIndex * TIME_SLOT_LEN || !REPLAN) { 
             // 等不到replan，则reject
             ostr.str("");
             ostr << "He is rejected!" << endl;
             ostr << "His tolerance time is " << newCustomer.tolerantTime << endl;
             ostr << endl;
             TxtRecorder::addLine(ostr.str());
-            cout << ostr.str();
+            if(SHOW_DETAIL) cout << ostr.str();
             rejectCustomerId.push_back(newCustomer.id);
         } else {  // 否则，进入等待的顾客序列
             ostr.str("");
             ostr << "He will wait for replan!" << endl << endl;
             TxtRecorder::addLine(ostr.str());
-            cout << ostr.str();
+            if(SHOW_DETAIL) cout << ostr.str();
             waitCustomerId.push_back(newCustomer.id);  
             sort(waitCustomerId.begin(), waitCustomerId.end());
         }
@@ -310,10 +304,10 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
         int selectedCarPos = insertPos.first;
         Customer selectedCustomer = insertPos.second;
         try {
-            currentPlan[selectedCarPos]->insertAfter(selectedCustomer, newCustomer);
+            currentPlan[selectedCarPos]->insertAfter(selectedCustomer, newCustomer,
+                    currentTime);
         } catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
+            throw out_of_range(e.what());
         }
         if(currentPlan[selectedCarPos]->getState() == wait) {  // if the car stays asleep
             newEvent = currentPlan[selectedCarPos]->launchCar(currentTime);
@@ -324,7 +318,7 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
         ostr.str("");
         ostr << "He is arranged to car #" << carIndex << endl << endl;
         TxtRecorder::addLine(ostr.str());
-        cout << ostr.str();
+        if(SHOW_DETAIL) cout << ostr.str();
     }
     return newEvent;
 }
@@ -348,7 +342,7 @@ EventElement Dispatcher::handleCarArrived(float time, int carIndex){
         ostr << "----Time " << time << ", Car #" << currentPlan[pos]->getCarIndex() 
             << " finished its task!" << endl << endl;
         TxtRecorder::addLine(ostr.str());
-        cout << ostr.str();
+        if(SHOW_DETAIL) cout << ostr.str();
         carFinishTask(tempEvent.carIndex);
     } else {
         // 更新newservedCustomerId以及promisedCustomerId
@@ -362,7 +356,8 @@ EventElement Dispatcher::handleCarArrived(float time, int carIndex){
         ostr << "----Time " << time << ", Car #" << currentPlan[pos]->getCarIndex() 
             << " arrives at customer #" << currentId << endl << endl;
         TxtRecorder::addLine(ostr.str());
-        cout << ostr.str();
+        if(SHOW_DETAIL) cout << ostr.str();
+
     }
     return tempEvent;
 }
@@ -387,7 +382,7 @@ EventElement Dispatcher::handleFinishedService(float time, int carIndex){
     ostr << "Its end time for servce is " << currentPlan[pos]->getCurrentNode().endTime 
         << endl << endl;;
     TxtRecorder::addLine(ostr.str());
-    cout << ostr.str();
+    if(SHOW_DETAIL) cout << ostr.str();
     return newEvent;
 }
 

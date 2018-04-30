@@ -45,21 +45,20 @@ void clearPlanSet(vector<vector<Car*> > planSet) {
     planSet.resize(0);
 }
 
-vector<Customer*> Simulator::generateScenario(){
+vector<Customer*> Simulator::generateScenario(Customer depot){
     // 产生情景
     // 根据动态顾客的随机信息产生其时间窗
     // 注意动态顾客只可能出现在slotIndex之后
-    int leftBound = 0;
-    int rightBound = 0;
+    int leftAlpha, rightAlpha;
     switch(STRATEGY) {
         case Negative: {
-            leftBound = 1;
-            rightBound = 4;
+            leftAlpha = max(1.0, 0.5*ALPHA);
+            rightAlpha = ALPHA;
             break;
         }
         case Positive: {
-            leftBound = 5;
-            rightBound = 15;
+            leftAlpha = ALPHA;
+            rightAlpha = 2*ALPHA;
             break;
         }
     }
@@ -67,6 +66,7 @@ vector<Customer*> Simulator::generateScenario(){
     vector<Customer*>::iterator iter = tempCustomer.begin();
     for(iter; iter<tempCustomer.end(); iter++){
         // 产生随机数选择顾客可能提出需求的时间
+        float randomAlpha = random(leftAlpha, rightAlpha);
         float randFloat = random(0,1);
         float sumation = 0;
         // 时间段计数
@@ -76,11 +76,10 @@ vector<Customer*> Simulator::generateScenario(){
         float tempt = random(t1, t2);
         // 时间轴长度
         float maxTime = TIME_SLOT_NUM * TIME_SLOT_LEN;
-        (*iter)->startTime = min(tempt, maxTime - 5*(*iter)->serviceTime);
-        float t3 = leftBound*(*iter)->serviceTime;
-        float t4 = rightBound*(*iter)->serviceTime;  
-        float timeWindowLen = random(t3, t4);       
-        (*iter)->endTime = min((*iter)->startTime + timeWindowLen, maxTime);
+        float minTimeWindowLen = dist(&depot, *iter);
+        (*iter)->startTime = min(tempt, maxTime - randomAlpha * minTimeWindowLen);
+        (*iter)->endTime = random((*iter)->startTime + randomAlpha*minTimeWindowLen,
+                maxTime);
     }
     return tempCustomer;
 }
@@ -110,7 +109,7 @@ bool Simulator::checkFeasible(vector<Car*> carSet) {
 
 void threadForInitial(Customer depot, float capacity, int coreId, vector<vector<Car*> > &planSet, 
         vector<Customer*> allCustomer, vector<int> validId, Matrix<int> &transformMatrix, 
-        mutex &record_lck) {
+        mutex &record_lck, bool &flag) {
     // 路径初始化的线程操作
     // Args:
     //   * depot: 仓库节点
@@ -125,26 +124,68 @@ void threadForInitial(Customer depot, float capacity, int coreId, vector<vector<
     ALNS alg(allCustomer, depot, capacity, 10000*ITER_PERCENTAGE);
     vector<Car*> solution(0);
     float cost = 0;
-    alg.run(solution, cost);
+    try{
+        alg.run(solution, cost);
+    } catch (exception &e) {
+        record_lck.lock();
+        cout << e.what() << endl;
+        flag = false;
+        record_lck.unlock();
+        return;
+    }
     vector<Car*>::iterator carIter;
     int totalRetainNum = 0;   // 看看就听过removeInvalidCustomer后还有多少剩余节点
     for(carIter = solution.begin(); carIter < solution.end(); carIter++) {
         (*carIter)->removeInvalidCustomer(validId, totalRetainNum);
         (*carIter)->updateTransformMatrix(transformMatrix);
     }
-    record_lck.lock();
-    try {
-        if(validId.size() != totalRetainNum+1) {
-            throw out_of_range("Miss some customers after remove invalid customers!");
-        }
-    } catch (exception &e) {
-        cerr << "valid id size: " << validId.size()-1 << ";real size: " << totalRetainNum << endl;
-        cerr << e.what() << endl;
-        exit(1);
+    if(validId.size() != totalRetainNum+1) {
+        record_lck.lock();
+        cout << "Miss some customers after remove invalid customers!" << endl;
+        flag = false;
+        record_lck.unlock();
+        return;
     }
+    record_lck.lock();
     planSet.push_back(solution);
-    cout << "The core with id #" << coreId << " finished its task" << endl;
+    if(SHOW_DETAIL) cout << "The core with id #" << coreId << " finished its task" << endl;
     record_lck.unlock();
+    return;
+}
+
+void retainVehicles(vector<Car*> &carSet, Customer depot, float capacity) {
+    // 保留VEHICLE_NUM数量的车
+    // 只清除当前没有顾客节点的车辆
+    // 如果carSet中的车辆数不足VEHICLE_NUM，则填补欠缺的空车
+    // 只在initialPlan中使用
+    if(carSet.size() <= VEHICLE_NUM) {
+        int addNum = VEHICLE_NUM - carSet.size();
+        for(int i=0; i<addNum; i++) {
+            Car *newCar = new Car(depot, depot, capacity, carSet.size());
+            carSet.push_back(newCar);
+        }
+    } else {
+        int cutNum = carSet.size() - VEHICLE_NUM;
+        int i=0;
+        vector<Car*>::iterator carIter;
+        for(carIter=carSet.begin(); carIter<carSet.end(); carIter++) {
+            if(cutNum <= 0) break;
+            if((*carIter)->getRoute().getSize() == 0) {
+                delete(*carIter);
+                carIter = carSet.erase(carIter);
+                cutNum--;
+            } else {
+                carIter++;
+            }
+        }
+        if(cutNum > 0) {
+            throw out_of_range("Cannot find so many vehicles to dismiss");
+        } else {
+            for(int i=0; i<carSet.size(); i++) {
+                carSet[i]->changeCarIndex(i);
+            }
+        }
+    }
 }
 
 vector<Car*> Simulator::initialPlan(Customer depot, float capacity){     
@@ -152,86 +193,106 @@ vector<Car*> Simulator::initialPlan(Customer depot, float capacity){
     ostringstream ostr;
     vector<int>::iterator intIter;
     vector<Car*>::iterator carIter;
-    mutex record_lck;    // 锁住planSet
-    vector<thread> thread_pool;   // a pool to capitalize thread
-    int i,j;
-    int count = 0;
-    // 顾客集按照id大小进行排序
-    sort(promiseCustomerSet.begin(), promiseCustomerSet.end());
-    vector<int> validId;
-    validId.push_back(0);   // 第一个节点时仓库节点
-    // 所有在计划开始前已知的顾客id（属于必须服务的顾客）
-    vector<int> tempId = getID(promiseCustomerSet);
-    for(intIter = tempId.begin(); intIter < tempId.end(); intIter++) {
-        validId.push_back(*intIter);
-    }
-    // 初始化transformMatrix
-    Matrix<int> transformMatrix(validId.size(), validId.size());
-    for(i=0; i<validId.size(); i++) {
-        for(j=0; j<validId.size(); j++) {
-            transformMatrix.setValue(i,j,0);
-        }       
-    }
-    // 所有采样得到的计划
-    vector<vector<Car*> > planSet;
-    planSet.reserve(SAMPLE_RATE);
-    vector<vector<Car*> >::iterator planIter = planSet.begin();
-    // 对所有的情景运行ALNS算法，并且把解放入planSet中
-    // 在此过程中将根据validId对所有的解，仅保留id在validId中的顾客节点
-    vector<Customer*>::iterator iter;
-    ostr.str("");
-    ostr << "----Sampling begins!" << endl;
-    TxtRecorder::addLine(ostr.str());
-    cout << ostr.str();
+    vector<Car*> outputPlan;
+    if(SAMPLING) {
+        // 顾客集按照id大小进行排序
+        sort(promiseCustomerSet.begin(), promiseCustomerSet.end());
+        vector<int> validId;
+        validId.push_back(0);   // 第一个节点时仓库节点
+        // 所有在计划开始前已知的顾客id（属于必须服务的顾客）
+        vector<int> tempId = getID(promiseCustomerSet);
+        for(intIter = tempId.begin(); intIter < tempId.end(); intIter++) {
+            validId.push_back(*intIter);
+        }
+        // 初始化transformMatrix
+        Matrix<int> transformMatrix(validId.size(), validId.size());
+        transformMatrix.setAll(0);
+        // 所有采样得到的计划
+        // 对所有的情景运行ALNS算法，并且把解放入planSet中
+        // 在此过程中将根据validId对所有的解，仅保留id在validId中的顾客节点
+        vector<Customer*>::iterator iter;
+        ostr.str("");
+        ostr << "----Sampling begins!" << endl;
+        TxtRecorder::addLine(ostr.str());
+        cout << ostr.str();
+        
+        vector<vector<Car*> > planSet;
+        mutex record_lck;    // 锁住planSet
+        vector<thread> thread_pool;   // a pool to capitalize thread
 
-    int restSampleNum = SAMPLE_RATE;       // 尚未跑完的样本
-    while(restSampleNum > 0) {
-        // coreId: 线程id，从0开始
-        int coreId = SAMPLE_RATE - restSampleNum + 1; 
-        for(int i=0; i<min(CORE_NUM,restSampleNum); i++) {
-            // 所有顾客信息
-            vector<Customer*> allCustomer = copyCustomerSet(promiseCustomerSet);
-            vector<Customer*> currentDynamicCust = generateScenario();  // 采样
-            iter = currentDynamicCust.begin();
-            for(iter; iter<currentDynamicCust.end(); iter++){
-                allCustomer.push_back(*iter);
+        int restSampleNum = SAMPLE_RATE;       // 尚未跑完的样本
+        bool flag = true;
+        while(restSampleNum > 0) {
+            // coreId: 线程id，从0开始
+            int coreId = SAMPLE_RATE - restSampleNum + 1; 
+            for(int i=0; i<min(CORE_NUM,restSampleNum); i++) {
+                // 所有顾客信息
+                vector<Customer*> allCustomer = copyCustomerSet(promiseCustomerSet);
+                vector<Customer*> currentDynamicCust = generateScenario(depot);  // 采样
+                iter = currentDynamicCust.begin();
+                for(iter; iter<currentDynamicCust.end(); iter++){
+                    allCustomer.push_back(*iter);
+                }
+                thread_pool.push_back(thread(threadForInitial, depot, capacity, coreId + i, 
+                            ref(planSet), allCustomer, validId, ref(transformMatrix), 
+                            ref(record_lck), ref(flag)));
             }
-            thread_pool.push_back(thread(threadForInitial, depot, capacity, coreId + i, 
-                        ref(planSet), allCustomer, validId, ref(transformMatrix), ref(record_lck)));
+            for(auto& thread:thread_pool) {
+                thread.join();
+            }
+            if(flag == false) {
+                throw out_of_range("Problem in subthread");
+            } 
+            restSampleNum = restSampleNum - CORE_NUM;
+            thread_pool.clear();
+            thread_pool.resize(0);
         }
-        for(auto& thread:thread_pool) {
-            thread.join();
-        }
-        restSampleNum = restSampleNum - CORE_NUM;
-        thread_pool.clear();
-        thread_pool.resize(0);
-    }
 
-    // 然后对所有情景下的计划进行评分，取得分最高者作为初始路径计划
-    ostr.str("");
-    ostr << "----Now assessing the performance of each scenario" << endl;
-    TxtRecorder::addLine(ostr.str());
-    cout << ostr.str();
-    vector<pair<int, int> > scoreForPlan;    // 每个计划的得分
-    scoreForPlan.reserve(SAMPLE_RATE);
-    try {
-        for(planIter = planSet.begin(); planIter < planSet.end(); planIter++) {
-            int pos = planIter - planSet.begin();   // 在采样得到的计划中的位置
-            int score = 0;
-            for(carIter = planIter->begin(); carIter < planIter->end(); carIter++) {
-                score += (*carIter)->computeScore(transformMatrix);
+        if(ASSESSMENT) {
+            // 然后对所有情景下的计划进行评分，取得分最高者作为初始路径计划
+            ostr.str("");
+            ostr << "----Now assessing the performance of each scenario" << endl;
+            TxtRecorder::addLine(ostr.str());
+            cout << ostr.str();
+            vector<pair<int, int> > scoreForPlan;    // 每个计划的得分
+            vector<vector<Car*> >::iterator planIter;
+            try {
+                for(planIter = planSet.begin(); planIter < planSet.end(); planIter++) {
+                    int pos = planIter - planSet.begin();   // 在采样得到的计划中的位置
+                    int score = 0;
+                    for(carIter = planIter->begin(); carIter < planIter->end(); carIter++) {
+                        score += (*carIter)->computeScore(transformMatrix);
+                    }
+                    scoreForPlan.push_back(make_pair(score, pos));
+                }
+            } catch (exception &e) {
+                throw out_of_range(e.what());
             }
-            scoreForPlan.push_back(make_pair(score, pos));
+            cout << "Assessment finished!!" << endl;
+            sort(scoreForPlan.begin(), scoreForPlan.end(), descendSort<int, int>);
+            outputPlan = copyPlan(planSet[scoreForPlan[0].second]);
+        } else {
+            // 如果不采用assessment，则随机选取一个plan
+            int randomSelection = int(random(0, SAMPLE_RATE));
+            randomSelection = min(randomSelection, SAMPLE_RATE-1);
+            outputPlan = copyPlan(planSet[randomSelection]);
         }
-    } catch (exception &e) {
-        cerr << e.what() << endl;
-        exit(1);
+        cout << "Refreshed the outputPlan!" << endl;
+        clearPlanSet(planSet);
+    } else {
+        // 不采用sampling方案
+        vector<Customer*> allCustomer = copyCustomerSet(promiseCustomerSet);
+        ALNS alg(allCustomer, depot, capacity, 10000*ITER_PERCENTAGE);
+        vector<Car*> solution(0);
+        float cost = 0;
+        alg.run(solution, cost);
+        cout << "Using ALNS without sampling to initialize..." << endl;
+        outputPlan = solution;
     }
-    cout << "Assessment finished!!" << endl;
-    sort(scoreForPlan.begin(), scoreForPlan.end(), descendSort<int, int>);
-    vector<Car*> outputPlan = copyPlan(planSet[scoreForPlan[0].second]);
-    cout << "Refreshed the outputPlan!" << endl;
-    clearPlanSet(planSet);
+    if(CONSTRAIN_CAR_NUM) {
+        retainVehicles(outputPlan, depot, capacity);
+        cout << "Successfully cut the outputPlan!" << endl;
+    }
     deleteCustomerSet(waitCustomerSet);
     deleteCustomerSet(promiseCustomerSet);
     withdrawPlan(currentPlan);
@@ -271,7 +332,7 @@ void validPromise(vector<Car*>Plan, vector<Customer*> hurryCustomer,
 
 void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet, 
         vector<Customer*> sampleCustomer, vector<Car*> currentPlan, vector<int> validId,
-        Matrix<int> &transformMatrix, mutex &record_lck) {
+        Matrix<int> &transformMatrix, mutex &record_lck, bool &flag) {
     // replan (SSLR) 的多线程
     // Args:
     //   * capacity: 货车容量
@@ -283,29 +344,36 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
     //   * transformMatrix: 得到service promise的顾客之间的转移频数
     vector<Car*> tempPlan;
     float finalCost = 0;
-    SSLR alg(sampleCustomer, currentPlan, capacity);
-    alg.run(tempPlan, finalCost, record_lck);
+    SSLR alg(sampleCustomer, currentPlan, capacity, 10000*ITER_PERCENTAGE);
+    try{
+        alg.run(tempPlan, finalCost, record_lck);
+    } catch (exception &e) {
+        record_lck.lock();
+        cout << e.what() << endl;
+        flag = false;
+        record_lck.unlock();
+        return;
+    }
     vector<Car*>::iterator carIter;
     int totalRetainNum = 0;
     for(carIter = tempPlan.begin(); carIter < tempPlan.end(); carIter++) {
         (*carIter)->removeInvalidCustomer(validId, totalRetainNum);
         (*carIter)->updateTransformMatrix(transformMatrix);
     }
-    record_lck.lock();
     // unique_lock<mutex> lck1(record_lck);
-    try {
-        if(validId.size() != totalRetainNum+1) {
-            throw out_of_range("Miss some customers after remove invalid customers!");
-        }
-    } catch (exception &e) {
-        cerr << "valid id size: " << validId.size()-1 << ";real size: " << totalRetainNum << endl;
-        cerr << e.what() << endl;
-        exit(1);
+    if(validId.size() != totalRetainNum+1) {
+        record_lck.lock();
+        cout << "Miss some customers after remove invalid customers!" << endl;
+        flag = false;
+        record_lck.unlock();
+        return;
     }
 
-    cout << "Core with id #" << coreId << " finished its task!" << endl;
+    record_lck.lock();
+    if(SHOW_DETAIL) cout << "Core with id #" << coreId << " finished its task!" << endl;
     planSet.push_back(tempPlan);
     record_lck.unlock();
+    return;
 }
 
 vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &newAbandonedCustomerId, vector<int> &delayCustomerId, float capacity) {
@@ -353,13 +421,8 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
             // 如果patientCustomer为空，则不需要对其进行replan
             SSLR alg(patientCustomer, currentPlan, capacity, iterForWaitCustomer);
             alg.run(newPlan, finalCost, record_lck);
-            try {
-                if(checkFeasible(newPlan) == false) {
-                    throw out_of_range("The plan after insert patient customer is invalid!");
-                }
-            } catch (exception &e) {
-                cerr << e.what() << endl;
-                exit(1);
+            if(checkFeasible(newPlan) == false) {
+                throw out_of_range("The plan after insert patient customer is invalid!");
             }
             validPromise(newPlan, patientCustomer, newServedCustomerId, delayCustomerId);
         } else {
@@ -378,13 +441,8 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         cout << ostr.str();
         SSLR alg(hurryCustomer, currentPlan, capacity, iterForWaitCustomer);
         alg.run(newPlan, finalCost, record_lck);
-        try {
-            if(checkFeasible(newPlan) == false) {
-                throw out_of_range("The plan after insert hurry customer is invalid!");
-            }
-        } catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
+        if(checkFeasible(newPlan) == false) {
+            throw out_of_range("The plan after insert hurry customer is invalid!");
         }
         validPromise(newPlan, hurryCustomer, newServedCustomerId, newAbandonedCustomerId);
         if(patientCustomer.size() != 0) {
@@ -395,13 +453,8 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
             // 如果patientCustomer不为空，则应该对其进行replan
             SSLR alg2(patientCustomer, newPlan, capacity, iterForWaitCustomer);
             alg2.run(newPlan, finalCost, record_lck);
-            try {
-                if(checkFeasible(newPlan) == false) {
-                    throw out_of_range("The plan after insert patient customer is invalid!");
-                }
-            } catch (exception &e) {
-                cerr << e.what() << endl;
-                exit(1);
+            if(checkFeasible(newPlan) == false) {
+                throw out_of_range("The plan after insert patient customer is invalid!");
             }
             validPromise(newPlan, patientCustomer, newServedCustomerId, delayCustomerId);		
         } else {
@@ -421,15 +474,10 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     ostr << "There are newly " << newAbandonedCustomerId.size() << " customers rejected!" << endl;
     TxtRecorder::addLine(ostr.str());
     cout << ostr.str();
-    
+   
     // 检查newPlan，也就是即将执行SSLR算法的originPlan是否包含了所有promise customer
-    try {
-        if(checkFeasible(newPlan) == false) {
-            throw out_of_range("The original plan has been infeasible!");
-        }
-    } catch (exception &e) {
-        cerr << e.what() << endl;
-        exit(1);
+    if(checkFeasible(newPlan) == false) {
+        throw out_of_range("The original plan has been infeasible!");
     }
 
     // 首先得到"OK promise"的顾客的id，用于求解评分矩阵
@@ -444,79 +492,95 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
         allServedCustomerId.push_back(*intIter);
     }
     sort(allServedCustomerId.begin(), allServedCustomerId.end());
-    // 然后进行采样，调用SSLR算法计算各个采样情景下的计划
-    // 并且计算评分矩阵
-    // 初始化transformMatrix
-    Matrix<int> transformMatrix(allServedCustomerId.size(), allServedCustomerId.size());
-    for(int i=0; i<allServedCustomerId.size(); i++) {
-        for(int j=0; j<allServedCustomerId.size(); j++) {
-            transformMatrix.setValue(i,j,0);
-        }
-    }
-    vector<vector<Car*> > planSet;     // store all threads of all scenarios
-    planSet.reserve(SAMPLE_RATE);
-    vector<vector<Car*> >::iterator planIter;
-    ostr.str("");
-    ostr << "----Sampling begins!" << endl;
-    ostr << "----In replan, there will be " << dynamicCustomerSet.size() 
-         << " dynamic customers" << endl;
-    TxtRecorder::addLine(ostr.str());
-    cout << ostr.str();
+    vector<Car*> outputPlan;
+    if(SAMPLING) {
+        // 然后进行采样，调用SSLR算法计算各个采样情景下的计划
+        // 并且计算评分矩阵
+        // 初始化transformMatrix
+        Matrix<int> transformMatrix(allServedCustomerId.size(), allServedCustomerId.size());
+        transformMatrix.setAll(0);
+        vector<vector<Car*> > planSet;     // store all threads of all scenarios
+        planSet.reserve(SAMPLE_RATE);
+        vector<vector<Car*> >::iterator planIter;
+        ostr.str("");
+        ostr << "----Sampling begins!" << endl;
+        ostr << "----In replan, there will be " << dynamicCustomerSet.size() 
+             << " dynamic customers" << endl;
+        TxtRecorder::addLine(ostr.str());
+        cout << ostr.str();
 
-    // 执行sampling
-    int restSampleNum = SAMPLE_RATE;
-    while(restSampleNum > 0) {
-        thread_pool.clear();
-        thread_pool.resize(0);
-        int coreId = SAMPLE_RATE - restSampleNum + 1;
-        for (int i = 0; i < min(CORE_NUM, restSampleNum); i++) {
-            vector<Customer*> sampleCustomer = generateScenario(); // 产生动态顾客到达的情景
-            thread_pool.push_back(thread(threadForReplan, capacity, coreId + i, 
-                        ref(planSet), sampleCustomer, ref(newPlan), allServedCustomerId, 
-                        ref(transformMatrix), ref(record_lck)));
-        }
-        for (auto& thread : thread_pool) {
-            thread.join();
-        }
-        restSampleNum = restSampleNum - CORE_NUM;   
-    }
-
-    // 评价每个scenario的性能
-    ostr.str("");
-    ostr << "----Now assessing the performance of each scenario" << endl;
-    TxtRecorder::addLine(ostr.str());
-    cout << ostr.str();
-    vector<pair<int, int> > scoreForPlan;    // 每个计划的得分
-    scoreForPlan.reserve(SAMPLE_RATE);
-    try {
-        for(planIter = planSet.begin(); planIter < planSet.end(); planIter++) {
-            int pos = planIter - planSet.begin();             // 在采样得到的计划中的位置
-            int score = 0;
-            for(carIter = planIter->begin(); carIter < planIter->end(); carIter++) {
-                score += (*carIter)->computeScore(transformMatrix);
+        // 执行sampling
+        int restSampleNum = SAMPLE_RATE;
+        bool flag = true;
+        while(restSampleNum > 0) {
+            thread_pool.clear();
+            thread_pool.resize(0);
+            int coreId = SAMPLE_RATE - restSampleNum + 1;
+            for (int i = 0; i < min(CORE_NUM, restSampleNum); i++) {
+                Customer depot = newPlan[0]->getRearNode();
+                vector<Customer*> sampleCustomer = generateScenario(depot); // 产生动态顾客到达的情景
+                thread_pool.push_back(thread(threadForReplan, capacity, coreId + i, 
+                            ref(planSet), sampleCustomer, ref(newPlan), allServedCustomerId, 
+                            ref(transformMatrix), ref(record_lck), ref(flag)));
             }
-            scoreForPlan.push_back(make_pair(score, pos));
+            for (auto& thread : thread_pool) {
+                thread.join();
+            }
+            if(!flag) {
+                throw out_of_range("Problem in subthread!");
+            }
+            restSampleNum = restSampleNum - CORE_NUM;   
         }
-    } catch (exception &e) {
-        cerr << e.what() << endl;
-        exit(1);
-    }
-    sort(scoreForPlan.begin(), scoreForPlan.end(), descendSort<int, int>);
-    vector<Car*> outputPlan = copyPlan(planSet[scoreForPlan[0].second]);
-    try {
-        if(checkFeasible(outputPlan) == false) {
-            throw out_of_range("The output plan is invalid!");
+
+        if(ASSESSMENT) {
+            // 评价每个scenario的性能
+            ostr.str("");
+            ostr << "----Now assessing the performance of each scenario" << endl;
+            TxtRecorder::addLine(ostr.str());
+            cout << ostr.str();
+            vector<pair<int, int> > scoreForPlan;    // 每个计划的得分
+            scoreForPlan.reserve(SAMPLE_RATE);
+            try {
+                for(planIter = planSet.begin(); planIter < planSet.end(); planIter++) {
+                    int pos = planIter - planSet.begin();             // 在采样得到的计划中的位置
+                    int score = 0;
+                    for(carIter = planIter->begin(); carIter < planIter->end(); carIter++) {
+                        score += (*carIter)->computeScore(transformMatrix);
+                    }
+                    scoreForPlan.push_back(make_pair(score, pos));
+                }
+            } catch (exception &e) {
+                throw out_of_range(e.what());
+            }
+            sort(scoreForPlan.begin(), scoreForPlan.end(), descendSort<int, int>);
+            cout << "Assessment finished, its score is: " << scoreForPlan[0].first << endl;
+            outputPlan = copyPlan(planSet[scoreForPlan[0].second]);
+        } else {
+            // 如果不采用assessment，则随机选取一个plan
+            int randomSelection = int(random(0, SAMPLE_RATE));
+            randomSelection = min(randomSelection, SAMPLE_RATE-1);
+            outputPlan = copyPlan(planSet[randomSelection]);
         }
-    } catch (exception &e) {
-        cerr << e.what() << endl;
-        exit(1);
+        clearPlanSet(planSet);
+    } else {
+        // 如果不进行采样
+        cout << "Not use sampling in replan..." << endl;
+        vector<Customer*> tempCustomer;
+        vector<Car*> tempPlan = copyPlan(newPlan);
+        float finalCost = 0;
+        SSLR alg(tempCustomer, tempPlan, capacity, 10000*ITER_PERCENTAGE);
+        alg.run(outputPlan, finalCost, record_lck);
     }
-    clearPlanSet(planSet);
+    if(checkFeasible(outputPlan) == false) {
+        throw out_of_range("The output plan is invalid!");
+    }
+
     deleteCustomerSet(waitCustomerSet);
     deleteCustomerSet(promiseCustomerSet);
     deleteCustomerSet(dynamicCustomerSet);
     withdrawPlan(currentPlan);
     withdrawPlan(newPlan);
+
     return outputPlan;
 }
 

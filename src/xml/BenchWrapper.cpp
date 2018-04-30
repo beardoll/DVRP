@@ -1,5 +1,6 @@
 #include "BenchWrapper.h"
 #include "../run/Config.h"
+#include "../public/PublicFunction.h"
 #include<sstream>
 #include<stdexcept>
 
@@ -151,6 +152,7 @@ void BenchWrapper::saveResult(string fileName, vector<Car*> carSet, vector<Custo
         tempCust.push_back(newdepot2);
         // 然后依次将tempCust中的节点信息写入XML文件中
         saveCustomerInfo(tempCust, routeElem);
+        deleteCustomerSet(tempCust);
         routeSetElem->LinkEndChild(routeElem);
     }
 
@@ -252,7 +254,8 @@ void BenchWrapper::loadBench(string fileName, vector<Customer*> &staticCustomers
     depot.startTime = 0;
     depot.arrivedTime = 0;
     depot.prop = 0;
-    
+    depot.serviceTime = 0;
+
     // 车辆信息
     TiXmlElement* vehicleElem = hRoot.FirstChild("vehicle").Element();
     TiXmlHandle vehicleNode(vehicleElem);

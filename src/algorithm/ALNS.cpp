@@ -169,11 +169,12 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
                 // 首先得到maxArrivedTime
                 float maxArrivedTime = -MAX_FLOAT;
                 for(i=0; i<(int)tempCarSet.size(); i++){
-                    // tempCarSet[i]->getRoute().refreshArrivedTime();	
                     vector<float> temp = tempCarSet[i]->getRoute().getArrivedTime();
                     sort(temp.begin(), temp.end(), greater<float>());
-                    if(temp[0] > maxArrivedTime) {
-                        maxArrivedTime = temp[0];
+                    if(temp.size() > 0) {
+                        if(temp[0] > maxArrivedTime) {
+                            maxArrivedTime = temp[0];
+                        }
                     }
                 }
                 // 更新类成员maxt
@@ -203,14 +204,8 @@ void ALNS::run(vector<Car*> &finalCarSet, float &finalCost){
                 break;
             }
         }
-        try {
-            if (getCustomerNum(tempCarSet) != customerTotalNum) {
-                throw out_of_range("Lose some customers in ALNS!");
-            }
-        }
-        catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
+        if (getCustomerNum(tempCarSet) != customerTotalNum) {
+            throw out_of_range("Lose some customers in ALNS!");
         }
         removeNullRoute(tempCarSet);
 

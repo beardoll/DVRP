@@ -5,7 +5,7 @@
 #include "Matrix.h"
 #include<vector>
 
-enum State{wait, depature, serving, offwork};
+enum State{wait, departure, serving, offwork};
 
 class Car{
 public:
@@ -45,10 +45,11 @@ public:
     Customer& getCurrentNode() {return route.currentPos();} // 得到current指针指向的节点
 
     // insert 和 delete Customer方法
-    void insertAtRear(Customer &item);   // 在路径的尾部插入节点
-    void insertAtHead(Customer &item);   // 在路径头部插入节点
-    void insertAfter(const Customer &item1, const Customer &item2);     //  在item1后插入item2
-    void deleteCustomer(Customer &item); // 在路径中删除item节点
+    void insertAtRear(Customer item);   // 在路径的尾部插入节点
+    void insertAtHead(Customer item);   // 在路径头部插入节点
+    void insertAfter(Customer item1, Customer item2);     //  在item1后插入item2
+    void insertAfter(Customer item1, Customer item2, float time);
+    void deleteCustomer(Customer item); // 在路径中删除item节点
 
     // part Route操作
     // 将newCar的路径插入到当前货车路径的current节点之后
@@ -68,7 +69,7 @@ public:
 private:
     State state;    // 货车状态（服务？行进？等待？）
     Route route;    // 计划要走的路径
-    float nearestDepatureTime;   // 最新的出发时间
+    float nearestDepartureTime;   // 最新的出发时间
     float nextArriveTime;        // 下一站的到达时间
     bool artificial;  // 为true表示是虚构的车辆，false表示真实的车辆
     int carIndex;     // 货车编号

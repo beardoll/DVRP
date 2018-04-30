@@ -20,6 +20,7 @@ template<class T1, class T2>  bool descendSort(pair<T1, T2> x, pair<T1, T2> y) {
     // 第二个元素包含该元素在原序列中的位置
     return x.first > y.first;
 }
+float dist(Customer *p1, Customer *p2);
 vector<float> randomVec(int num);
 // 获得范围从lb到ub的m个不重复的数字
 // 剩余数字置于restData中

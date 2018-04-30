@@ -1,6 +1,7 @@
 #include "SSLR.h"
 #include "../baseclass/Matrix.h"
 #include "../run/TxtRecorder.h"
+#include "../run/Config.h"
 #include<cmath>
 #include<stdexcept>
 #include<algorithm>
@@ -9,7 +10,7 @@
 
 using namespace std;
 
-float RANDOM_RANGE_SSLR[2] = {0, 1};
+float RANDOM_RANGE_SSLR[2] = {0.8, 1};
 
 vector<Customer*> feedDataForLNSBase(vector<Customer*> waitCustomer, vector<Car*> originPlan) {
     // 返回allCustomer，其中对waitCustomer优先级赋值为2，对originPlan的顾客优先级赋值为1
@@ -220,7 +221,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
     // 其余核心参数
     int segment = 100;   // 每隔一个segment更新removeProb, removeWeight等参数
     float w = 0.05f;      // 初始温度设定有关参数
-    float T = w * abs(currentCost) / (float)log(2);   // 初始温度
+    float refCost = getTrueCost(baseCarSet);
+    float T = w * abs(refCost) / (float)log(2);   // 初始温度
     float ksi = 0.8f;    // 每次移除的最大节点数目占总节点数的比例
     float c = 0.9998f;    // 降温速率
     vector<Customer*> removedCustomer(0);    // 被移除的节点
@@ -323,11 +325,12 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
                 // 首先得到maxArrivedTime
                 float maxArrivedTime = -MAX_FLOAT;
                 for(i=0; i<(int)tempCarSet.size(); i++){
-                    // tempCarSet[i]->getRoute().refreshArrivedTime;
                     vector<float> temp = tempCarSet[i]->getRoute().getArrivedTime();
                     sort(temp.begin(), temp.end(), greater<float>());
-                    if(temp[0] > maxArrivedTime) {
-                        maxArrivedTime = temp[0];
+                    if(temp.size() > 0) {
+                        if(temp[0] > maxArrivedTime) {
+                            maxArrivedTime = temp[0];
+                        }
                     }
                 }
                 // 重置类成员maxt
@@ -357,14 +360,8 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
             }
         }
 
-        try {
-            if (getCustomerNum(tempCarSet) != customerTotalNum) {
-                throw out_of_range("Lose some customers in SSLR!");
-            }
-        } 
-        catch (exception &e) {
-            cerr << e.what() << endl;
-            exit(1);
+        if (getCustomerNum(tempCarSet) != customerTotalNum) {
+            throw out_of_range("Lose some customers in SSLR!");
         }
 
         // 移除空路径
@@ -457,7 +454,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
         ostr << "SSLR: we should use the origin plan, there are " << infeasibleNum << 
             " high priority customers left in virtual vehicles." << endl;
         TxtRecorder::addLine(ostr.str());
-        cout << ostr.str();
+        if(SHOW_DETAIL) cout << ostr.str();
         print_lck.unlock();
         finalCarSet = copyPlan(originPlan);
     } else {
@@ -469,7 +466,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost, mutex &print_lck){
                 finalCarSet.push_back(tempCar);
             }
         }
-        cout << ostr.str();
+        if(SHOW_DETAIL) cout << ostr.str();
         print_lck.unlock();
     }
     delete [] DTpara;

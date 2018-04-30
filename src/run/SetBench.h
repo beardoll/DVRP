@@ -12,7 +12,7 @@ public:
     ~SetBench(){};  // 析构函数
     void constructProbInfo(); // 为probInfo赋值
     void construct(vector<Customer*> &staticCustomerSet, 
-            vector<Customer*> &dynamicCustomerSet);   // 创造顾客样本
+            vector<Customer*> &dynamicCustomerSet, Customer depot);   // 创造顾客样本
 private:
     vector<Customer*> originCustomerSet; // 原始顾客数据
 };

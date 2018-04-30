@@ -21,10 +21,10 @@ public:
     void clear();     // 清空链表
 
     // 插入以及删除节点操作
-    void insertAfter(Customer &item1, Customer &item2); // 在链表中与item1相同的节点后面插入节点item2
-    void insertAtHead(Customer &item);   // 在表头插入item
-    void insertAtRear(Customer &item);    // 在表尾插入item
-    void deleteNode(Customer &item);   // 在链表中删除与item相同的节点
+    void insertAfter(Customer item1, Customer item2); // 在链表中与item1相同的节点后面插入节点item2
+    void insertAtHead(Customer item);   // 在表头插入item
+    void insertAtRear(Customer item);    // 在表尾插入item
+    void deleteNode(Customer item);   // 在链表中删除与item相同的节点
 
     // 获得单节点操作
     Customer& currentPos();   // 返回当前位置
@@ -32,6 +32,7 @@ public:
     Customer& pastPos() {return *(current->front);}     // 前一个节点的位置
     Customer& getHeadNode();    // 得到头结点
     Customer& getRearNode();    // 得到尾节点
+    Customer& getStand() { return *stand; }
 
     // 获取链表属性
     float getQuantity() {return this->quantity;}            // 得到本车已使用的容量(装载顾客)
@@ -47,7 +48,9 @@ public:
     void decreaseLeftQuantity(float amount) {leftQuantity -= amount;}   
     // 减少剩余的车容量（服务了新的顾客）
     void setLeftQuantity(float newValue) {leftQuantity = newValue;}
-    void setCurrentArrivedTime(float time) {current->arrivedTime = time;}      
+    void setCurrentArrivedTime(float time) {current->arrivedTime = time;}
+    // 设置当前驻点
+    void setStand(float x, float y, float arrivedTime, float serviceTime=0.0f);
     // 设置当前节点的到达时间
     bool moveForward();      // 向前进
 
@@ -62,10 +65,10 @@ public:
             bool regularization = true);  
 
     // 计算把item插入到pre后面是否会违反时间窗约束
-    bool timeWindowJudge(Customer *pre, int pos, Customer item);
+    bool timeWindowJudge(Customer *pre, Customer item);
     
-    // 更新一下各个节点的到达时刻
-    void refreshArrivedTime();   
+    // 检查一下各个节点的到达时刻
+    void checkArrivedTime();   
 
     // 路径的替换和提取
     // 以route替换掉current指针后的路径
@@ -78,12 +81,12 @@ public:
     bool checkPassRoute();
 private:
     Customer *head, *current, *rear;  // 表头，表尾和当前指针，当前指针指向货车当前的驻地
+    Customer *stand;  // 真实驻地
     int size;         // 链表的长度
     float quantity;   // 当前已使用的容量(与装载的顾客数量有关)
     float leftQuantity;   // 剩余容量（与车辆行驶情况有关）
     float capacity;       // 车载量，在这里保存
     void copy(const Route& L);  // 复制链表，供复制构造函数和重载“=”函数使用
-    vector<float> arrivedTime;  // 在各个节点的到达时刻
 };
 
 

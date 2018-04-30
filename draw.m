@@ -38,8 +38,8 @@ function [] = drawCircle(r)
 end  
 
 function [] = drawLine(theta, r)
-    % ?(0, 0)????theta?????????r???
-    % theta??
+    % 以(0, 0)为原点，theta为夹角画一条长度为r的射线
+    % theta为度
     theta = 2*pi*theta/360;
     delta_r = 0:0.1:(r+0.1);
     x = delta_r * cos(theta);

@@ -1,4 +1,4 @@
-function [] = draw()
+function [] = drawDataSet()
     drawCircle(30);
     hold on;
     drawCircle(60);
@@ -32,8 +32,7 @@ end
 function [] = drawCircle(r)  
     theta=0:0.05:(2*pi+0.05);  
     Circle1=r*cos(theta);  
-    Circle2=r*sin(theta);  
-    c=[123,14,52];  
+    Circle2=r*sin(theta);   
     plot(Circle1,Circle2,'m','linewidth',1);   
 end  
 

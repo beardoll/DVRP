@@ -1,9 +1,8 @@
-function [routeSet, rejectCustomer, dynamicCustomer, travelDistance] = readxml(filename)
+function [routeSet, rejectCustomer, dynamicCustomer] = readxml(filename)
     xmlDoc = xmlread(filename);
     routeSet = extractRouteSetInfo(xmlDoc);
     rejectCustomer = extractSpotSetInfo(xmlDoc, 'rejectCustomer');
     dynamicCustomer = extractSpotSetInfo(xmlDoc, 'dynamicCustomer');
-    travelDistance = extractSingleValue(xmlDoc, 'travelLen');
 end 
 
 function [node] = constructEmptyNode()
@@ -61,7 +60,7 @@ function [routeSet] = extractRouteSetInfo(xmlDoc)
     % 所有Route节点
     routeNodeArray = xmlDoc.getElementsByTagName('Route');
     routeSet = cell(1, routeNodeArray.getLength);
-    for i = 0: routeNodeArray.getLength-1
+    for i = 1: routeNodeArray.getLength-1
         currentRouteNode = routeNodeArray.item(i);
         spotNode = currentRouteNode.getFirstChild;
         spotSet = [];
@@ -75,7 +74,7 @@ function [routeSet] = extractRouteSetInfo(xmlDoc)
             end
             spotNode = spotNode.getNextSibling;
         end
-        routeSet{i+1} = spotSet;
+        routeSet{i} = spotSet;
     end
 end
 
@@ -94,10 +93,6 @@ function [spotSet] = extractSpotSetInfo(xmlDoc, spotSetName)
     end
 end
 
-function [value] = extractSingleValue(xmlDoc, nodeName)
-    % 单节点的值
-    node = xmlDoc.getElementsByTagName(nodeName).item(0);
-    value = str2double(char((node.getFirstChild.getData)));
-end
+function [value] = extractSingleValue()
 
 

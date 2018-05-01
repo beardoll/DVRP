@@ -1,4 +1,5 @@
 function [] = drawDataSet()
+    % 画出顾客节点的分布
     drawCircle(30);
     hold on;
     drawCircle(60);
@@ -30,6 +31,7 @@ function [] = drawDataSet()
 end
 
 function [] = drawCircle(r)  
+    % 画半径为r的圆
     theta=0:0.05:(2*pi+0.05);  
     Circle1=r*cos(theta);  
     Circle2=r*sin(theta);   

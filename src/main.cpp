@@ -12,33 +12,30 @@
 #include "run/Config.h"
 #include "baseclass/Spot.h"
 #include "dataset/TxtParser.h"
+#include "run/TxtRecorder.h"
 #include<fstream>
 
 using namespace std;
 
-int main(int argc, char *argv[]){
-    cout << "================ Simulation Start =============" << endl;
-    cout << "Please choose benchmark file index: (1-20):";
-    int index;
-    cin >> index;
+void experimentEngine(int index) {
+    // index可从1-20中选择
     ostringstream ostr;
     if(index < 0 || index > 20) {
         cout << "Benchmark with index " << index << " not exist!" << endl;
+        exit(1);
     } else if (index < 10) {
         ostr << 0 << index;
     } else {
         ostr << index;
     }
     string data_file = SIMULATION_PATH + "dataset/pr" + ostr.str(); 
-	//static ofstream outfile;
-	//outfile.open(data_file.c_str(), ofstream::trunc);
-	//outfile << "test" << endl;
-	//outfile.close();
+    string txt_file = SIMULATION_PATH + "result/pr" + ostr.str() + ".txt";
+    TxtRecorder::changeFile(txt_file);
 
     TxtParser tp(data_file);
     vector<Spot*> depots, customers;
     tp.getDataset(depots, customers, VEHICLE_NUM);
-    SSLR alg(customers, depots, 15000, true);
+    SSLR alg(customers, depots, MAX_ITER, true);
     vector<Car*> result;
     float cost;
     alg.run(result, cost);
@@ -47,14 +44,19 @@ int main(int argc, char *argv[]){
     // 每辆车的time duration
     vector<float> tds = getTimeDurations(result);
     for(int i=0; i<tds.size(); i++) {
-        cout << "id: #" << result[i]->getCarIndex() << " depot: #"
-            << result[i]->getDepotIndex() <<" demand: "  << demands[i] 
-            << " time duration: " << tds[i] << " customerNum: " <<
-            result[i]->getRoute()->getSize() << endl;
+        ostr.str("");
+        ostr << result[i]->getCarIndex() << " " << result[i]->getDepotIndex() << " "
+             << demands[i] << " " << tds[i] << " " << result[i]->getRoute()->getSize() << endl;
+        TxtRecorder::addLine(ostr.str());
     }
-    cout << "=================" << endl;
-    cout << "The final cost is " << cost << endl;
-    cout << "=================" << endl;
-    showDetailForPlan(result);
+    ostr.str("");
+    ostr << cost << endl;
+    TxtRecorder::addLine(ostr.str());
+    // showDetailForPlan(result);
+    TxtRecorder::closeFile();
+}
+
+int main(int argc, char *argv[]){
+    experimentEngine(1);
     return 0;
 }

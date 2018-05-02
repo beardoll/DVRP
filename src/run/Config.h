@@ -11,6 +11,7 @@ enum DynamicLevel{low, mid, high};
 
 extern int CUSTOMER_NUM;
 extern int VEHICLE_NUM;
+extern int MAX_ITER;
 
 // 数据路径
 extern string SIMULATION_PATH;

@@ -7,6 +7,7 @@
 #include<algorithm>
 #include<cassert>
 #include<functional>
+#include<sstream>
 
 using namespace std;
 
@@ -21,34 +22,6 @@ SSLR::SSLR(vector<Spot*> allCustomer, vector<Spot*> depots, int maxIter, bool ve
 }
 
 SSLR::~SSLR() {}
-
-bool judgeFeasible(vector<Car*> carSet, vector<Car*> refCarSet, int &infeasibleNum) {
-	// 判断carSet是否可行
-    // 主要判断refCarSet中的顾客是否都在carSet的working vehicle中
-    infeasibleNum = 0;
-    bool mark = true;
-    vector<Car*>::iterator carIter;
-    vector<int> refIDs = getCustomerID(refCarSet);
-    vector<int>::iterator iter, iter1;
-    sort(refIDs.begin(), refIDs.end());
-    vector<Car*> workingCarSet;
-    for(carIter = carSet.begin(); carIter < carSet.end(); carIter++) {
-        if((*carIter)->judgeArtificial() == false) {
-            workingCarSet.push_back(*carIter);
-        }
-    }
-    vector<int> currentIDs = getCustomerID(workingCarSet);
-    for(iter = currentIDs.begin(); iter < currentIDs.end(); iter++) {
-        iter1 = find(refIDs.begin(), refIDs.end(), *iter);
-        if(iter1 < refIDs.end()) {
-            refIDs.erase(iter1);
-        }
-        sort(refIDs.begin(), refIDs.end());
-    }
-    infeasibleNum = refIDs.size();
-    mark = (infeasibleNum==0);
-    return mark;
-}
 
 float* computeDTpara(vector<Spot*> allCustomer, vector<Spot*> depots,
         float maxd, float mind){
@@ -195,6 +168,7 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     float c = 0.9998f;    // 降温速率
     vector<Spot*> removedCustomer(0);    // 被移除的节点
     vector<Car*> tempCarSet = copyPlan(currentCarSet);      // 暂时存放当前解
+    ostringstream ostr;
 
     for(int iter=0; iter<maxIter; iter++){
         if(iter%segment == 0){  // 新的segment开始
@@ -399,6 +373,16 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
             withdrawPlan(tempCarSet);
             tempCarSet = copyPlan(currentCarSet);
         }
+
+        float tc1, tc2;
+        int dismissNum;
+        tc1 = getTrueLen(currentCarSet, dismissNum);
+        if(dismissNum != 0) tc1 = -1;
+        tc2 = getTrueLen(globalCarSet, dismissNum);
+        if(dismissNum) tc2 = -1;
+        ostr.str("");
+        ostr << iter << " " << tc1 << " " << tc2 << " " << endl;
+        TxtRecorder::addLine(ostr.str());
     }    
 
     finalCarSet = copyPlan(globalCarSet);   

@@ -401,8 +401,12 @@ void threadForReplan(float capacity, int coreId, vector<vector<Car*>> &planSet,
   
     // unique_lock<mutex> lck1(record_lck);
     if(validId.size() != totalRetainNum+1) {
-        cerr << "valid id size: " << validId.size()-1 << ";real size: " << totalRetainNum << endl;
-        throw out_of_range("Miss some customers after remove invalid customers!");
+        record_lck.lock();
+        cout << "valid id size: " << validId.size()-1 << ";real size: " << totalRetainNum << endl;
+        cout << "Miss some customers after remove invalid customers!" << endl;
+        flag = false;
+        record_lck.unlock();
+        return;
     }
     record_lck.lock();
     planSet.push_back(tempPlan);

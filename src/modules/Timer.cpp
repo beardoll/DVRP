@@ -9,6 +9,10 @@ bool ascendSortEvent(const EventElement &a, const EventElement &b){  // 递增排序
     return a.time < b.time;
 }
 
+bool ascendSortCustomerSet(Spot *a, Spot *b) {
+    return a->id < b->id;
+}
+
 EventElement Timer::pop(){  
     // 将事件推出
     assert(eventList.size() > 0);
@@ -183,7 +187,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
     for(custIter = dynamicCustomerSet.begin(); custIter < dynamicCustomerSet.end(); custIter++) {
         allCustomer.push_back(*custIter);
     }
-    sort(allCustomer.begin(), allCustomer.end());
+    sort(allCustomer.begin(), allCustomer.end(), ascendSortCustomerSet);
     vector<int> rejectCustomerId = disp.getRejectCustomerId();
     vector<int>::iterator intIter;
     for(intIter = rejectCustomerId.begin(); intIter < rejectCustomerId.end(); intIter++) {

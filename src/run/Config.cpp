@@ -33,5 +33,5 @@ int MAX_DEMAND = 5;
 
 
 // ******** Path for the bench we construct ******** //
-string BENCH_FILE_PATH = "./O2OSimulation/";
+string SIMULATION_ROOT_PATH = "./O2OSimulation/";
 

@@ -13,6 +13,9 @@ public:
     void constructStoreSet();
     void constructCustomerSet();
     void constructDepot();
+    void changeTWL(vector<Spot*> customerSet, Spot *depot, float newAlpha);
+    void changeDYN(vector<Spot*> customerSet, Spot *depot, int beginIndex,
+            vector<Spot*> &staticCustomer, vector<Spot*> &dynamicCustomer);
     void construct(vector<Spot*> &staticCustomerSet, vector<Spot*> &dynamicCustomerSet,
             vector<Spot*> &storeSet, Spot &depot, float currentTime);   // 创造顾客样本
 private:

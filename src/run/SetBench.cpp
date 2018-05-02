@@ -36,6 +36,46 @@ void SetBench::constructStoreSet() {
     this->storeSet = storeSet;
 }
 
+void SetBench::changeTWL(vector<Spot*> customerSet, Spot *depot, float newAlpha) {
+    // 以newAlpha为时间窗-距离比，调整customerSet的时间窗
+    float timeHorizon = LATEST_SERVICE_TIME;
+    for(int i=0; i<customerSet.size(); i++) {
+        Spot *c = customerSet[i];
+        float distFromCustomerToStore = dist(c, c->choice);
+        float distFromDepotToStore = dist(depot, c->choice);
+        float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
+        float minEndTime = max(BEGIN_SLOT_INDEX * TIME_SLOT_LEN + minTimeLen,
+                c->startTime + newAlpha*minTimeLen);
+        c->endTime = random(minEndTime, timeHorizon);
+        if(c->tolerantTime > c->endTime) {
+            c->endTime = c->tolerantTime;
+        }
+    }
+}
+
+void SetBench::changeDYN(vector<Spot*> customerSet, Spot *depot, int beginIndex,
+        vector<Spot*> &staticCustomer, vector<Spot*> &dynamicCustomer) {
+    // 调整begin_slot_index以改变dynamicism
+    float timeHorizon = LATEST_SERVICE_TIME;
+    for(int i=0; i<customerSet.size(); i++) {
+        Spot *c = customerSet[i];
+        float distFromCustomerToStore = dist(c, c->choice);
+        float distFromDepotToStore = dist(depot, c->choice);
+        float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
+        float minEndTime = max(beginIndex * TIME_SLOT_LEN + minTimeLen,
+                c->startTime + ALPHA*minTimeLen);
+        c->endTime = random(minEndTime, timeHorizon);
+        if(c->tolerantTime > c->endTime) {
+            c->endTime = c->tolerantTime;
+        }
+        if(c->startTime < beginIndex * TIME_SLOT_LEN) {
+            staticCustomer.push_back(c);
+        } else {
+            dynamicCustomer.push_back(c);
+        }
+    }
+}
+
 void SetBench::constructCustomerSet() {
     vector<Spot*> customerSet(0);
     float innerR = R3;

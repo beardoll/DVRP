@@ -41,11 +41,7 @@ extern float ALPHA;
 extern float PI;
 extern int MAX_DEMAND;
 
-// ******** Path for Solomon Benchmark ********* //
-extern string SOLOMON_PATH;
-extern string SOLOMON_FILENAME;
-
 // ******** Path for the bench we construct ******** //
-extern string BENCH_FILE_PATH;
+extern string SIMULATION_ROOT_PATH;
 
 #endif

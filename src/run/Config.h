@@ -19,16 +19,16 @@ extern int SAMPLE_RATE;
 extern int NUM_OF_CUSTOMER;
 extern int TIME_SLOT_LEN;
 extern int TIME_SLOT_NUM;
+extern float LATEST_SERVICE_TIME;
 extern int CORE_NUM;
 extern bool CONSTRAIN_CAR_NUM;
 extern int VEHICLE_NUM;
 extern float ALPHA;
 
 // ******** Path for Solomon Benchmark ********* //
-extern string SOLOMON_PATH;
 extern string SOLOMON_FILENAME;
 
-// ******** Path for the bench we construct ******** //
-extern string BENCH_FILE_PATH;
+// ******** Path for the Simulation ******** //
+extern string SIMULATION_ROOT_PATH;
 
 #endif

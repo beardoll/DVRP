@@ -1,5 +1,6 @@
 #include "Car.h"
 #include "../public/PublicFunction.h"
+#include "../run/Config.h"
 #include<cmath>
 #include <stdexcept>
 
@@ -7,7 +8,7 @@ Car::Car(Customer &headNode, Customer &rearNode, float capacity, int index, bool
     carIndex(index), route(headNode, rearNode, capacity), artificial(artificial)
 {
     state = wait;
-    nearestDepartureTime = 0;
+    nearestDepartureTime = LATEST_SERVICE_TIME;
     nextArriveTime = 0;
     travelDistance = 0;
 }
@@ -241,10 +242,18 @@ void Car::updateState(float time){
             Customer nextPos = route.nextPos();
             if(time == nearestDepartureTime) {
                 // 可以进行状态转换
-                route.setStand(currentPos.x, currentPos.y, time);
-                state = departure;
-                nextArriveTime = nearestDepartureTime + sqrt(pow(currentPos.x - nextPos.x, 2) 
-                        + pow(currentPos.y - nextPos.y, 2));
+                if(nextPos.type == 'D' && time < LATEST_SERVICE_TIME) {
+                    // 如果下一站是回到仓库并且未到下班时间，则等待
+                    state = wait;
+                    nearestDepartureTime = LATEST_SERVICE_TIME;
+                    route.setStand(currentPos.x, currentPos.y, time);
+                    if(SHOW_DETAIL) cout << "Car #" << carIndex << ": nothing to do, wait" << endl;
+                } else {
+                    // 继续出发
+                    route.setStand(currentPos.x, currentPos.y, time);
+                    state = departure;
+                    nextArriveTime = nearestDepartureTime + dist(&currentPos, &nextPos);
+                }
             } else {
                 // 仍维持serving状态，更新stand相关信息
                 route.setStand(currentPos.x, currentPos.y, time, nearestDepartureTime-time);
@@ -252,11 +261,17 @@ void Car::updateState(float time){
             break;
         }
         case wait: {
-            // do nothing now
-            // 必须是启动了货车之后才能进行状态转换
-            // 仍保持wait状态，更新stand相关信息
-            Customer currentPos = route.currentPos();
-            route.setStand(currentPos.x, currentPos.y, time);
+            if(time == nearestDepartureTime) {
+                Customer currentPos = route.currentPos();
+                Customer nextPos = route.nextPos();
+                nextArriveTime = time + dist(&currentPos, &nextPos);
+                route.setStand(currentPos.x, currentPos.y, time);
+                state = departure;
+            } else {
+                // 仍保持wait状态，更新stand相关信息
+                Customer currentPos = route.currentPos();
+                route.setStand(currentPos.x, currentPos.y, time);
+            }
             break;
         }
         case offwork: {
@@ -282,8 +297,9 @@ EventElement Car::getCurrentAction(float time){
             break;
         }
         case wait: {
-            // do nothing	
-            // 返回无效事件，说明货车还没有启动
+            event.time = nearestDepartureTime;
+            event.eventType = finishedService;
+            event.customerId = currentPos.id;
             break;
         }
         case serving: {
@@ -309,17 +325,29 @@ EventElement Car::launchCar(float currentTime){
     EventElement event;
     if(state == wait && route.getSize() != 0) {
         // 当货车有顾客点时才会启动
-        state = departure;
         Customer currentPos = route.currentPos();  // 当前驻点
         Customer nextPos = route.nextPos();        // 下一目的地
-        nearestDepartureTime = currentTime;
-        float time = currentTime + sqrt(pow(currentPos.x - nextPos.x, 2) 
-                + pow(currentPos.y - nextPos.y, 2));
-        nextArriveTime = time;
-        event.time = time;
-        event.eventType = carArrived;
-        event.carIndex = carIndex;
-        event.customerId = nextPos.id;
+        if(nextPos.type == 'D' && currentTime < LATEST_SERVICE_TIME) {
+            // 停车等待策略：如果下一站是仓库并且还没有到停止服务时间
+            // 则继续呆在原地等待，如果往后再没有服务，则在LATEST_SERVICE_TIME
+            // 时启程返回仓库，故返回一个有效事件
+            state = wait;
+            event.time = LATEST_SERVICE_TIME;
+            event.eventType = finishedService;
+            event.carIndex = carIndex;
+            event.customerId = 0;
+        } else {
+            // 车辆继续出发
+            state = departure;
+            nearestDepartureTime = currentTime;
+            float time = currentTime + sqrt(pow(currentPos.x - nextPos.x, 2) 
+                    + pow(currentPos.y - nextPos.y, 2));
+            nextArriveTime = time;
+            event.time = time;
+            event.eventType = carArrived;
+            event.carIndex = carIndex;
+            event.customerId = nextPos.id;
+        }
     }
     return event;
 }

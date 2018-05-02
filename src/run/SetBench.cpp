@@ -4,11 +4,7 @@
 #include<algorithm>
 #include<cmath>
 
-SetBench::SetBench(vector<Customer*> originCustomerSet) {
-    this->originCustomerSet = copyCustomerSet(originCustomerSet);
-} // 构造函数
-
-void SetBench::constructProbInfo(){ 
+void SetBench::constructProbInfo(vector<Customer*> originCustomerSet){ 
     // 设置各个节点的概率信息
     vector<int> BHsPos(0); // BHs的位置
     int i;
@@ -21,19 +17,66 @@ void SetBench::constructProbInfo(){
         for(i=0; i<TIME_SLOT_NUM; i++) {
             if(i == index) {
                 (*iter)->timeProb[i] = 0.5;
-            } else if(i == TIME_SLOT_NUM - 1) {
-                (*iter)->timeProb[i] = 0;
             } else {
-                (*iter)->timeProb[i] = 0.5/(TIME_SLOT_NUM - 1);
+                (*iter)->timeProb[i] = 0.5/TIME_SLOT_NUM;
             }
             //(*iter)->timeProb[i] = dist[i];
         }
     }
 }
 
-void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*> &dynamicCustomerSet, Customer depot){
+void SetBench::changeTWL(vector<Customer*> customerSet, Customer depot, float alpha) {
+    float timeHorizon = LATEST_SERVICE_TIME;  // 货车可工作的最晚时间
+    for(int i=0; i<customerSet.size(); i++) {
+        Customer *c = customerSet[i];
+        float minTimeWindowLen = dist(&depot, c);
+        c->endTime = random(c->startTime + ALPHA * minTimeWindowLen,
+                timeHorizon);
+        if(c->tolerantTime > c->endTime) {
+            c->endTime = c->tolerantTime;
+        }
+    }
+}
+
+void SetBench::changeDYN(vector<Customer*> originCustomerSet, Customer depot, float dynamicism,
+        vector<Customer*> &staticCustomer, vector<Customer*> &dynamicCustomer) {
+    // 将顾客集分成static和dynamic两个集合
+    // Args:
+    //   * originCustomerSet: 所有的顾客集合
+    //   * dynamicism: 动态顾客占比
+    // Returns:
+    //   * staticCustomer: 静态顾客集合
+    //   * dynamicCustomer: 动态顾客集合
+    sort(originCustomerSet.begin(), originCustomerSet.end(), ascendSortForCustId);
+    int customerAmount = originCustomerSet.size();
+    int dynamicNum = (int)floor(customerAmount*dynamicism);  // 动态到达的顾客数量
+    // dynamicPos: 动态到达的顾客在OriginCustomerSet中的定位
+    // staticPos:  静态到达的顾客节点在originCustomerSet中的定位
+    vector<int> staticPos;          	
+    // 动态到达的BHs在BHs集合下的坐标
+    vector<int> dynamicPos = getRandom(0, customerAmount, dynamicNum, staticPos);
+    vector<Customer*>::iterator iter;
+    for (iter=originCustomerSet.begin(); iter < originCustomerSet.end(); iter++) {
+        // 当前顾客节点于originCustomerSet中的定位
+        // 这里默认originCustomerSet是按id升序排列
+        int count = iter - originCustomerSet.begin();  				
+        // 寻找count是否是dynamicPos的元素
+        vector<int>::iterator iter2 = find(dynamicPos.begin(), dynamicPos.end(), count);
+        if (iter2 != dynamicPos.end()) {   // 在dynamicPos集合中
+            (*iter)->prop = 1;
+            dynamicCustomer.push_back(*iter);
+        }
+        else {
+            (*iter)->prop = 0;
+            staticCustomer.push_back(*iter);
+        }
+    }
+}
+
+void SetBench::construct(vector<Customer*> originCustomerSet, vector<Customer*> &staticCustomerSet, 
+        vector<Customer*> &dynamicCustomerSet, Customer depot){
     // 根据概率情况构造样本
-    constructProbInfo();
+    constructProbInfo(originCustomerSet);
     int customerAmount = originCustomerSet.end() - originCustomerSet.begin();
     int i;
     int dynamicNum = (int)floor(customerAmount*DYNAMICISM);  // 动态到达的顾客数量
@@ -62,7 +105,7 @@ void SetBench::construct(vector<Customer*> &staticCustomerSet, vector<Customer*>
         float t1 = selectSlot * TIME_SLOT_LEN;         // 时间段的开始
         float t2 = (selectSlot+1) * TIME_SLOT_LEN;     // 时间段的结束
         float tempt = random(t1, t2);
-        float maxActiveTime = TIME_SLOT_NUM * TIME_SLOT_LEN;  // 货车可工作的最晚时间
+        float maxActiveTime = LATEST_SERVICE_TIME;  // 货车可工作的最晚时间
         float minTimeWindowLen = dist(&depot, *iter);
         (*iter)->startTime =  min(tempt, maxActiveTime - ALPHA * minTimeWindowLen); 
         (*iter)->endTime = random((*iter)->startTime + ALPHA * minTimeWindowLen,

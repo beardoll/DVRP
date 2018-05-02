@@ -18,7 +18,7 @@ struct Customer{
     int priority;      // 顾客优先级，1表示第一优先级，2表示第二优先级，依次类推
     Customer *next;    // 指向下一个node节点的指针
     Customer *front;   // 指向前一个node节点的指针
-    float timeProb[6]; // 在各个timeSlot下的分布概率
+    float timeProb[5]; // 在各个timeSlot下的分布概率
     int prop ;    // 顾客性质（0表示静态顾客，1表示动态顾客） 
     bool operator< (Customer &item){
         return this->id < item.id;

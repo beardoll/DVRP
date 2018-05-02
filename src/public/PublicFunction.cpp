@@ -115,47 +115,6 @@ int roulette(float *probability, int num) {
     return k;
 }
 
-
-
-void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &staticCustomer, 
-        vector<Customer*> &dynamicCustomer, float dynamicism) {
-    // 将顾客集分成static和dynamic两个集合
-    // Args:
-    //   * originCustomerSet: 所有的顾客集合
-    //   * dynamicism: 动态顾客占比
-    // Returns:
-    //   * staticCustomer: 静态顾客集合
-    //   * dynamicCustomer: 动态顾客集合
-    sort(originCustomerSet.begin(), originCustomerSet.end(), ascendSortForCustId);
-    int customerAmount = originCustomerSet.size();
-    int dynamicNum = (int)floor(customerAmount*dynamicism);  // 动态到达的顾客数量
-    // dynamicPos: 动态到达的顾客在OriginCustomerSet中的定位
-    // staticPos:  静态到达的顾客节点在originCustomerSet中的定位
-    vector<int> staticPos;          	
-    // 动态到达的BHs在BHs集合下的坐标
-    vector<int> dynamicPos = getRandom(0, customerAmount, dynamicNum, staticPos);
-    vector<Customer*>::iterator iter;
-    staticCustomer.resize(0);
-    dynamicCustomer.resize(0);
-    vector<Customer*> originCopy = copyCustomerSet(originCustomerSet);
-    for (iter=originCopy.begin(); iter < originCopy.end(); iter++) {
-        // 当前顾客节点于originCustomerSet中的定位
-        // 这里默认originCustomerSet是按id升序排列
-        int count = iter - originCopy.begin();  				
-        // 寻找count是否是dynamicPos的元素
-        vector<int>::iterator iter2 = find(dynamicPos.begin(), dynamicPos.end(), count);
-        if (iter2 != dynamicPos.end()) {   // 在dynamicPos集合中
-            (*iter)->prop = 1;
-            dynamicCustomer.push_back(*iter);
-        }
-        else {
-            (*iter)->prop = 0;
-            staticCustomer.push_back(*iter);
-        }
-    }
-}
-
-
 void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost){
     // 计算对CarSet中顾客的最佳服务路线
     // Args:

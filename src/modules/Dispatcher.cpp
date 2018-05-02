@@ -56,7 +56,7 @@ void Dispatcher::carFinishTask(int carIndex){
         }
     }
     if(currentPlan.size() == 0) {
-        ostr.str("");
+                ostr.str("");
         ostr << "=============== END ================" << endl;
         ostr << "----OH!! Finished!" << endl;
         ostr << "----" << servedCustomerId.size() << " customers get served finally" << endl;
@@ -179,9 +179,9 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             // tempVec: 存放new served以及new abandoned顾客
             //          将原来的wait Customer和tempVec作差即可得到最新的wait Customer
             vector<int> tempVec;
-            tempVec.insert(tempVec.end(), newServedCustomerId.begin(), newServedCustomerId.end());
+            tempVec.insert(tempVec.end(), newservedCustomerId.begin(), newservedCustomerId.end());
             // newServedCustomer将会成为新的promisedCustomer
-            promisedCustomerId.insert(promisedCustomerId.end(), newServedCustomerId.begin(), newServedCustomerId.end());
+            promisedCustomerId.insert(promisedCustomerId.end(), newservedCustomerId.begin(), newservedCustomerId.end());
             sort(promisedCustomerId.begin(), promisedCustomerId.end());
 
             tempVec.insert(tempVec.end(), newAbandonedCustomerId.begin(), newAbandonedCustomerId.end());
@@ -281,7 +281,8 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
     EventElement newEvent;
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
-        if(newCustomer.tolerantTime < slotIndex * TIME_SLOT_LEN || !REPLAN) { 
+        if(newCustomer.tolerantTime < slotIndex * TIME_SLOT_LEN || !REPLAN || 
+                currentTime > TIME_SLOT_NUM * TIME_SLOT_LEN) { 
             // 等不到replan，则reject
             ostr.str("");
             ostr << "He is rejected!" << endl;

@@ -37,8 +37,6 @@ inline void withdrawPlan(vector<Car*> &Plan);    // 销毁计划
 inline vector<Car*> copyPlan(vector<Car*> Plan); // 复制计划
 inline void deleteCustomerSet(vector<Customer*> &customerSet);            // 删除customerSet
 inline vector<Customer*> copyCustomerSet(vector<Customer*> customerSet);  // 复制customerSet
-void seperateCustomer(vector<Customer*> originCustomerSet, vector<Customer*> &staticCustomer, 
-        vector<Customer*> &dynamicCustomer, float dynamicism);
 bool ascendSortForCustId(Customer* item1, Customer* item2);
 void computeBest(vector<Car*> carSet, vector<Car*> &bestRoute, float &bestCost);
 int getCustomerNum(vector<Car*> originCarSet);

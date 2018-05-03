@@ -54,7 +54,7 @@ bool M_ASSESSMENT[4] = {true, false, false, true};
 bool M_SAMPLING[4] = {true, true, false, true};
 // 仅针对DYN数据集构造时，因为其他数据集的构造都是以DYN数据集为base set
 bool HAS_BASESET = true;
-int EXP_TIMES = 1;
+int EXP_TIMES = 10;
 
 void constructBaseSet(string path) {
     // 构造基准数据集（更改时间窗、服务时间等属性）

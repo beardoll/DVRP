@@ -135,7 +135,7 @@ void Timer::run(vector<Car*> &finishedPlan, vector<Spot*> &rejectCustomer,
         float &travelDistance, float &addAveDistance) {
     // 调度中心初始化
     Dispatcher disp(staticCustomerSet, dynamicCustomerSet, storeSet, depot, capacity);
-    int slotIndex = 1;  // 第0个时间段
+    int slotIndex = BEGIN_SLOT_INDEX;  // 第0个时间段
     while(eventList.size() != 0) {
         EventElement currentEvent = pop();  // 弹出最近事件
         switch(currentEvent.eventType) {

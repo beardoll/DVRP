@@ -689,7 +689,9 @@ bool Route::timeWindowJudge(Spot *refStore, Spot *refCustomer, Spot *store, Spot
     if(refStore == refCustomer) {
         // 对于refStore==refCustomer的情况，作特殊处理
         time += dist(store, customer);
-        if(time > customer->endTime) return false;
+        if(time > customer->endTime) {
+            return false;
+        }
         if(time < customer->startTime) time = customer->startTime;
         time += customer->serviceTime;
         pre = customer;

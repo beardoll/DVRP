@@ -107,7 +107,7 @@ vector<Spot*> Simulator::generateScenario(Spot depot){
                     c->startTime = random(currentTime, (slotIndex+1)*TIME_SLOT_LEN);
                     c->startTime = min(c->startTime, timeHorizon-ALPHA*minTimeLen);
                     float minEndTime = max(BEGIN_SLOT_INDEX * TIME_SLOT_LEN + 
-                        minTimeLen, c->startTime+ALPHA*minTimeLen);
+                        1.2 * minTimeLen, double(c->startTime+ALPHA*minTimeLen));
                     c->endTime = random(minEndTime, timeHorizon);
                     c->quantity = random(0, MAX_DEMAND);
                     dynamicCustomer.push_back(c);
@@ -216,7 +216,10 @@ void retainVehicles(vector<Car*> &carSet, Spot depot, float capacity) {
             }
         }
         if(cutNum > 0) {
-            throw out_of_range("Cannot find so many vehicles to dismiss");
+            for(int i=0; i<carSet.size(); i++) {
+                carSet[i]->changeCarIndex(i);
+            }
+            // throw out_of_range("Cannot find so many vehicles to dismiss");
         } else {
             for(int i=0; i<carSet.size(); i++) {
                 carSet[i]->changeCarIndex(i);

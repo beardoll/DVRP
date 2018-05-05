@@ -28,9 +28,8 @@ float LAMBDA_FACTOR[4] = {0.5, 1.0, 1.5, 2.0};
 
 // ************* 时间窗实验参数 ************** //
 string TWL_ROOT_PATH = "VariousTWLExperiment/";
-string TWL_SETS[5] = {"short_set/", "mid_set/", "long_set/", "longer_set/",
-                      "longest_set/"};
-float M_ALPHA[5] = {1.0, 1.5, 2.0, 2.5, 3.0};
+string TWL_SETS[4] = {"short_set/", "mid_set/", "longer_set/", "longest_set/"};
+float M_ALPHA[4] = {1.5, 2.0, 2.5, 3.0};
 
 // ************* 动态性实验参数 ************** //
 string DYN_ROOT_PATH = "DynamicismExperiment/";
@@ -154,16 +153,16 @@ void experimentEngine(string expRootPath, string *setsName, int setNum, int mode
                 if(mode == 1) {
                     FACTOR = LAMBDA_FACTOR[i];
                 } else if(mode == 2) {
-                    // 选择largerset作为base benchmark
-                    FACTOR = LAMBDA_FACTOR[2];
+                    // 选择medium作为base benchmark
+                    FACTOR = LAMBDA_FACTOR[1];
                     ALPHA = M_ALPHA[i];
                 } else if(mode == 3) {
-                    // 选择largerset作为base benchmark
+                    // 选择larger作为base benchmark
                     FACTOR = LAMBDA_FACTOR[2];
                     BEGIN_SLOT_INDEX = M_BEGIN_INDEX[i]; 
                 } else if(mode == 4) {
-                    // 选择largerset作为base benchmark
-                    FACTOR = LAMBDA_FACTOR[2];
+                    // 选择medium作为base benchmark
+                    FACTOR = LAMBDA_FACTOR[1];
                     SAMPLE_RATE = M_SAMPLE_RATE[i]; 
                 }
                 REPLAN = M_REPLAN[k];
@@ -172,6 +171,7 @@ void experimentEngine(string expRootPath, string *setsName, int setNum, int mode
                 string method = METHODS[k];
                 string setName = setsName[i];
                 string benchPath = expRootPath + setName + "bench.xml";
+                cout << benchPath << endl;
                 string mediumFileBasis = expRootPath + setName + method; 
                 ostr.str("");
                 ostr << j;
@@ -212,9 +212,9 @@ void experimentEngine(string expRootPath, string *setsName, int setNum, int mode
 
 int main(int argc, char *argv[]){
     // **************** 时间窗实验 **************** //
-    // string TWLExpRootPath = SIMULATION_ROOT_PATH + TWL_ROOT_PATH;
-    // if(!HAS_DATASET) constructTWLDataSet(TWLExpRootPath, 5);
-    // experimentEngine(TWLExpRootPath, TWL_SETS, 5, 2);
+    string TWLExpRootPath = SIMULATION_ROOT_PATH + TWL_ROOT_PATH;
+    if(!HAS_DATASET) constructTWLDataSet(TWLExpRootPath, 4);
+    experimentEngine(TWLExpRootPath, TWL_SETS, 4, 2);
     
     // **************** 动态性实验 **************** //
     // string DYNExpRootPath = SIMULATION_ROOT_PATH + DYN_ROOT_PATH;
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]){
     // experimentEngine(DYNExpRootPath, DYN_SETS, 4, 3);
     
     // ************** 采样率变化实验 ************** //
-    string SPRExpRootPath = SIMULATION_ROOT_PATH + SPR_ROOT_PATH;
-    experimentEngine(SPRExpRootPath, DYN_SETS, 4, 4);
+    // string SPRExpRootPath = SIMULATION_ROOT_PATH + SPR_ROOT_PATH;
+    // experimentEngine(SPRExpRootPath, DYN_SETS, 4, 4);
     return 0;
 }

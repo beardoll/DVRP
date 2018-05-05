@@ -148,7 +148,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
     }
     vector<EventElement> newEventList;
     ostringstream ostr;
-    if(slotIndex == 1) {  // 路径计划需要初始化
+    if(slotIndex == BEGIN_SLOT_INDEX) {  // 路径计划需要初始化
         ostr.str("");
         ostr << "============ Now Initialize the routing plan ===========" << endl;
         TxtRecorder::addLine(ostr.str());

@@ -766,6 +766,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 cout << "Selected index is: " << selectedCustIndex << endl;
                 cout << "CustomerID is #" << selectedCustomer->id << " x-pos is " << selectedCustomer->x << " y-pos is: " << selectedCustomer->y << endl;
                 showAllCustomerID(removedCustomer);
+                cout << e.what() << endl;
                 throw out_of_range("In greedy insert, cannot find valid position: " + string(e.what()));
             }
             removedCarSet.push_back(newCar);  // 添加到货车集合中

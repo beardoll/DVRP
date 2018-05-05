@@ -44,11 +44,11 @@ void SetBench::changeTWL(vector<Spot*> customerSet, Spot *depot, float newAlpha)
         float distFromCustomerToStore = dist(c, c->choice);
         float distFromDepotToStore = dist(depot, c->choice);
         float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
-        float minEndTime = max(BEGIN_SLOT_INDEX * TIME_SLOT_LEN + minTimeLen,
-                c->startTime + newAlpha*minTimeLen);
+        float minEndTime = max(BEGIN_SLOT_INDEX * TIME_SLOT_LEN + 1.2*minTimeLen,
+                double(c->startTime + newAlpha*minTimeLen));
         c->endTime = random(minEndTime, timeHorizon);
         if(c->tolerantTime > c->endTime) {
-            c->endTime = c->tolerantTime;
+            c->tolerantTime = c->endTime;
         }
     }
 }
@@ -62,11 +62,11 @@ void SetBench::changeDYN(vector<Spot*> customerSet, Spot *depot, int beginIndex,
         float distFromCustomerToStore = dist(c, c->choice);
         float distFromDepotToStore = dist(depot, c->choice);
         float minTimeLen = distFromCustomerToStore + distFromDepotToStore;
-        float minEndTime = max(beginIndex * TIME_SLOT_LEN + minTimeLen,
-                c->startTime + ALPHA*minTimeLen);
+        float minEndTime = max(beginIndex * TIME_SLOT_LEN + 1.2*minTimeLen,
+                double(c->startTime + ALPHA*minTimeLen));
         c->endTime = random(minEndTime, timeHorizon);
         if(c->tolerantTime > c->endTime) {
-            c->endTime = c->tolerantTime;
+            c->tolerantTime = c->endTime;
         }
         if(c->startTime < beginIndex * TIME_SLOT_LEN) {
             staticCustomer.push_back(c);
@@ -120,7 +120,7 @@ void SetBench::constructCustomerSet() {
                     c->startTime = random(i*TIME_SLOT_LEN, (i+1)*TIME_SLOT_LEN);
                     c->startTime = min(c->startTime, timeHorizon-ALPHA*minTimeLen);
                     float minEndTime = max(BEGIN_SLOT_INDEX * TIME_SLOT_LEN + 
-                        minTimeLen, c->startTime+ALPHA*minTimeLen);
+                        1.2*minTimeLen, double(c->startTime+ALPHA*minTimeLen));
                     c->endTime = random(minEndTime, timeHorizon);
                     float windowLen = c->endTime - c->startTime;
                     c->tolerantTime = c->startTime + random(0.6*windowLen, 0.8*windowLen);

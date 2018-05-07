@@ -212,9 +212,9 @@ void experimentEngine(string expRootPath, string *setsName, int setNum, int mode
 
 int main(int argc, char *argv[]){
     // **************** 时间窗实验 **************** //
-    string TWLExpRootPath = SIMULATION_ROOT_PATH + TWL_ROOT_PATH;
-    if(!HAS_DATASET) constructTWLDataSet(TWLExpRootPath, 4);
-    experimentEngine(TWLExpRootPath, TWL_SETS, 4, 2);
+    // string TWLExpRootPath = SIMULATION_ROOT_PATH + TWL_ROOT_PATH;
+    // if(!HAS_DATASET) constructTWLDataSet(TWLExpRootPath, 4);
+    // experimentEngine(TWLExpRootPath, TWL_SETS, 4, 2);
     
     // **************** 动态性实验 **************** //
     // string DYNExpRootPath = SIMULATION_ROOT_PATH + DYN_ROOT_PATH;
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]){
     // experimentEngine(DYNExpRootPath, DYN_SETS, 4, 3);
     
     // ************** 采样率变化实验 ************** //
-    // string SPRExpRootPath = SIMULATION_ROOT_PATH + SPR_ROOT_PATH;
-    // experimentEngine(SPRExpRootPath, DYN_SETS, 4, 4);
+    string SPRExpRootPath = SIMULATION_ROOT_PATH + SPR_ROOT_PATH;
+    experimentEngine(SPRExpRootPath, DYN_SETS, 4, 4);
     return 0;
 }

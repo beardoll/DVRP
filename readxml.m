@@ -1,9 +1,20 @@
-function [routeSet, rejectCustomer, dynamicCustomer, travelDistance] = readxml(filename)
-    xmlDoc = xmlread(filename);
-    routeSet = extractRouteSetInfo(xmlDoc);
-    rejectCustomer = extractSpotSetInfo(xmlDoc, 'rejectCustomer');
-    dynamicCustomer = extractSpotSetInfo(xmlDoc, 'dynamicCustomer');
-    travelDistance = extractSingleValue(xmlDoc, 'travelLen');
+function [result] = readxml(filename, mode)
+    result.routeSet = [];
+    result.rejectCustomer = [];
+    result.dynamicCustomer = [];
+    result.travelDistance = [];
+    result.staticCustomer = [];
+    if(strcmp(mode, 'readResult') == 1)
+        xmlDoc = xmlread(filename);
+        result.routeSet = extractRouteSetInfo(xmlDoc);
+        result.rejectCustomer = extractSpotSetInfo(xmlDoc, 'rejectCustomer');
+        result.dynamicCustomer = extractSpotSetInfo(xmlDoc, 'dynamicCustomer');
+        result.travelDistance = extractSingleValue(xmlDoc, 'travelLen');
+    elseif(strcmp(mode, 'readBench') == 1)
+        xmlDoc = xmlread(filename);
+        result.staticCustomer = extractSpotSetInfo(xmlDoc, 'staticCustomer');
+        result.dynamicCustomer = extractSpotSetInfo(xmlDoc, 'dynamicCustomer');
+    end
 end 
 
 function [node] = constructEmptyNode()

@@ -40,6 +40,7 @@ vector<float> randomVec(int num){
         }
         output.push_back(rest);
     }
+    random_shuffle(output.begin(), output.end()); 
     return output;
 }
 

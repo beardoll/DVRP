@@ -24,12 +24,12 @@ using namespace std;
 // ***************** 动态性实验参数 ***************** //
 string DYN_ROOT_PATH = "DynamicismExperiment/";
 string DYN_SETS[4] = {"low_set/", "mid_set/", "higher_set/", "highest_set/"};
-float M_DYNAMICISM[4] = {0.1, 0.3, 0.5, 0.7};
+float M_DYNAMICISM[4] = {0.2, 0.4, 0.6, 0.8};
 
 // **************** 重规划频率实验参数 ************** //
-string RPF_ROOT_PATH = "VariousRPF_ROOT_PATH/";
+string RPF_ROOT_PATH = "VariousRPFExperiment/";
 string RPF_SETS[4] = {"low_set/", "mid_set/", "higher_set/", "highest_set/"};
-int M_SLOT_NUM[4] = {5, 10, 15, 20};
+int M_SPLIT[4] = {1, 2, 3, 4};
 
 // ******************** 公共参数 ******************** //
 string METHODS[6] = {"replan_sampling_evaluation_pos/", "replan_sampling_evaluation_neg/",
@@ -106,12 +106,11 @@ void experimentEngine(string expRootPath, string *setsName, int setNum, int mode
                     " Methods index: " << k << endl;
                 cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
                 if(mode == 2) {
-                    TIME_SLOT_NUM = M_SLOT_NUM[i];
-                    TIME_SLOT_LEN = 200 / TIME_SLOT_NUM;
+                    SPLIT = M_SPLIT[i];
                 }
                 REPLAN = M_REPLAN[k];
                 ASSESSMENT = M_ASSESSMENT[k];
-                STRATEGY = M_STRATEGY[i];
+                STRATEGY = M_STRATEGY[k];
                 string method = METHODS[k];
                 string setName = setsName[i];
                 string benchPath = expRootPath + setName + "bench.xml";
@@ -143,7 +142,6 @@ void experimentEngine(string expRootPath, string *setsName, int setNum, int mode
                     continue;
                 }
                 TxtRecorder::closeFile();
-                if(k==0) vehicleNum = finalCarSet.size();
                 k++;
                 bw.saveResult(xmlName, finalCarSet, rejectCustomer, dynamicCustomer, depot, travelDistance, addAveDistance);
                 withdrawPlan(finalCarSet);
@@ -161,7 +159,7 @@ int main(int argc, char *argv[]){
         constructBaseSet(DYNExpRootPath + "base.xml");
         constructDYNDataSet(DYNExpRootPath, 4);
     }
-    experimentEngine(DYNExpRootPath, DYN_SETS, 4, 1);
+    //experimentEngine(DYNExpRootPath, DYN_SETS, 4, 1);
 
     // *************** 重规划频率实验 ************* //
     string RPFExpRootPath = SIMULATION_ROOT_PATH + RPF_ROOT_PATH;

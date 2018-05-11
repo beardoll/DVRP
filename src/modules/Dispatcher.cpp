@@ -151,7 +151,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
         ostr << "============ Now replan, the time slot is: " << slotIndex << "============" << endl;
         TxtRecorder::addLine(ostr.str());
         cout << ostr.str();
-        float currentTime = slotIndex * TIME_SLOT_LEN;
+        float currentTime = slotIndex * REPLAN_END_TIME / TIME_SLOT_NUM / SPLIT;
         for(custIdIter = waitCustomerId.begin(); custIdIter < waitCustomerId.end(); custIdIter++) {
             Customer *temp = new Customer;
             *temp = *allCustomer[*custIdIter - 1];
@@ -183,7 +183,7 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
             // newServedCustomer将会成为新的promisedCustomer
             promisedCustomerId.insert(promisedCustomerId.end(), newservedCustomerId.begin(), newservedCustomerId.end());
             sort(promisedCustomerId.begin(), promisedCustomerId.end());
-
+            
             tempVec.insert(tempVec.end(), newAbandonedCustomerId.begin(), newAbandonedCustomerId.end());
             rejectCustomerId.insert(rejectCustomerId.end(), newAbandonedCustomerId.begin(), newAbandonedCustomerId.end());
             sort(rejectCustomerId.begin(), rejectCustomerId.end());
@@ -207,6 +207,17 @@ vector<EventElement> Dispatcher::handleNewTimeSlot(int slotIndex){
                         waitCustomerId.end(), tempVec.begin(), tempVec.end(), tempVec2.begin());
                 tempVec2.resize(iterxx - tempVec2.begin());
                 waitCustomerId = tempVec2;
+            }
+            
+            if(slotIndex >= TIME_SLOT_NUM * SPLIT) {
+                // 后面已经没有replan
+                ostr.str("");
+                ostr << "No replan after current time, reject all waiting customer, the number is:" << waitCustomerId.size() << endl;
+                TxtRecorder::addLine(ostr.str());
+                cout << ostr.str();
+                rejectCustomerId.insert(rejectCustomerId.end(), waitCustomerId.begin(), 
+                        waitCustomerId.end());
+                waitCustomerId.clear();
             }
             
             // 将变更后的future plan安插到currentPlan对应位置之后
@@ -281,8 +292,8 @@ EventElement Dispatcher::handleNewCustomer(int slotIndex, const Customer& newCus
     EventElement newEvent;
     if(minInsertCost == MAX_FLOAT) {
         // 没有可行插入点
-        if(newCustomer.tolerantTime < slotIndex * TIME_SLOT_LEN || !REPLAN || 
-                currentTime > TIME_SLOT_NUM * TIME_SLOT_LEN) { 
+        if(newCustomer.tolerantTime < slotIndex * REPLAN_END_TIME/TIME_SLOT_NUM/SPLIT || 
+                !REPLAN || currentTime > REPLAN_END_TIME) { 
             // 等不到replan，则reject
             ostr.str("");
             ostr << "He is rejected!" << endl;

@@ -11,16 +11,16 @@ void SetBench::constructProbInfo(vector<Customer*> originCustomerSet){
     // float temp[6] = {0.4, 0.2, 0.2, 0.1, 0.1, 0};
     vector<Customer*>::iterator iter = originCustomerSet.begin();
     for(iter; iter < originCustomerSet.end(); iter++) {
-        // vector<float> dist = randomVec(timeSlotNum);   // 在各个slot提出需求的概率
-        // vector<float> dist(temp, temp+6);
-        int index = random(0, TIME_SLOT_NUM-1);
+        vector<float> dist = randomVec(TIME_SLOT_NUM);   // 在各个slot提出需求的概率
+        // vector<float> dist(temp, temp+TIME_SLOT_NUM);
+        // int index = random(0, TIME_SLOT_NUM-1);
         for(i=0; i<TIME_SLOT_NUM; i++) {
-            if(i == index) {
-                (*iter)->timeProb[i] = 0.5;
-            } else {
-                (*iter)->timeProb[i] = 0.5/TIME_SLOT_NUM;
-            }
-            //(*iter)->timeProb[i] = dist[i];
+            // if(i == index) {
+            //     (*iter)->timeProb[i] = 0.5;
+            // } else {
+            //     (*iter)->timeProb[i] = 0.5/TIME_SLOT_NUM;
+            // }
+            (*iter)->timeProb[i] = dist[i];
         }
     }
 }
@@ -86,6 +86,7 @@ void SetBench::construct(vector<Customer*> originCustomerSet, vector<Customer*> 
     vector<Customer*>::iterator iter = originCustomerSet.begin();
     staticCustomerSet.resize(0);
     dynamicCustomerSet.resize(0);
+    float timeSlotLen = REPLAN_END_TIME / TIME_SLOT_NUM;
     for(iter; iter<originCustomerSet.end(); iter++) {
         // 当前顾客节点于originCustomerSet中的定位
         // 这里默认originCustomerSet是按id升序排列
@@ -102,8 +103,8 @@ void SetBench::construct(vector<Customer*> originCustomerSet, vector<Customer*> 
         }
         // 利用轮盘算法采样得出顾客可能提出需求的时间段
         int selectSlot = roulette((*iter)->timeProb, TIME_SLOT_NUM);   
-        float t1 = selectSlot * TIME_SLOT_LEN;         // 时间段的开始
-        float t2 = (selectSlot+1) * TIME_SLOT_LEN;     // 时间段的结束
+        float t1 = selectSlot * timeSlotLen;         // 时间段的开始
+        float t2 = (selectSlot+1) * timeSlotLen;     // 时间段的结束
         float tempt = random(t1, t2);
         float maxActiveTime = LATEST_SERVICE_TIME;  // 货车可工作的最晚时间
         float minTimeWindowLen = dist(&depot, *iter);

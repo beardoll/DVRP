@@ -44,9 +44,10 @@ Timer::Timer(vector<Customer*> staticCustomerSet, vector<Customer*> dynamicCusto
     this->depot = depot;
     EventElement newEvent;
     int i;
-    for(i=0; i<=TIME_SLOT_NUM; i++) {  
+    float timeSlotLen = REPLAN_END_TIME / TIME_SLOT_NUM / SPLIT;
+    for(i=0; i<=TIME_SLOT_NUM*SPLIT; i++) {  
         // 增加“时间段到达”事件
-        newEvent = EventElement(i*TIME_SLOT_LEN, newTimeSlot, -1, -1);
+        newEvent = EventElement(i*timeSlotLen, newTimeSlot, -1, -1);
         eventList.push_back(newEvent);
     }
     vector<Customer*>::iterator iter = dynamicCustomerSet.begin();

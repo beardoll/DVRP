@@ -64,22 +64,31 @@ vector<Customer*> Simulator::generateScenario(Customer depot){
     }
     vector<Customer*> tempCustomer = copyCustomerSet(dynamicCustomerSet);
     vector<Customer*>::iterator iter = tempCustomer.begin();
+    float maxTime = REPLAN_END_TIME;
+    float timeSlotLen = maxTime / TIME_SLOT_NUM / SPLIT;
     for(iter; iter<tempCustomer.end(); iter++){
         // 产生随机数选择顾客可能提出需求的时间
         float randomAlpha = random(leftAlpha, rightAlpha);
         float randFloat = random(0,1);
         float sumation = 0;
         // 时间段计数
-        int count = roulette((*iter)->timeProb + slotIndex, TIME_SLOT_NUM - slotIndex);
-        float t1 = (count+slotIndex) * TIME_SLOT_LEN;
-        float t2 = (count+slotIndex+1) * TIME_SLOT_LEN;
+        float *timeProb_ = new float[TIME_SLOT_NUM * SPLIT];
+        for(int i=0; i<TIME_SLOT_NUM; i++) {
+            for(int j=0; j<SPLIT; j++) {
+                timeProb_[i*SPLIT + j] = (*iter)->timeProb[i] / SPLIT;
+            }
+        }
+        int count = roulette(timeProb_+slotIndex, TIME_SLOT_NUM * SPLIT - slotIndex);
+        // int count = roulette((*iter)->timeProb + slotIndex, TIME_SLOT_NUM - slotIndex);
+        float t1 = (count+slotIndex) * timeSlotLen;
+        float t2 = (count+slotIndex+1) * timeSlotLen;
         float tempt = random(t1, t2);
         // 时间轴长度
-        float maxTime = TIME_SLOT_NUM * TIME_SLOT_LEN;
         float minTimeWindowLen = dist(&depot, *iter);
         (*iter)->startTime = min(tempt, maxTime - randomAlpha * minTimeWindowLen);
         (*iter)->endTime = random((*iter)->startTime + randomAlpha*minTimeWindowLen,
                 maxTime);
+        delete []timeProb_;
     }
     return tempCustomer;
 }
@@ -391,7 +400,7 @@ vector<Car*> Simulator::replan(vector<int> &newServedCustomerId, vector<int> &ne
     vector<thread> thread_pool;    // pool for storing all threads
     int count = 0;
     // 下一个时间段的终止时间（下下个时间段的开始时间）
-    float nextMoment = (slotIndex+1) * TIME_SLOT_LEN; 
+    float nextMoment = (slotIndex+1) * REPLAN_END_TIME / TIME_SLOT_NUM / SPLIT; 
     for(custIter = waitCustomerSet.begin(); custIter < waitCustomerSet.end(); custIter++) {
         if((*custIter)->tolerantTime <= nextMoment) {  
             // 该顾客着急于下时间段前得到回复

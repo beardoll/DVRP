@@ -112,7 +112,15 @@ void SSLR::run(vector<Car*> &finalCarSet, float &finalCost){
     vector<Car*> currentCarSet;
     Car *newCar = new Car(*depots[0], *depots[0], 0, depots[0]->id);
     currentCarSet.push_back(newCar);
-    greedyInsert(currentCarSet, allCustomer, false);
+    bool sign = false;
+    while(!sign) {
+        try {
+            greedyInsert(currentCarSet, allCustomer, false);
+            sign = true;
+        } catch (exception &e) {
+            sign = false;
+        }
+    }
     // 全局最优解，初始化与当前解相同
     vector<Car*> globalCarSet = copyPlan(currentCarSet);        
     float currentCost = getCost(currentCarSet);

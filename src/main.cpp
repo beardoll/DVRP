@@ -57,6 +57,8 @@ void experimentEngine(int index) {
 }
 
 int main(int argc, char *argv[]){
-    experimentEngine(1);
+    for(int i=10; i<=20; i++) {
+        experimentEngine(i);
+    }
     return 0;
 }

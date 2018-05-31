@@ -727,6 +727,7 @@ void LNSBase::greedyInsert(vector<Car*> &removedCarSet, vector<Spot*> removedCus
                 Spot* selectedCustomer = removedCustomer[selectedCustIndex];
                 newCar->insertAtRear(selectedCustomer);
             } catch (exception &e) {
+                cout << "Customer id is: #" << removedCustomer[selectedCustIndex]->id << endl; 
                 cerr << "In greedy insert: " << e.what() << endl;
                 //exit(1);
             }
